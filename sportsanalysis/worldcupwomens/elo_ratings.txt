@@ -1,0 +1,249 @@
+Rank  Team                      Elo Rating
+----------------------------------------
+1     Spain                      2284.01  
+2     United States              2252.84  
+3     France                     2171.51  
+4     England                    2169.74  
+5     Germany                    2155.64  
+6     Japan                      2141.13  
+7     Brazil                     2138.81  
+8     Sweden                     2131.95  
+9     North Korea                2059.17  
+10    Canada                     2053.77  
+11    Netherlands                2038.35  
+12    Norway                     1998.07  
+13    Australia                  1982.34  
+14    Denmark                    1975.94  
+15    Italy                      1968.79  
+16    Mexico                     1922.50  
+17    Colombia                   1910.77  
+18    Nigeria                    1896.33  
+19    China PR                   1888.76  
+20    Iceland                    1883.96  
+21    South Korea                1852.65  
+22    Belgium                    1833.09  
+23    Poland                     1810.72  
+24    Portugal                   1808.39  
+25    Austria                    1806.45  
+26    Russia                     1800.69  
+27    Scotland                   1785.39  
+28    South Africa               1783.22  
+29    Switzerland                1782.34  
+30    Republic of Ireland        1779.41  
+31    Finland                    1779.29  
+32    Vietnam                    1769.19  
+33    Argentina                  1766.61  
+34    Zambia                     1745.79  
+35    Ghana                      1738.57  
+36    Serbia                     1717.59  
+37    Haiti                      1717.51  
+38    Wales                      1715.81  
+39    Ivory Coast                1698.65  
+40    Taiwan                     1692.19  
+41    New Zealand                1688.34  
+42    Morocco                    1686.50  
+43    Czech Republic             1684.27  
+44    Ukraine                    1679.38  
+45    Cameroon                   1677.50  
+46    Åland                      1667.79  
+47    Papua New Guinea           1667.68  
+48    Algeria                    1663.76  
+49    Bermuda                    1662.33  
+50    Thailand                   1658.36  
+51    Myanmar                    1658.15  
+52    Senegal                    1658.02  
+53    Tanzania                   1657.69  
+54    Puerto Rico                1654.17  
+55    Isle of Man                1652.33  
+56    Kenya                      1649.88  
+57    Venezuela                  1641.50  
+58    Chile                      1637.85  
+59    Panama                     1636.01  
+60    Slovenia                   1632.61  
+61    Jamaica                    1624.41  
+62    Philippines                1623.83  
+63    Sápmi                      1619.86  
+64    Great Britain              1614.75  
+65    Malawi                     1612.53  
+66    Costa Rica                 1611.55  
+67    Gotland                    1610.51  
+68    Uzbekistan                 1607.41  
+69    Ethiopia                   1602.67  
+70    Dominican Republic         1599.61  
+71    Mali                       1597.41  
+72    Western Isles              1590.40  
+73    Burkina Faso               1586.25  
+74    Cuba                       1583.30  
+75    El Salvador                1580.76  
+76    FR Yugoslavia              1576.98  
+77    Paraguay                   1573.89  
+78    Belarus                    1567.21  
+79    Uruguay                    1563.00  
+80    Zimbabwe                   1562.38  
+81    Prince Edward Island       1556.42  
+82    Namibia                    1550.86  
+83    Guyana                     1549.60  
+84    Uganda                     1549.52  
+85    Fiji                       1548.73  
+86    Northern Ireland           1540.00  
+87    Czechoslovakia             1538.11  
+88    Iran                       1534.18  
+89    Trinidad and Tobago        1531.64  
+90    Hungary                    1521.85  
+91    Equatorial Guinea          1517.46  
+92    Botswana                   1516.59  
+93    Jersey                     1515.45  
+94    Réunion                    1512.80  
+95    Liberia                    1512.20  
+96    Tunisia                    1511.55  
+97    Gozo                       1508.56  
+98    Surrey                     1506.05  
+99    Cape Verde                 1505.46  
+100   Turkey                     1500.52  
+101   Slovakia                   1500.46  
+102   Catalonia                  1498.88  
+103   Chad                       1497.60  
+104   Mayotte                    1497.59  
+105   Netherlands Antilles       1494.65  
+106   Yugoslavia                 1491.29  
+107   DR Congo                   1490.03  
+108   Jordan                     1488.89  
+109   Isle of Wight              1488.15  
+110   Saare County               1480.12  
+111   Shetland Islands           1479.80  
+112   Ecuador                    1479.50  
+113   Tamil Eelam                1478.97  
+114   Menorca                    1477.64  
+115   Guatemala                  1474.47  
+116   Curacao                    1473.65  
+117   India                      1473.37  
+118   Székely Land               1469.68  
+119   Egypt                      1469.61  
+120   Congo                      1468.14  
+121   Benin                      1468.05  
+122   Nicaragua                  1465.25  
+123   Bangladesh                 1464.32  
+124   Nepal                      1463.77  
+125   Gambia                     1463.19  
+126   Curaçao                    1460.70  
+127   Romania                    1459.18  
+128   Greenland                  1458.20  
+129   Togo                       1457.66  
+130   Saint Lucia                1451.78  
+131   Froya                      1451.75  
+132   Samoa                      1450.59  
+133   Greece                     1448.95  
+134   Burundi                    1446.20  
+135   New Caledonia              1446.13  
+136   Saint Kitts and Nevis      1442.30  
+137   Solomon Islands            1438.45  
+138   Suriname                   1434.47  
+139   Mozambique                 1432.74  
+140   Tibet                      1431.49  
+141   Central African Republic   1430.16  
+142   Madagascar                 1428.79  
+143   Mauritania                 1428.68  
+144   Vanuatu                    1419.59  
+145   Hong Kong                  1419.33  
+146   Orkney                     1418.96  
+147   Bosnia and Herzegovina     1418.18  
+148   Serbia and Montenegro      1416.23  
+149   Qatar                      1410.41  
+150   Ynys Môn                   1406.92  
+151   Rwanda                     1404.87  
+152   Martinique                 1402.89  
+153   Sierra Leone               1401.35  
+154   U.S. Virgin Islands        1400.88  
+155   Bonaire                    1400.66  
+156   Croatia                    1400.28  
+157   Barbados                   1400.07  
+158   Aruba                      1399.94  
+159   Angola                     1398.61  
+160   Gabon                      1393.23  
+161   Israel                     1389.62  
+162   Montenegro                 1384.20  
+163   Sudan                      1384.20  
+164   Rhodes                     1383.95  
+165   Saudi Arabia               1382.28  
+166   South Sudan                1381.07  
+167   Eritrea                    1379.38  
+168   Turkmenistan               1378.38  
+169   São Tomé and Príncipe      1377.63  
+170   Albania                    1376.03  
+171   United States Virgin Islands  1375.91  
+172   Guam                       1375.75  
+173   Shetland                   1373.66  
+174   Tahiti                     1370.99  
+175   Guadeloupe                 1370.88  
+176   Grenada                    1368.13  
+177   Belize                     1363.55  
+178   Guinea-Bissau              1359.82  
+179   Azerbaijan                 1359.39  
+180   Kosovo                     1349.79  
+181   Kuwait                     1347.17  
+182   Guernsey                   1344.38  
+183   Cambodia                   1343.62  
+184   Lebanon                    1343.44  
+185   Honduras                   1342.60  
+186   Kiribati                   1341.82  
+187   Bahamas                    1340.91  
+188   Niger                      1338.74  
+189   Saint Vincent and the Grenadines  1338.53  
+190   Tonga                      1335.45  
+191   Hitra                      1332.39  
+192   Malaysia                   1325.41  
+193   Zanzibar                   1314.78  
+194   Anguilla                   1313.88  
+195   Pakistan                   1312.82  
+196   Indonesia                  1311.53  
+197   Luxembourg                 1311.50  
+198   Malta                      1300.12  
+199   Eswatini                   1298.52  
+200   Cook Islands               1298.26  
+201   Bahrain                    1295.98  
+202   Lesotho                    1294.55  
+203   Djibouti                   1292.08  
+204   Northern Mariana Islands   1291.58  
+205   Guinea                     1290.55  
+206   Libya                      1288.03  
+207   Comoros                    1287.47  
+208   Mongolia                   1287.11  
+209   Macau                      1281.36  
+210   Cayman Islands             1277.69  
+211   Bhutan                     1274.07  
+212   United Arab Emirates       1270.41  
+213   Kyrgyzstan                 1269.71  
+214   British Virgin Islands     1267.48  
+215   Palestine                  1266.54  
+216   Peru                       1265.35  
+217   Afghanistan                1264.99  
+218   Antigua and Barbuda        1257.63  
+219   Latvia                     1254.13  
+220   Liechtenstein              1251.77  
+221   Iraq                       1250.33  
+222   Seychelles                 1244.93  
+223   Bolivia                    1243.75  
+224   Syria                      1242.11  
+225   Lithuania                  1222.53  
+226   Sri Lanka                  1220.65  
+227   Tajikistan                 1216.19  
+228   Mauritius                  1208.21  
+229   Cyprus                     1201.49  
+230   Kazakhstan                 1199.41  
+231   Dominica                   1199.38  
+232   Faroe Islands              1199.09  
+233   Singapore                  1194.97  
+234   American Samoa             1190.86  
+235   Georgia                    1190.05  
+236   Andorra                    1183.83  
+237   Timor-Leste                1181.60  
+238   Turks and Caicos Islands   1180.18  
+239   Laos                       1179.27  
+240   Estonia                    1177.37  
+241   North Macedonia            1165.89  
+242   Bulgaria                   1157.62  
+243   Moldova                    1146.23  
+244   Macedonia                  1126.32  
+245   Armenia                    1090.97  
+246   Gibraltar                  1087.89  
+247   Maldives                   1083.87  

@@ -1,0 +1,25 @@
+﻿Symbol,Name,Quantity,Price,Total,ExpectedDailyReturn
+BA,Boeing,3,205.38,616.14,10.15%
+CAT,Caterpillar,0,583.33,0.00,2.69%
+HON,Honeywell,0,193.03,0.00,1.48%
+CRM,Salesforce Inc,0,235.42,0.00,1.11%
+GS,Goldman Sachs,0,815.85,0.00,1.11%
+CSCO,Cisco,0,76.85,0.00,1.07%
+AAPL,Apple,0,286.13,0.00,1.07%
+NVDA,NVIDIA,0,181.61,0.00,0.94%
+C,Citigroup,0,103.65,0.00,0.94%
+AMZN,Amazon.com,0,235.54,0.00,0.71%
+MSFT,Microsoft,0,490.14,0.00,0.70%
+AXP,American Express,0,362.78,0.00,0.68%
+SUI,Sui,829,1.61,1334.69,21.11%
+ADA,Cardano,2201,0.43,946.43,14.96%
+LINK,Chainlink,55,13.33,733.15,11.71%
+SOL,Solana,5,139.02,695.1,11.56%
+AAVE,Aave,3,185.98,557.94,11.56%
+DOT,Polkadot,317,2.24,710.08,11.23%
+XLM,Stellar,2433,0.26,632.58,10.00%
+HYPE,Hyperliquid,17,32.84,558.28,8.93%
+HBAR,Hedera,3995,0.14,559.30,8.84%
+WBETH,Wrapped Beacon ETH,0,3239.67,0.00,8.54%
+DOGE,Dogecoin,3598,0.15,539.70,8.53%
+WSTETH,Wrapped stETH,0,3643.29,0.00,8.42%
