@@ -1,0 +1,26 @@
+# Example configuration file for All-code-in-one project
+# Copy this file to config.yaml and edit as needed
+
+# DataNinja settings
+DataNinja:
+  default_data_dir: "DataNinja/data"
+  analysis_weights:
+    avg_finish: -50
+    avg_grid: -2
+    dnf_rate: -200
+    total_points: 5
+    fastest_laps: 10
+
+# API keys (example)
+API:
+  some_service_key: "YOUR_API_KEY_HERE"
+
+# Output directories
+output:
+  reports: "reports/"
+  logs: "logs/"
+
+# Other global settings
+logging:
+  level: "INFO"
+  file: "logs/allcode.log" 

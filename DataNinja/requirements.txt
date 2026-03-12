@@ -1,0 +1,18 @@
+# Core dependencies
+pandas
+rich
+typer[all]
+plotext
+
+# File format support
+openpyxl
+PyYAML
+
+# ML and analysis
+scikit-learn
+numpy
+
+# Testing
+pytest
+
+# Note: sqlite3 is part of Python standard library
