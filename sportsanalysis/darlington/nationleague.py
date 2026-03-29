@@ -301,210 +301,153 @@ COMPLETED_MATCHES = [
     ("Spennymoor", "Scarborough", 1, 1),
     ("Macclesfield", "Radcliffe", 2, 1),
     ("Scarborough", "Hereford Utd", 0, 3),
+
+    # February 2025
+    ("AFC Fylde", "Peterborough S.", 5, 2),
+    ("Chorley", "Leamington", 1, 1),
+    ("Curzon", "Bedford Town", 2, 2),
+    ("Kings Lynn", "Southport", 2, 0),
+    ("Macclesfield", "Kidderminster", 5, 1),
+    ("Radcliffe", "Oxford City", 1, 0),
+    ("Spennymoor", "Telford Utd", 0, 2),
+    ("Bedford Town", "Chester", 1, 2),
+    ("Leamington", "Oxford City", 0, 0),
+    ("Marine", "Scarborough", 1, 1),
+    ("Peterborough S.", "Curzon", 1, 1),
+    ("Radcliffe", "Kings Lynn", 0, 1),
+    ("Southport", "Darlington", 2, 2),
+    ("Worksop Town", "Telford Utd", 3, 1),
+    ("Merthyr Town", "Chorley", 2, 3),
+    ("AFC Fylde", "Spennymoor", 5, 0),
+    ("Buxton", "Peterborough S.", 0, 0),
+    ("Chester", "Alfreton Town", 2, 2),
+    ("Chorley", "Southport", 4, 2),
+    ("Curzon", "Marine", 4, 1),
+    ("Kidderminster", "Merthyr Town", 0, 0),
+    ("Kings Lynn", "Worksop Town", 0, 1),
+    ("Macclesfield", "Leamington", 3, 1),
+    ("Scarborough", "South Shields", 2, 2),
+    ("Telford Utd", "Hereford Utd", 3, 0),
+    ("AFC Fylde", "Alfreton Town", 3, 0),
+    ("Chester", "Buxton", 1, 0),
+    ("Chorley", "Radcliffe", 0, 1),
+    ("Marine", "Leamington", 5, 0),
+    ("Merthyr Town", "Bedford Town", 7, 1),
+    ("Peterborough S.", "Spennymoor", 1, 3),
+    ("Scarborough", "Curzon", 1, 0),
+    ("Southport", "Hereford Utd", 5, 1),
+    ("Worksop Town", "Oxford City", 1, 2),
+    ("Hereford Utd", "Darlington", 1, 0),
+    ("Leamington", "Spennymoor", 0, 2),
+    ("Southport", "Buxton", 0, 0),
+    ("Telford Utd", "Chorley", 2, 2),
+
+    # March 2025
+    ("Alfreton Town", "Merthyr Town", 3, 2),
+    ("Bedford Town", "Chorley", 2, 0),
+    ("Buxton", "AFC Fylde", 0, 3),
+    ("Curzon", "Worksop Town", 3, 1),
+    ("Hereford Utd", "Scarborough", 1, 2),
+    ("Kidderminster", "Southport", 1, 1),
+    ("Leamington", "Chester", 0, 2),
+    ("Macclesfield", "Kings Lynn", 4, 0),
+    ("Oxford City", "Marine", 0, 2),
+    ("Radcliffe", "Peterborough S.", 2, 1),
+    ("South Shields", "Telford Utd", 2, 2),
+    ("Spennymoor", "Darlington", 0, 4),
+    ("Alfreton Town", "Scarborough", 2, 1),
+    ("Bedford Town", "Peterborough S.", 4, 1),
+    ("Buxton", "Kings Lynn", 1, 2),
+    ("Curzon", "Darlington", 1, 2),
+    ("Hereford Utd", "Chester", 5, 2),
+    ("Kidderminster", "Marine", 4, 0),
+    ("Leamington", "Merthyr Town", 1, 2),
+    ("Macclesfield", "AFC Fylde", 1, 4),
+    ("Oxford City", "Telford Utd", 0, 0),
+    ("Radcliffe", "Southport", 1, 2),
+    ("South Shields", "Worksop Town", 3, 1),
+    ("Spennymoor", "Chorley", 1, 0),
+    ("AFC Fylde", "Curzon", 5, 1),
+    ("Chester", "Spennymoor", 2, 1),
+    ("Darlington", "Bedford Town", 2, 0),
+    ("Kings Lynn", "Oxford City", 1, 2),
+    ("Merthyr Town", "Buxton", 1, 3),
+    ("Peterborough S.", "South Shields", 0, 3),
+    ("Scarborough", "Macclesfield", 2, 2),
+    ("Telford Utd", "Radcliffe", 2, 0),
+    ("Worksop Town", "Leamington", 2, 0),
+    ("Darlington", "Macclesfield", 1, 2),
+    ("Kidderminster", "Alfreton Town", 1, 0),
+    ("Scarborough", "Hereford Utd", 0, 0),
+    ("South Shields", "AFC Fylde", 2, 1),
+    ("Telford Utd", "Leamington", 1, 2),
+    ("Buxton", "Kidderminster", 1, 3),
+    ("Chester", "Darlington", 2, 1),
+    ("Kings Lynn", "Marine", 1, 0),
+    ("Leamington", "AFC Fylde", 1, 1),
+    ("Macclesfield", "Chorley", 1, 2),
+    ("Oxford City", "Scarborough", 0, 2),
+    ("Peterborough S.", "Southport", 0, 1),
+    ("Radcliffe", "Merthyr Town", 1, 3),
+    ("South Shields", "Curzon", 3, 0),
+    ("Spennymoor", "Bedford Town", 0, 0),
+    ("Telford Utd", "Alfreton Town", 4, 1),
+    ("Worksop Town", "Hereford Utd", 2, 3),
+    ("AFC Fylde", "Telford Utd", 2, 1),
+    ("Alfreton Town", "Radcliffe", 1, 1),
+    ("Bedford Town", "Worksop Town", 0, 2),
+    ("Chorley", "South Shields", 1, 1),
+    ("Curzon", "Oxford City", 2, 2),
+    ("Darlington", "Buxton", 0, 2),
+    ("Hereford Utd", "Leamington", 5, 1),
+    ("Kidderminster", "Peterborough S.", 4, 0),
+    ("Marine", "Macclesfield", 2, 4),
+    ("Merthyr Town", "Chester", 1, 2),
+    ("Scarborough", "Kings Lynn", 1, 1),
+    ("Southport", "Spennymoor", 2, 0),
+    ("AFC Fylde", "Kings Lynn", 4, 1),
+    ("Alfreton Town", "Peterborough S.", 0, 2),
+    ("Bedford Town", "Radcliffe", 1, 0),
+    ("Chorley", "Buxton", 1, 2),
+    ("Curzon", "Macclesfield", 0, 2),
+    ("Darlington", "Leamington", 1, 0),
+    ("Hereford Utd", "South Shields", 2, 1),
+    ("Kidderminster", "Chester", 1, 1),
+    ("Marine", "Worksop Town", 4, 2),
+    ("Merthyr Town", "Spennymoor", 2, 3),
+    ("Scarborough", "Telford Utd", 1, 1),
+    ("Southport", "Oxford City", 1, 3),
+    ("Chorley", "Kidderminster", 2, 1),
+    ("Darlington", "Radcliffe", 3, 0),
+    ("Hereford Utd", "AFC Fylde", 1, 4),
+    ("Kings Lynn", "South Shields", 3, 0),
+    ("Leamington", "Buxton", 0, 1),
+    ("Peterborough S.", "Marine", 0, 0),
+    ("Southport", "Alfreton Town", 2, 1),
+    ("Spennymoor", "Curzon", 4, 1),
+    ("Telford Utd", "Macclesfield", 3, 0),
+    ("Alfreton Town", "Hereford Utd", 2, 1),
+    ("Buxton", "Bedford Town", 3, 0),
+    ("Chester", "Southport", 1, 2),
+    ("Kings Lynn", "Curzon", 0, 0),
+    ("Leamington", "Scarborough", 1, 2),
+    ("Macclesfield", "Hereford Utd", 3, 1),
+    ("Oxford City", "Chorley", 2, 0),
+    ("Peterborough S.", "Darlington", 0, 1),
+    ("Radcliffe", "Kidderminster", 1, 1),
+    ("South Shields", "Merthyr Town", 4, 1),
+    ("Spennymoor", "Alfreton Town", 1, 1),
+    ("Telford Utd", "Marine", 0, 2),
+    ("Worksop Town", "AFC Fylde", 1, 0),
+    ("Alfreton Town", "Macclesfield", 0, 2),
+    ("Darlington", "Kidderminster", 0, 2),
+    ("Hereford Utd", "Spennymoor", 1, 2),
+    ("Leamington", "Kings Lynn", 2, 5),
 ]
 
 # UPCOMING_FIXTURES are now automatically generated - no manual list needed
 # The system generates all possible home-and-away fixtures and filters out completed matches
-UPCOMING_FIXTURES = [
-    # January 2025 (continued)
-    ("Curzon", "Bedford Town"),
-    ("Darlington", "Radcliffe"),
-    ("Kings Lynn", "Alfreton Town"),
-    ("Leamington", "Spennymoor"),
-    ("Oxford City", "Buxton"),
-    ("Scarborough", "Chester"),
-    ("Worksop Town", "Merthyr Town"),
-    ("AFC Fylde", "Scarborough"),
-    ("Bedford Town", "Southport"),
-    ("Buxton", "Marine"),
-    ("Chester", "Chorley"),
-    ("Curzon", "Telford Utd"),
-    ("Darlington", "Alfreton Town"),
-    ("Kidderminster", "Worksop Town"),
-    ("Kings Lynn", "Hereford Utd"),
-    ("Macclesfield", "Oxford City"),
-    ("Merthyr Town", "Peterborough S."),
-    ("South Shields", "Leamington"),
-    ("Spennymoor", "Radcliffe"),
-    ("Hereford Utd", "Macclesfield"),
-    ("Leamington", "Buxton"),
-    ("Marine", "Radcliffe"),
-    ("South Shields", "Southport"),
-    ("Telford Utd", "Chorley"),
-    ("Alfreton Town", "Bedford Town"),
-    ("Chorley", "Darlington"),
-    ("Hereford Utd", "Spennymoor"),
-    ("Leamington", "Curzon"),
-    ("Marine", "South Shields"),
-    ("Oxford City", "AFC Fylde"),
-    ("Peterborough S.", "Chester"),
-    ("Radcliffe", "Buxton"),
-    ("Scarborough", "Kidderminster"),
-    ("Southport", "Merthyr Town"),
-    ("Telford Utd", "Kings Lynn"),
-    ("Worksop Town", "Macclesfield"),
-    ("Alfreton Town", "Chorley"),
-    ("Bedford Town", "Kidderminster"),
-    ("Hereford Utd", "Oxford City"),
-    ("Leamington", "Kings Lynn"),
-    ("Marine", "Chester"),
-    ("Merthyr Town", "Telford Utd"),
-    ("Peterborough S.", "Macclesfield"),
-    ("Radcliffe", "Scarborough"),
-    ("South Shields", "AFC Fylde"),
-    ("Southport", "Buxton"),
-    ("Spennymoor", "Curzon"),
-    ("Worksop Town", "Darlington"),
-    ("AFC Fylde", "Marine"),
-    ("Buxton", "Spennymoor"),
-    ("Chester", "Radcliffe"),
-    ("Chorley", "Peterborough S."),
-    ("Curzon", "Hereford Utd"),
-    ("Darlington", "Merthyr Town"),
-    ("Kidderminster", "Alfreton Town"),
-    ("Kings Lynn", "Southport"),
-    ("Macclesfield", "Bedford Town"),
-    ("Oxford City", "South Shields"),
-    ("Scarborough", "Worksop Town"),
-    ("Telford Utd", "Leamington"),
-    ("AFC Fylde", "Peterborough S."),
-    ("Chorley", "Leamington"),
-    ("Hereford Utd", "Marine"),
-    ("Macclesfield", "Kidderminster"),
-    ("Radcliffe", "Oxford City"),
-    ("Alfreton Town", "Buxton"),
-    ("Bedford Town", "Chester"),
-    ("Hereford Utd", "AFC Fylde"),
-    ("Leamington", "Oxford City"),
-    ("Marine", "Scarborough"),
-    ("Merthyr Town", "Chorley"),
-    ("Peterborough S.", "Curzon"),
-    ("Radcliffe", "Kings Lynn"),
-    ("South Shields", "Macclesfield"),
-    ("Southport", "Darlington"),
-    ("Spennymoor", "Kidderminster"),
-    ("Worksop Town", "Telford Utd"),
-    ("AFC Fylde", "Spennymoor"),
-    ("Buxton", "Peterborough S."),
-    ("Chester", "Alfreton Town"),
-    ("Chorley", "Southport"),
-    ("Curzon", "Marine"),
-    ("Kidderminster", "Merthyr Town"),
-    ("Kings Lynn", "Worksop Town"),
-    ("Macclesfield", "Leamington"),
-    ("Scarborough", "South Shields"),
-    ("Telford Utd", "Hereford Utd"),
-    ("AFC Fylde", "Alfreton Town"),
-    ("Chester", "Buxton"),
-    ("Chorley", "Radcliffe"),
-    ("Darlington", "Kidderminster"),
-    ("Kings Lynn", "South Shields"),
-    ("Marine", "Leamington"),
-    ("Merthyr Town", "Bedford Town"),
-    ("Peterborough S.", "Spennymoor"),
-    ("Scarborough", "Curzon"),
-    ("Southport", "Hereford Utd"),
-    ("Telford Utd", "Macclesfield"),
-    ("Worksop Town", "Oxford City"),
-    ("Alfreton Town", "Macclesfield"),
-    ("Hereford Utd", "Darlington"),
-    ("Alfreton Town", "Merthyr Town"),
-    ("Bedford Town", "Chorley"),
-    ("Buxton", "AFC Fylde"),
-    ("Curzon", "Worksop Town"),
-    ("Hereford Utd", "Scarborough"),
-    ("Kidderminster", "Southport"),
-    ("Leamington", "Chester"),
-    ("Macclesfield", "Kings Lynn"),
-    ("Oxford City", "Marine"),
-    ("Radcliffe", "Peterborough S."),
-    ("South Shields", "Telford Utd"),
-    ("Spennymoor", "Darlington"),
-    ("Alfreton Town", "Scarborough"),
-    ("Bedford Town", "Peterborough S."),
-    ("Buxton", "Kings Lynn"),
-    ("Curzon", "Darlington"),
-    ("Hereford Utd", "Chester"),
-    ("Kidderminster", "Marine"),
-    ("Leamington", "Merthyr Town"),
-    ("Macclesfield", "AFC Fylde"),
-    ("Oxford City", "Telford Utd"),
-    ("Radcliffe", "Southport"),
-    ("South Shields", "Worksop Town"),
-    ("Spennymoor", "Chorley"),
-    ("AFC Fylde", "Curzon"),
-    ("Chester", "Spennymoor"),
-    ("Chorley", "Kidderminster"),
-    ("Darlington", "Bedford Town"),
-    ("Kings Lynn", "Oxford City"),
-    ("Marine", "Hereford Utd"),
-    ("Merthyr Town", "Buxton"),
-    ("Peterborough S.", "South Shields"),
-    ("Scarborough", "Macclesfield"),
-    ("Southport", "Alfreton Town"),
-    ("Telford Utd", "Radcliffe"),
-    ("Worksop Town", "Leamington"),
-    ("Buxton", "Kidderminster"),
-    ("Chester", "Darlington"),
-    ("Kings Lynn", "Marine"),
-    ("Leamington", "AFC Fylde"),
-    ("Macclesfield", "Chorley"),
-    ("Oxford City", "Scarborough"),
-    ("Peterborough S.", "Southport"),
-    ("Radcliffe", "Merthyr Town"),
-    ("South Shields", "Curzon"),
-    ("Spennymoor", "Bedford Town"),
-    ("Telford Utd", "Alfreton Town"),
-    ("Worksop Town", "Hereford Utd"),
-    ("AFC Fylde", "Telford Utd"),
-    ("Alfreton Town", "Radcliffe"),
-    ("Bedford Town", "Worksop Town"),
-    ("Chorley", "South Shields"),
-    ("Curzon", "Oxford City"),
-    ("Darlington", "Buxton"),
-    ("Hereford Utd", "Leamington"),
-    ("Kidderminster", "Peterborough S."),
-    ("Marine", "Macclesfield"),
-    ("Merthyr Town", "Chester"),
-    ("Scarborough", "Kings Lynn"),
-    ("Southport", "Spennymoor"),
-    ("AFC Fylde", "Kings Lynn"),
-    ("Alfreton Town", "Peterborough S."),
-    ("Bedford Town", "Radcliffe"),
-    ("Chorley", "Buxton"),
-    ("Curzon", "Macclesfield"),
-    ("Darlington", "Leamington"),
-    ("Hereford Utd", "South Shields"),
-    ("Kidderminster", "Chester"),
-    ("Marine", "Worksop Town"),
-    ("Merthyr Town", "Spennymoor"),
-    ("Scarborough", "Telford Utd"),
-    ("Southport", "Oxford City"),
-    ("AFC Fylde", "Southport"),
-    ("Curzon", "Buxton"),
-    ("Hereford Utd", "Radcliffe"),
-    ("Kings Lynn", "Chorley"),
-    ("Leamington", "Kidderminster"),
-    ("Macclesfield", "Spennymoor"),
-    ("Marine", "Alfreton Town"),
-    ("Oxford City", "Chester"),
-    ("Scarborough", "Merthyr Town"),
-    ("South Shields", "Bedford Town"),
-    ("Telford Utd", "Darlington"),
-    ("Worksop Town", "Peterborough S."),
-    ("Alfreton Town", "Curzon"),
-    ("Bedford Town", "Scarborough"),
-    ("Buxton", "Leamington"),
-    ("Chester", "Kings Lynn"),
-    ("Chorley", "Worksop Town"),
-    ("Darlington", "Oxford City"),
-    ("Hereford Utd", "Peterborough S."),
-    ("Kidderminster", "South Shields"),
-    ("Merthyr Town", "AFC Fylde"),
-    ("Radcliffe", "Macclesfield"),
-    ("Southport", "Telford Utd"),
-    ("Spennymoor", "Marine"),
-]
+UPCOMING_FIXTURES = []
 
 # ===============================
 # SIMULATION ENGINE
@@ -747,8 +690,12 @@ class LeagueSimulator:
 
         # Initialize position counters
         position_counts = {}
+        promotion_counts = {}  # Count how many times each team gets promoted
+        playoff_winner_counts = {}  # Count how many times each team wins the playoffs
         for team in self.team_stats.keys():
-            position_counts[team] = {pos: 0 for pos in range(1, 8)}  # Track positions 1-7
+            position_counts[team] = {pos: 0 for pos in range(1, 8)}
+            promotion_counts[team] = 0
+            playoff_winner_counts[team] = 0
 
         # Progress bar setup
         bar_width = 50
@@ -786,8 +733,80 @@ class LeagueSimulator:
 
             # Record final positions
             final_table = self.get_league_table()
-            for pos, team in enumerate(final_table[:7], 1):  # Only track top 7 positions
+            for pos, team in enumerate(final_table[:7], 1):
                 position_counts[team][pos] += 1
+            
+            # Simulate playoffs:
+            # Position 1: Auto-promoted
+            # Position 2-3: Qualify for semi-finals (direct)
+            # Position 4-7: Qualify for quarter-finals
+            # Quarter-finals: 4v7, 5v6
+            # Semi-finals: QF winner 1 vs 2nd place, QF winner 2 vs 3rd place
+            # Final: SF winners compete for final promotion spot
+            
+            # Auto-promote league winner
+            promotion_counts[final_table[0]] += 1
+            
+            # Playoffs for positions 2-7 (teams 2,3,4,5,6,7 in final_table)
+            playoff_teams = final_table[1:8]  # Positions 2-7
+            
+            if len(playoff_teams) >= 6:
+                # Quarter-finals: 4th vs 7th, 5th vs 6th
+                qf1_home = playoff_teams[2]  # 4th place
+                qf1_away = playoff_teams[5]  # 7th place
+                qf2_home = playoff_teams[3]  # 5th place
+                qf2_away = playoff_teams[4]  # 6th place
+                
+                # Simulate quarter-finals
+                qf1_h, qf1_a = self.elo_system.predict_match(qf1_home, qf1_away)
+                qf2_h, qf2_a = self.elo_system.predict_match(qf2_home, qf2_away)
+                
+                qf1_winner = qf1_home if qf1_h > qf1_a else qf1_away
+                qf2_winner = qf2_home if qf2_h > qf2_a else qf2_away
+                
+                # Semi-finals: QF1 winner vs 2nd place, QF2 winner vs 3rd place
+                sf1_home = playoff_teams[0]  # 2nd place
+                sf1_away = qf1_winner
+                sf2_home = playoff_teams[1]  # 3rd place
+                sf2_away = qf2_winner
+                
+                # Simulate semi-finals
+                sf1_h, sf1_a = self.elo_system.predict_match(sf1_home, sf1_away)
+                sf2_h, sf2_a = self.elo_system.predict_match(sf2_home, sf2_away)
+                
+                sf1_winner = sf1_home if sf1_h > sf1_a else sf1_away
+                sf2_winner = sf2_home if sf2_h > sf2_a else sf2_away
+                
+                # Final: SF winners compete for promotion
+                final_h, final_a = self.elo_system.predict_match(sf1_winner, sf2_winner)
+                playoff_winner = sf1_winner if final_h > final_a else sf2_winner
+                
+                # Count playoff winner promotion
+                promotion_counts[playoff_winner] += 1
+                playoff_winner_counts[playoff_winner] += 1
+            elif len(playoff_teams) >= 4:
+                # Fallback for fewer teams (3rd-6th enter playoffs)
+                playoff_teams = final_table[1:6]
+                sf1_home = playoff_teams[1]  # 3rd
+                sf1_away = playoff_teams[3]  # 6th
+                sf2_home = playoff_teams[0]  # 4th
+                sf2_away = playoff_teams[2]  # 5th
+                
+                sf1_h, sf1_a = self.elo_system.predict_match(sf1_home, sf1_away)
+                sf2_h, sf2_a = self.elo_system.predict_match(sf2_home, sf2_away)
+                
+                sf1_winner = sf1_home if sf1_h > sf1_a else sf1_away
+                sf2_winner = sf2_home if sf2_h > sf2_a else sf2_away
+                
+                final_h, final_a = self.elo_system.predict_match(sf1_winner, sf2_winner)
+                playoff_winner = sf1_winner if final_h > final_a else sf2_winner
+                
+                promotion_counts[playoff_winner] += 1
+                playoff_winner_counts[playoff_winner] += 1
+            else:
+                # Not enough for playoffs, auto-promote position 2
+                if len(playoff_teams) >= 1:
+                    promotion_counts[playoff_teams[0]] += 1
 
         # Complete progress bar
         bar = '=' * bar_width
@@ -795,29 +814,35 @@ class LeagueSimulator:
         sys.stdout.write(f'\rProgress: [{bar}] 100% ({num_simulations}/{num_simulations}) Total: {total_time:.1f}s\n')
         sys.stdout.flush()
 
-        return position_counts
+        return position_counts, promotion_counts, playoff_winner_counts
 
-    def print_position_probabilities(self, position_counts, num_simulations):
+    def print_position_probabilities(self, position_counts, promotion_counts, playoff_winner_counts, num_simulations):
         """Print each team's probability of finishing in each position"""
         teams = sorted(self.team_stats.keys())
 
-        print("\n" + "="*80)
-        print("MONTE CARLO SIMULATION RESULTS - POSITION PROBABILITIES")
-        print("="*80)
-        print(f"{'Team':<25} {'Win %':>8} {'Playoffs %':>12}")
-        print("-"*80)
+        print("\n" + "="*110)
+        print("MONTE CARLO SIMULATION RESULTS - POSITION & PROMOTION PROBABILITIES")
+        print("="*110)
+        print(f"{'Team':<22} {'Win %':>8} {'Playoffs %':>12} {'Promoted %':>12} {'Playoff Winner %':>16}")
+        print("-"*110)
 
         for team in teams:
             win_pct = position_counts[team][1] / num_simulations * 100
             # Combine positions 2-7 for playoff percentage
             playoff_pct = sum(position_counts[team][pos] for pos in range(2, 8)) / num_simulations * 100
+            # Promoted = league winner (position 1) OR playoff winner
+            promoted_pct = promotion_counts[team] / num_simulations * 100
+            # Playoff winner percentage
+            playoff_win_pct = playoff_winner_counts.get(team, 0) / num_simulations * 100
 
-            print(f"{team:<25} {win_pct:>8.1f}% {playoff_pct:>12.1f}%")
+            print(f"{team:<22} {win_pct:>8.1f}% {playoff_pct:>12.1f}% {promoted_pct:>12.1f}% {playoff_win_pct:>16.1f}%")
 
-        print("="*80)
+        print("="*110)
         print(f"Based on {num_simulations} Monte Carlo simulations of the remaining season")
-        print("Win %: Chance of finishing 1st (winning the league)")
-        print("Playoffs %: Chance of finishing 2nd-7th (playoff positions)")
+        print("Win %: Chance of finishing 1st (winning the league - auto-promoted)")
+        print("Playoffs %: Chance of finishing 2nd-7th (qualifying for playoffs)")
+        print("Promoted %: Total chance of getting promoted (league winner + playoff winner)")
+        print("Playoff Winner %: Chance of winning the playoffs (make playoffs and win them)")
 
 def main():
     # Set random seed for reproducible results
@@ -839,10 +864,10 @@ def main():
     simulator.print_league_table()
 
     # Run Monte Carlo simulations for position probabilities
-    position_counts = simulator.run_monte_carlo_simulations(num_simulations=1000)  # Full production run
+    position_counts, promotion_counts, playoff_winner_counts = simulator.run_monte_carlo_simulations(num_simulations=1000)  # Full production run
 
     # Print position probabilities
-    simulator.print_position_probabilities(position_counts, 1000)
+    simulator.print_position_probabilities(position_counts, promotion_counts, playoff_winner_counts, 1000)
 
     # Simulate remaining season (single simulation)
     simulator.simulate_remaining_season()

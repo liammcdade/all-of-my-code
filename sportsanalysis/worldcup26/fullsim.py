@@ -9,6 +9,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 import io
+import math
 
 
 number_of_qualfied_teams = 48
@@ -36,7 +37,7 @@ GROUPS = {
             ('South Africa', 'South Korea')
         ],
         'possible_winners': {
-            'UEFA_Path_D_Winner': ['Denmark', 'North Macedonia', 'Czech Republic', 'Republic of Ireland']
+            'UEFA_Path_D_Winner': ['Denmark', 'Czech Republic']
         }
     },
     'B': {
@@ -50,7 +51,7 @@ GROUPS = {
             ('UEFA_Path_A_Winner', 'Qatar')
         ],
         'possible_winners': {
-            'UEFA_Path_A_Winner': ['Italy', 'Northern Ireland', 'Wales', 'Bosnia and Herzegovina']
+            'UEFA_Path_A_Winner': ['Italy', 'Bosnia and Herzegovina']
         }
     },
     'C': {
@@ -75,7 +76,7 @@ GROUPS = {
             ('Paraguay', 'Australia')
         ],
         'possible_winners': {
-            'UEFA_Path_C_Winner': [('Turkey'), ('Romania'), ('Slovakia'), ('Kosovo')]
+            'UEFA_Path_C_Winner': ['Turkey', 'Kosovo']
         }
     },
     'E': {
@@ -100,7 +101,7 @@ GROUPS = {
             ('Japan', 'UEFA_Path_B_Winner')
         ],
         'possible_winners': {
-            'UEFA_Path_B_Winner': [('Ukraine'), ('Sweden'), ('Poland'), ('Albania')]
+            'UEFA_Path_B_Winner': ['Sweden', 'Poland']
         }
     },
     'G': {
@@ -136,7 +137,7 @@ GROUPS = {
             ('Senegal', 'IC_Path_2_Winner')
         ],
         'possible_winners': {
-            'IC_Path_2_Winner': [('Iraq'), ('Bolivia'), ('Suriname')]
+            'IC_Path_2_Winner': ['Bolivia', 'Iraq']
         }
     },
     'J': {
@@ -161,7 +162,7 @@ GROUPS = {
             ('IC_Path_1_Winner', 'Uzbekistan')
         ],
         'possible_winners': {
-            'IC_Path_1_Winner': [('DR Congo'), ('Jamaica'), ('New Caledonia')]
+            'IC_Path_1_Winner': ['Jamaica', 'Congo DR']
         }
     },
     'L': {
@@ -350,339 +351,60 @@ def apply_home_advantage_to_expected_goals(lambda_a, lambda_b, team_a, team_b, g
 
 # Base ratings for all teams (canonical names only)
 BASE_TEAM_RATINGS = {
-    'Spain': 2010.31,
-    'Argentina': 2005.13,
-    'Colombia': 1941.47,
-    'France': 1935.09,
-    'Brazil': 1929.06,
-    'England': 1919.37,
-    'Portugal': 1896.48,
-    'Netherlands': 1881.9,
-    'Ecuador': 1869.22,
-    'Croatia': 1862.02,
-    'Germany': 1853.14,
-    'Switzerland': 1845.99,
-    'Uruguay': 1842.77,
-    'Japan': 1839.04,
-    'Norway': 1834.66,
-    'Denmark': 1822.66,
-    'Morocco': 1818.6,
-    'Belgium': 1818.32,
-    'Italy': 1817.76,
-    'Turkey': 1803.71,
-    'Canada': 1803.26,
-    'Senegal': 1797.5,
-    'Austria': 1791.3,
-    'South Korea': 1790.73,
-    'Paraguay': 1784.82,
-    'Mexico': 1784.5,
-    'Iran': 1781.23,
-    'Australia': 1777.02,
-    'Ukraine': 1766.95,
-    'United States': 1763.4,
-    'Serbia': 1762.86,
-    'Algeria': 1762.12,
-    'Basque Country': 1762.07,
-    'Chile': 1756.48,
-    'Russia': 1754.01,
-    'Uzbekistan': 1746.25,
-    'Poland': 1738.7,
-    'Greece': 1737.62,
-    'Czechoslovakia': 1732.78,
-    'Jersey': 1726.81,
-    'Yugoslavia': 1726.12,
-    'Panama': 1725.25,
-    'Scotland': 1724.78,
-    'Czech Republic': 1721.53,
-    'Venezuela': 1716.84,
-    'Tunisia': 1709.0,
-    'Peru': 1708.32,
-    'German DR': 1708.01,
-    'Costa Rica': 1702.45,
-    'Slovenia': 1699.94,
-    'Sweden': 1699.42,
-    'Wales': 1694.45,
-    'Jordan': 1690.49,
-    'Hungary': 1687.01,
-    'Guernsey': 1685.56,
-    'Kosovo': 1685.16,
-    'Congo DR': 1682.99,
-    'Nigeria': 1681.78,
-    'Ivory Coast': 1681.6,
-    'Slovakia': 1677.08,
-    'New Zealand': 1675.23,
-    'Ireland': 1674.94,
-    'Occitania': 1667.17,
-    'Egypt': 1665.88,
-    'Mali': 1665.41,
-    'Isle of Man': 1663.0,
-    'Albania': 1660.52,
-    'Burkina Faso': 1660.45,
-    'Georgia': 1659.34,
-    'Catalonia': 1659.23,
-    'Bolivia': 1658.75,
-    'Padania': 1652.52,
-    'Saudi Arabia': 1651.32,
-    'Iraq': 1646.65,
-    'Cape Verde': 1643.65,
-    'Romania': 1643.37,
-    'Israel': 1640.05,
-    'Northern Cyprus': 1639.95,
-    'Haiti': 1636.48,
-    'Cameroon': 1629.98,
-    'Northern Ireland': 1627.64,
-    'South Africa': 1626.84,
-    'Honduras': 1625.49,
-    'Iraqi Kurdistan': 1618.56,
-    'United Arab Emirates': 1617.67,
-    'Isle of Wight': 1617.55,
-    'Jamaica': 1614.12,
-    'Iceland': 1613.39,
-    'Guatemala': 1610.86,
-    'Ghana': 1609.98,
-    'Kernow': 1606.33,
-    'Bosnia and Herzegovina': 1605.79,
-    'Ynys Môn': 1598.7,
-    'Abkhazia': 1596.98,
-    'North Macedonia': 1593.01,
-    'Andalusia': 1591.94,
-    'Angola': 1586.2,
-    'Kárpátalja': 1582.11,
-    'Panjab': 1581.37,
-    'Guinea': 1580.55,
-    'New Caledonia': 1579.65,
-    'Reunion': 1574.13,
-    'Finland': 1572.86,
-    'County of Nice': 1572.43,
-    'Oman': 1570.96,
-    'Rhodes': 1569.11,
-    'Syria': 1568.94,
-    'Ellan Vannin': 1563.61,
-    'Yorkshire': 1560.13,
-    'Belarus': 1558.65,
-    'Palestine': 1557.77,
-    'Menorca': 1555.56,
-    'Gabon': 1553.83,
-    'Artsakh': 1550.63,
-    'Corsica': 1550.49,
-    'Chameria': 1547.42,
-    'Cascadia': 1545.85,
-    'Arameans Suryoye': 1536.1,
-    'Libya': 1535.88,
-    'Trinidad and Tobago': 1535.64,
-    'Suriname': 1532.12,
-    'Zanzibar': 1530.98,
-    'Thailand': 1528.06,
-    'Gambia': 1527.79,
-    'Bahrain': 1525.88,
-    'Qatar': 1525.68,
-    'Asturias': 1524.4,
-    'Western Armenia': 1524.31,
-    'Maule Sur': 1520.56,
-    'Benin': 1520.55,
-    'China': 1520.09,
-    'Uganda': 1519.83,
-    'Bulgaria': 1519.8,
-    'Galicia': 1519.08,
-    'Canary Islands': 1518.43,
-    'Zambia': 1516.92,
-    'Surrey': 1516.33,
-    'United Koreans in Japan': 1514.86,
-    'Parishes of Jersey': 1514.85,
-    'Montenegro': 1514.7,
-    'Madagascar': 1513.93,
-    'Donetsk PR': 1513.61,
-    'Silesia': 1513.46,
-    'Guadeloupe': 1512.2,
-    'Shetland': 1510.39,
-    'North Korea': 1510.21,
-    'Biafra': 1510.19,
-    'Elba Island': 1507.54,
-    'El Salvador': 1507.35,
-    'Mapuche': 1507.05,
-    'Equatorial Guinea': 1506.51,
-    'Felvidék': 1505.88,
-    'Sudan': 1504.32,
-    'Sealand': 1503.16,
-    'North Vietnam': 1501.78,
-    'Tahiti': 1501.49,
-    'Tamil Eelam': 1500.9,
-    'Curaçao': 1500.61,
-    'Délvidék': 1499.75,
-    'Martinique': 1499.58,
-    'Malaysia': 1497.38,
-    'Sápmi': 1496.32,
-    'Mozambique': 1496.3,
-    'Crimea': 1496.06,
-    'Brittany': 1495.0,
-    'Székely Land': 1494.35,
-    'Central Spain': 1493.04,
-    'Western Sahara': 1492.81,
-    'West Papua': 1492.7,
-    'Saugeais': 1491.68,
-    'Kazakhstan': 1491.36,
-    'Nicaragua': 1491.36,
-    'Cilento': 1490.56,
-    'Republic of St. Pauli': 1490.5,
-    'Madrid': 1490.33,
-    'Dominican Republic': 1489.32,
-    'Luhansk PR': 1487.56,
-    'Yoruba Nation': 1487.53,
-    'Greenland': 1487.04,
-    'Seborga': 1485.47,
-    'Sierra Leone': 1484.54,
-    'South Ossetia': 1481.98,
-    'Vietnam': 1481.36,
-    'Kuwait': 1480.34,
-    'Gozo': 1479.67,
-    'Matabeleland': 1479.63,
-    'Franconia': 1478.33,
-    'Luxembourg': 1478.2,
-    'Kenya': 1478.08,
-    'Somaliland': 1477.54,
-    'Comoros': 1477.11,
-    'South Yemen': 1476.41,
-    'Åland Islands': 1476.01,
-    'Kyrgyzstan': 1473.87,
-    'Zimbabwe': 1473.34,
-    'Togo': 1473.05,
-    'Guyana': 1472.64,
-    'Aymara': 1472.39,
-    'Armenia': 1471.63,
-    'Lebanon': 1469.73,
-    'Estonia': 1469.15,
-    'Indonesia': 1468.87,
-    'Mayotte': 1468.56,
-    'Provence': 1468.33,
-    'Romani people': 1465.51,
-    'Gotland': 1464.94,
-    'Niger': 1463.95,
-    'Kabylia': 1463.89,
-    'Ryūkyū': 1462.71,
-    'Hmong': 1462.5,
-    'Mauritania': 1461.73,
-    'French Guiana': 1460.8,
-    'Botswana': 1457.71,
-    'Faroe Islands': 1452.36,
-    'Malawi': 1451.36,
-    'Monaco': 1449.33,
-    'Papua New Guinea': 1448.25,
-    'Niue': 1445.61,
-    'Saarland': 1445.05,
-    'Azerbaijan': 1444.96,
-    'Tajikistan': 1443.84,
-    'Western Isles': 1440.34,
-    'Găgăuzia': 1440.3,
-    'Burundi': 1440.14,
-    'Rwanda': 1438.9,
-    'Chechnya': 1437.12,
-    'Namibia': 1436.09,
-    'Central African Republic': 1435.53,
-    'Two Sicilies': 1433.91,
-    'Cuba': 1433.41,
-    'Marshall Islands': 1433.07,
-    'Solomon Islands': 1432.88,
-    'Vanuatu': 1432.79,
-    'Tanzania': 1431.46,
-    'St. Vincent / Grenadines': 1428.09,
-    'Fiji': 1427.02,
-    'Western Australia': 1426.83,
-    'Ticino': 1422.99,
-    'Ethiopia': 1419.17,
-    'Manchukuo': 1418.78,
-    'Orkney': 1415.34,
-    'Liberia': 1415.13,
-    'Guinea-Bissau': 1414.63,
-    'Raetia': 1413.06,
-    'Saint Barthélemy': 1411.81,
-    'Ambazonia': 1409.36,
-    'Latvia': 1403.44,
-    'Cyprus': 1401.81,
-    'Lithuania': 1401.72,
-    'Vatican City': 1400.57,
-    'Palau': 1399.02,
-    'Moldova': 1398.2,
-    'Turkmenistan': 1397.59,
-    'Vietnam Republic': 1396.92,
-    'Congo': 1394.43,
-    'Malta': 1393.28,
-    'Lesotho': 1392.31,
-    'Yemen DPR': 1391.01,
-    'Belize': 1389.8,
-    'Eswatini': 1389.73,
-    'Hong Kong': 1382.71,
-    'Saare County': 1381.61,
-    'Puerto Rico': 1378.77,
-    'Barawa': 1375.35,
-    'Bermuda': 1373.5,
-    'Saint Helena': 1371.27,
-    'Hitra': 1371.01,
-    'Chagos Islands': 1367.03,
-    'Sark': 1364.75,
-    'Philippines': 1360.37,
-    'Yemen': 1354.89,
-    'Micronesia': 1351.63,
-    'Grenada': 1343.86,
-    'Sint Maarten': 1334.41,
-    'Singapore': 1332.32,
-    'South Sudan': 1329.98,
-    'India': 1329.71,
-    'Wallis Islands and Futuna': 1329.61,
-    'Chad': 1327.9,
-    'St. Kitts and Nevis': 1322.93,
-    'Darfur': 1322.62,
-    'Saint Martin': 1320.59,
-    'Tibet': 1319.74,
-    'Saint Pierre and Miquelon': 1316.1,
-    'Samoa': 1294.43,
-    'St. Lucia': 1293.9,
-    'Afghanistan': 1292.1,
-    'Mauritius': 1292.08,
-    'Kiribati': 1290.65,
-    'Montserrat': 1287.99,
-    'Aruba': 1287.69,
-    'Eritrea': 1277.38,
-    'Falkland Islands': 1275.09,
-    'Tuvalu': 1270.04,
-    'Andorra': 1267.04,
-    'Sao Tome e Principe': 1263.88,
-    'Dominica': 1258.43,
-    'Barbados': 1258.42,
-    'Frøya': 1249.89,
-    'Gibraltar': 1246.92,
-    'Cook Islands': 1237.16,
-    'Antigua and Barbuda': 1230.72,
-    'Nepal': 1229.2,
-    'Bonaire': 1228.49,
-    'Bangladesh': 1226.46,
-    'Myanmar': 1218.4,
-    'Taiwan': 1210.84,
-    'Djibouti': 1187.35,
-    'Cayman Islands': 1184.93,
-    'Tonga': 1177.32,
-    'Maldives': 1176.77,
-    'Somalia': 1172.06,
-    'Cambodia': 1163.95,
-    'Alderney': 1161.98,
-    'Seychelles': 1152.74,
-    'British Virgin Islands': 1152.58,
-    'Liechtenstein': 1149.7,
-    'Bahamas': 1136.74,
-    'Pakistan': 1135.59,
-    'Turks and Caicos Islands': 1135.25,
-    'Mongolia': 1131.97,
-    'Sri Lanka': 1130.85,
-    'Guam': 1125.66,
-    'United States Virgin Islands': 1115.61,
-    'American Samoa': 1088.67,
-    'Northern Mariana Islands': 1087.4,
-    'Laos': 1077.06,
-    'San Marino': 1076.62,
-    'Anguilla': 1062.54,
-    'Timor-Leste': 1049.8,
-    'Brunei': 1048.39,
-    'Macau': 1027.09,
-    'Bhutan': 1012.91,
+    # Current World Football Elo Ratings (eloratings.net, March 2026)
+    # Only teams that could qualify for the 2026 World Cup
+    'Spain': 2172,
+    'Argentina': 2113,
+    'France': 2070,
+    'England': 2042,
+    'Colombia': 1986,
+    'Portugal': 1976,
+    'Brazil': 1970,
+    'Netherlands': 1959,
+    'Croatia': 1944,
+    'Ecuador': 1933,
+    'Norway': 1922,
+    'Germany': 1910,
+    'Switzerland': 1897,
+    'Uruguay': 1890,
+    'Japan': 1878,
+    'Denmark': 1872,
+    'Senegal': 1869,
+    'Italy': 1866,
+    'Mexico': 1857,
+    'Belgium': 1850,
+    'Paraguay': 1833,
+    'Austria': 1818,
+    'Morocco': 1806,
+    'Canada': 1805,
+    'Scotland': 1790,
+    'South Korea': 1784,
+    'Australia': 1779,
+    'United States': 1747,
+    'Poland': 1746,
+    'Kosovo': 1738,
+    'Panama': 1733,
+    'Czech Republic': 1723,
+    'Algeria': 1728,
+    'Uzbekistan': 1728,
+    'Turkey': 1885,
+    'Tunisia': 1614,
+    'Egypt': 1659,
+    'Iran': 1755,
+    'Ivory Coast': 1637,
+    'Ghana': 1509,
+    'New Zealand': 1552,
+    'Jordan': 1689,
+    'Cape Verde': 1549,
+    'Saudi Arabia': 1592,
+    'Haiti': 1542,
+    'Curaçao': 1440,
+    'Bosnia and Herzegovina': 1584,
+    'Sweden': 1702,
+    'Iraq': 1582,
+    'Bolivia': 1670,
+    'Jamaica': 1550,
+    'Congo DR': 1640,
 }
 
 # =============================================================================
@@ -858,7 +580,7 @@ def calculate_three_outcome_probs(rating_a, rating_b, draw_base=0.243):
         p_draw /= total
     else:
         # Fallback for extreme rating differences
-        p_a_win, p_b_win, p_draw = 0.5, 0.0, 0.5
+        p_a_win, p_b_win, p_draw = 0.45, 0.45, 0.10
     
     return p_a_win, p_b_win, p_draw
 
@@ -895,9 +617,69 @@ def sample_bivariate_poisson_goals(lambda_a, lambda_b, correlation=0.15):
     return min(goals_a, max_goals), min(goals_b, max_goals)
 
 
-def simulate_match(team_a, team_b, group_key=None, allow_draw=True):
+# =============================================================================
+# POISSON CALCULATOR FUNCTIONS (from poisson_calculator.py)
+# =============================================================================
+
+def expected_goals_skellam_random_cap(team_a_elo, team_b_elo, baseline_goals=2.531666667,
+                                       cap_min=200, cap_max=350):
     """
-    Simulate one 90-minute match with realistic goal scoring.
+    Calculate expected goals with a random cap applied between cap_min and cap_max.
+    
+    This uses the Skellam distribution approach with Elo-based goal expectancy.
+    """
+    lambda_base = baseline_goals / 2
+    D = team_b_elo - team_a_elo
+
+    # Random cap between min and max
+    elo_cap = np.random.uniform(cap_min, cap_max)
+
+    # Adjust large differences
+    if D > elo_cap:
+        excess = D - elo_cap
+        D = elo_cap - math.sqrt(excess)
+    elif D < -elo_cap:
+        excess = -D - elo_cap
+        D = -elo_cap + math.sqrt(excess)
+
+    lambda_A = lambda_base * 10 ** (-D / 400)
+    lambda_B = lambda_base * 10 ** (D / 400)
+
+    return lambda_A, lambda_B
+
+
+def simulate_average_score(team_a_elo, team_b_elo, sims=1000):
+    """
+    Simulate matches with random caps and return average goals, goal difference,
+    and most likely scoreline.
+    """
+    goals_A_list = []
+    goals_B_list = []
+
+    for _ in range(sims):
+        lambda_A, lambda_B = expected_goals_skellam_random_cap(team_a_elo, team_b_elo)
+        gA = np.random.poisson(lambda_A)
+        gB = np.random.poisson(lambda_B)
+        goals_A_list.append(gA)
+        goals_B_list.append(gB)
+
+    avg_A = np.mean(goals_A_list)
+    avg_B = np.mean(goals_B_list)
+    avg_diff = np.mean(np.array(goals_A_list) - np.array(goals_B_list))
+    score_pairs = list(zip(goals_A_list, goals_B_list))
+    most_common_score = max(set(score_pairs), key=score_pairs.count)
+
+    return {
+        "avg_goals_A": round(avg_A, 4),
+        "avg_goals_B": round(avg_B, 4),
+        "avg_goal_diff": round(avg_diff, 4),
+        "most_common_score": most_common_score
+    }
+
+
+def simulate_match(team_a, team_b, group_key=None, allow_draw=True, use_poisson_calc=False):
+    """
+    Simulate one 90-minute match with realistic goal scoring. 
     
     Uses explicit three-outcome modelling with bivariate Poisson goal
     distribution to naturally emerge:
@@ -906,34 +688,54 @@ def simulate_match(team_a, team_b, group_key=None, allow_draw=True):
     - Goals scored
     - Tie-break realism
     
+    Parameters:
+    - use_poisson_calc: If True, uses the poisson_calculator.py approach with random Elo caps
+                       If False (default), uses the original bivariate Poisson approach
+    
     Returns: (points_a, points_b, goals_a, goals_b)
     """
     rating_a = get_rating(team_a)
     rating_b = get_rating(team_b)
 
-    # Calculate expected goals (lambda) for each team
-    # Base lambda reflects overall match excitement (World Cup avg ~2.5 goals)
-    rating_diff = abs(rating_a - rating_b)
-    base_lambda = 2.5 + 0.001 * rating_diff
-    base_lambda = max(1.8, min(3.8, base_lambda))
-    
-    # Team's share of expected goals based on Elo ratings
-    exp_rating_a = 10 ** (rating_a / 400)
-    exp_rating_b = 10 ** (rating_b / 400)
-    share_a = exp_rating_a / (exp_rating_a + exp_rating_b)
-    
-    lambda_a = base_lambda * share_a
-    lambda_b = base_lambda * (1 - share_a)
-    
-    # Apply home advantage as goal expectancy adjustment
-    lambda_a, lambda_b = apply_home_advantage_to_expected_goals(
-        lambda_a, lambda_b, team_a, team_b, group_key
-    )
-    
-    # Sample goals using bivariate Poisson for realistic correlation
-    goals_a, goals_b = sample_bivariate_poisson_goals(
-        lambda_a, lambda_b, correlation=0.12
-    )
+    if use_poisson_calc:
+        # Use the poisson_calculator.py approach with random Elo caps
+        # This applies a random cap between 200-350 to the Elo difference
+        lambda_a, lambda_b = expected_goals_skellam_random_cap(
+            rating_a, rating_b, baseline_goals=2.531666667
+        )
+        
+        # Apply home advantage as goal expectancy adjustment
+        lambda_a, lambda_b = apply_home_advantage_to_expected_goals(
+            lambda_a, lambda_b, team_a, team_b, group_key
+        )
+        
+        # Sample goals using simple Poisson (no correlation in this approach)
+        goals_a = min(np.random.poisson(lambda_a), 10)
+        goals_b = min(np.random.poisson(lambda_b), 10)
+    else:
+        # Original approach: Calculate expected goals (lambda) for each team
+        # Base lambda reflects overall match excitement (World Cup avg ~2.5 goals)
+        rating_diff = abs(rating_a - rating_b)
+        base_lambda = 2.5 + 0.001 * rating_diff
+        base_lambda = max(1.8, min(3.8, base_lambda))
+        
+        # Team's share of expected goals based on Elo ratings
+        exp_rating_a = 10 ** (rating_a / 400)
+        exp_rating_b = 10 ** (rating_b / 400)
+        share_a = exp_rating_a / (exp_rating_a + exp_rating_b)
+        
+        lambda_a = base_lambda * share_a
+        lambda_b = base_lambda * (1 - share_a)
+        
+        # Apply home advantage as goal expectancy adjustment
+        lambda_a, lambda_b = apply_home_advantage_to_expected_goals(
+            lambda_a, lambda_b, team_a, team_b, group_key
+        )
+        
+        # Sample goals using bivariate Poisson for realistic correlation
+        goals_a, goals_b = sample_bivariate_poisson_goals(
+            lambda_a, lambda_b, correlation=0.12
+        )
     
     # Determine outcome from sampled goals
     if goals_a > goals_b:
@@ -945,7 +747,7 @@ def simulate_match(team_a, team_b, group_key=None, allow_draw=True):
         # but for consistency we return 1-1, 1, 1
         return 1, 1, goals_a, goals_b
 
-def simulate_knockout_match(team_a, team_b, group_key=None):
+def simulate_knockout_match(team_a, team_b, group_key=None, use_poisson_calc=False):
     """
     Knockout simulation with regulation time, extra time, and penalties if needed.
     
@@ -956,50 +758,87 @@ def simulate_knockout_match(team_a, team_b, group_key=None):
     
     Home advantage applies to knockout matches hosted in host nation venues.
     
+    Parameters:
+    - use_poisson_calc: If True, uses the poisson_calculator.py approach with random Elo caps
+                       If False (default), uses the original bivariate Poisson approach
+    
     Returns the winner team name.
     """
     rating_a = get_rating(team_a)
     rating_b = get_rating(team_b)
-    rating_diff = abs(rating_a - rating_b)
 
-    # Calculate expected goals for regulation time
-    base_lambda = 2.5 + 0.001 * rating_diff
-    base_lambda = max(1.8, min(3.8, base_lambda))
-    
-    exp_rating_a = 10 ** (rating_a / 400)
-    exp_rating_b = 10 ** (rating_b / 400)
-    share_a = exp_rating_a / (exp_rating_a + exp_rating_b)
-    
-    lambda_a = base_lambda * share_a
-    lambda_b = base_lambda * (1 - share_a)
-    
-    # Apply home advantage for knockout matches (if hosted in host nation venues)
-    lambda_a, lambda_b = apply_home_advantage_to_expected_goals(
-        lambda_a, lambda_b, team_a, team_b, group_key
-    )
+    if use_poisson_calc:
+        # Use the poisson_calculator.py approach with random Elo caps
+        lambda_a, lambda_b = expected_goals_skellam_random_cap(
+            rating_a, rating_b, baseline_goals=2.531666667
+        )
+        
+        # Apply home advantage for knockout matches
+        lambda_a, lambda_b = apply_home_advantage_to_expected_goals(
+            lambda_a, lambda_b, team_a, team_b, group_key
+        )
+        
+        # Regulation time: Sample goals from simple Poisson
+        goals_a_reg = min(np.random.poisson(lambda_a), 10)
+        goals_b_reg = min(np.random.poisson(lambda_b), 10)
+        
+        # If not tied after regulation, return winner
+        if goals_a_reg != goals_b_reg:
+            return team_a if goals_a_reg > goals_b_reg else team_b
 
-    # Regulation time: Sample goals from bivariate Poisson
-    goals_a_reg, goals_b_reg = sample_bivariate_poisson_goals(
-        lambda_a, lambda_b, correlation=0.12
-    )
+        # Extra time: ~30% of regulation expected goals
+        lambda_a_et = lambda_a * 0.30
+        lambda_b_et = lambda_b * 0.30
+        
+        # Apply home advantage to extra time as well
+        lambda_a_et, lambda_b_et = apply_home_advantage_to_expected_goals(
+            lambda_a_et, lambda_b_et, team_a, team_b, group_key
+        )
 
-    # If not tied after regulation, return winner
-    if goals_a_reg != goals_b_reg:
-        return team_a if goals_a_reg > goals_b_reg else team_b
+        goals_a_et = min(np.random.poisson(lambda_a_et), 10)
+        goals_b_et = min(np.random.poisson(lambda_b_et), 10)
+    else:
+        # Original approach
+        rating_diff = abs(rating_a - rating_b)
 
-    # Extra time: ~30% of regulation expected goals (reduced scoring in ET)
-    lambda_et = 0.30 * base_lambda
-    lambda_a_et = lambda_et * share_a
-    lambda_b_et = lambda_et * (1 - share_a)
-    
-    # Apply home advantage to extra time as well
-    lambda_a_et, lambda_b_et = apply_home_advantage_to_expected_goals(
-        lambda_a_et, lambda_b_et, team_a, team_b, group_key
-    )
+        # Calculate expected goals for regulation time
+        base_lambda = 2.5 + 0.001 * rating_diff
+        base_lambda = max(1.8, min(3.8, base_lambda))
+        
+        exp_rating_a = 10 ** (rating_a / 400)
+        exp_rating_b = 10 ** (rating_b / 400)
+        share_a = exp_rating_a / (exp_rating_a + exp_rating_b)
+        
+        lambda_a = base_lambda * share_a
+        lambda_b = base_lambda * (1 - share_a)
+        
+        # Apply home advantage for knockout matches (if hosted in host nation venues)
+        lambda_a, lambda_b = apply_home_advantage_to_expected_goals(
+            lambda_a, lambda_b, team_a, team_b, group_key
+        )
 
-    goals_a_et, goals_b_et = sample_bivariate_poisson_goals(
-        lambda_a_et, lambda_b_et, correlation=0.10  # Lower correlation in ET
-    )
+        # Regulation time: Sample goals from bivariate Poisson
+        goals_a_reg, goals_b_reg = sample_bivariate_poisson_goals(
+            lambda_a, lambda_b, correlation=0.12
+        )
+
+        # If not tied after regulation, return winner
+        if goals_a_reg != goals_b_reg:
+            return team_a if goals_a_reg > goals_b_reg else team_b
+
+        # Extra time: ~30% of regulation expected goals (reduced scoring in ET)
+        lambda_et = 0.30 * base_lambda
+        lambda_a_et = lambda_et * share_a
+        lambda_b_et = lambda_et * (1 - share_a)
+        
+        # Apply home advantage to extra time as well
+        lambda_a_et, lambda_b_et = apply_home_advantage_to_expected_goals(
+            lambda_a_et, lambda_b_et, team_a, team_b, group_key
+        )
+
+        goals_a_et, goals_b_et = sample_bivariate_poisson_goals(
+            lambda_a_et, lambda_b_et, correlation=0.10  # Lower correlation in ET
+        )
 
     total_goals_a = goals_a_reg + goals_a_et
     total_goals_b = goals_b_reg + goals_b_et
@@ -1018,7 +857,7 @@ def simulate_knockout_match(team_a, team_b, group_key=None):
     while True:
         # Simulate one penalty each
         a_scores = random.random() < prob_a_penalty
-        b_scores = random.random() < prob_a_penalty
+        b_scores = random.random() < (1 - prob_a_penalty)
         
         # Check if one team has advantage (simplified shootout)
         # In reality, shootouts continue until there's a winner
@@ -1054,232 +893,276 @@ def simulate_group(group, num_sims, group_key=None):
         results[standings[3][0]]['4th'] += 1
     return results
 
-if mode == 'most_likely':
-    # -------------------------
-    # Pre-determine qualifiers for placeholders using teams_ratings always
-    # -------------------------
-    QUALIFIER_SIMS = 10000
-    qualifiers = {}
-
-    # Generic helper to simulate 4-team bracket using team names or (name,rating) tuples
-    def simulate_bracket_by_candidates(candidates, sims=QUALIFIER_SIMS):
-        """
-        Simulate a 4-team bracket qualification path.
-        
-        Parameters:
-        - candidates: list like ['Italy','Wales','Bosnia and Herzegovina','Northern Ireland']
-                      or list of tuples [('Turkey',1880.0),...]
-        - sims: Number of simulations
-        
-        Returns:
-        - Dict of {team_name: qualification_count} for probability-weighted sampling
-        """
-        wins = {}
-        patched = {}
-        temp_names = []
-        try:
-            for i, c in enumerate(candidates):
-                if isinstance(c, tuple):
-                    name = f"__temp_candidate_{i}__"
-                    teams_ratings[name] = float(c[1])
-                    patched[name] = c[0]
-                    temp_names.append(name)
-                    wins[name] = 0
-                else:
-                    name = c
-                    wins[name] = 0
-                    temp_names.append(name)
-            for _ in range(sims):
-                # semi 1: 0 vs 1, semi 2: 2 vs 3
-                semi1 = simulate_knockout_match(temp_names[0], temp_names[1])
-                semi2 = simulate_knockout_match(temp_names[2], temp_names[3])
-                final_winner = simulate_knockout_match(semi1, semi2)
-                wins[final_winner] = wins.get(final_winner, 0) + 1
-            # Return probability distribution, not just winner
-            mapped_wins = {}
-            for k, v in wins.items():
-                real_name = patched[k] if k in patched else k
-                mapped_wins[real_name] = mapped_wins.get(real_name, 0) + v
-            return mapped_wins
-        finally:
-            for name in patched.keys():
-                teams_ratings.pop(name, None)
-
-    # simulate 3-team round robin with candidates as names or tuples
-    def simulate_round_robin_candidates(candidates, sims=QUALIFIER_SIMS):
-        """
-        Simulate a 3-team round robin qualification path.
-        Returns a dict of {team_name: qualification_count} for probability weighting.
-        """
-        wins = {}
-        patched = {}
-        temp_names = []
-        try:
-            for i, c in enumerate(candidates):
-                if isinstance(c, tuple):
-                    name = f"__temp_rr_{i}__"
-                    teams_ratings[name] = float(c[1])
-                    patched[name] = c[0]
-                    temp_names.append(name)
-                    wins[name] = 0
-                else:
-                    name = c
-                    wins[name] = 0
-                    temp_names.append(name)
-            for _ in range(sims):
-                # three matches
-                group_points = {n: 0 for n in temp_names}
-                matches = [(temp_names[0], temp_names[1]), (temp_names[0], temp_names[2]), (temp_names[1], temp_names[2])]
-                for a, b in matches:
-                    sa, sb = simulate_match(a, b, allow_draw=True)
-                    group_points[a] += sa
-                    group_points[b] += sb
-                max_points = max(group_points.values())
-                candidates_with_max = [n for n, pts in group_points.items() if pts == max_points]
-                winner = random.choice(candidates_with_max)
-                wins[winner] += 1
-            # Return probability distribution, not just winner
-            mapped_wins = {}
-            for k, v in wins.items():
-                real_name = patched[k] if k in patched else k
-                mapped_wins[real_name] = mapped_wins.get(real_name, 0) + v
-            return mapped_wins
-        finally:
-            for name in patched.keys():
-                teams_ratings.pop(name, None)
+# =============================================================================
+# QUALIFIER SIMULATION HELPERS — module-level so both modes share them
+# =============================================================================
+QUALIFIER_SIMS = 10000
 
 
-    def sample_qualifier_from_probs(prob_dict):
-        """
-        Sample a qualifier team based on qualification probability distribution.
-        
-        Parameters:
-        - prob_dict: {team_name: qualification_count} from simulate functions
-        
-        Returns:
-        - Sampled team name based on their qualification probability
-        """
-        if not prob_dict:
-            return None
-        total = sum(prob_dict.values())
-        if total == 0:
-            return random.choice(list(prob_dict.keys()))
-        
-        # Weighted random selection
-        r = random.uniform(0, total)
-        cumulative = 0
-        for team, count in prob_dict.items():
-            cumulative += count
-            if r <= cumulative:
-                return team
-        return list(prob_dict.keys())[-1]
+def simulate_bracket_by_candidates(candidates, sims=QUALIFIER_SIMS):
+    """
+    Simulate a 4-team bracket qualification path.
+    Returns {team_name: qualification_count} for probability-weighted sampling.
+    """
+    wins = {}
+    patched = {}
+    temp_names = []
+    try:
+        for i, c in enumerate(candidates):
+            if isinstance(c, tuple):
+                name = f"__temp_candidate_{i}__"
+                teams_ratings[name] = float(c[1])
+                patched[name] = c[0]
+                temp_names.append(name)
+                wins[name] = 0
+            else:
+                name = c
+                wins[name] = 0
+                temp_names.append(name)
+        for _ in range(sims):
+            semi1 = simulate_knockout_match(temp_names[0], temp_names[1])
+            semi2 = simulate_knockout_match(temp_names[2], temp_names[3])
+            final_winner = simulate_knockout_match(semi1, semi2)
+            wins[final_winner] = wins.get(final_winner, 0) + 1
+        mapped_wins = {}
+        for k, v in wins.items():
+            real_name = patched[k] if k in patched else k
+            mapped_wins[real_name] = mapped_wins.get(real_name, 0) + v
+        return mapped_wins
+    finally:
+        for name in patched.keys():
+            teams_ratings.pop(name, None)
 
-    # Store original possible_winners for reference
-    original_possible = {g: group.get('possible_winners', {}).copy() for g, group in GROUPS.items()}
 
-    # Pre-calculate qualification probability distributions for each placeholder
-    # Instead of picking a single "most likely" team, we store the full probability distribution
-    # This allows per-simulation sampling based on actual qualification chances
-    qualifier_probabilities = {}
-    
-    for group_key, group in GROUPS.items():
-        if 'possible_winners' in group:
-            for placeholder, opts in list(group['possible_winners'].items()):
-                # opts may be list of names or list of (name,rating) tuples
-                if len(opts) == 3 and all(isinstance(o, tuple) for o in opts):
-                    # 3-team round robin candidates
-                    prob_dist = simulate_round_robin_candidates(opts)
-                elif len(opts) == 4:
-                    prob_dist = simulate_bracket_by_candidates(opts)
-                else:
-                    # Fallback: use ratings to create probability distribution
-                    # Stronger teams get higher weights
-                    prob_dist = {}
-                    total_rating = 0
-                    for o in opts:
-                        name = o[0] if isinstance(o, tuple) else o
-                        rating = float(o[1]) if isinstance(o, tuple) else teams_ratings.get(name, 1500.0)
-                        # Use exponential weighting based on rating difference
-                        weight = np.exp((rating - 1500) / 200)
-                        prob_dist[name] = weight
-                        total_rating += weight
-                    # Normalize
-                    for name in prob_dist:
-                        prob_dist[name] = prob_dist[name] / total_rating * QUALIFIER_SIMS
-                
-                qualifier_probabilities[placeholder] = prob_dist
+def simulate_round_robin_candidates(candidates, sims=QUALIFIER_SIMS):
+    """
+    Simulate a 3-team round robin qualification path.
+    Returns {team_name: qualification_count} for probability weighting.
+    """
+    wins = {}
+    patched = {}
+    temp_names = []
+    try:
+        for i, c in enumerate(candidates):
+            if isinstance(c, tuple):
+                name = f"__temp_rr_{i}__"
+                teams_ratings[name] = float(c[1])
+                patched[name] = c[0]
+                temp_names.append(name)
+                wins[name] = 0
+            else:
+                name = c
+                wins[name] = 0
+                temp_names.append(name)
+        for _ in range(sims):
+            group_points = {n: 0 for n in temp_names}
+            rr_matches = [
+                (temp_names[0], temp_names[1]),
+                (temp_names[0], temp_names[2]),
+                (temp_names[1], temp_names[2])
+            ]
+            for a, b in rr_matches:
+                sa, sb, _, _ = simulate_match(a, b, allow_draw=True)
+                group_points[a] += sa
+                group_points[b] += sb
+            max_points = max(group_points.values())
+            top = [n for n, pts in group_points.items() if pts == max_points]
+            winner = random.choice(top)
+            wins[winner] += 1
+        mapped_wins = {}
+        for k, v in wins.items():
+            real_name = patched[k] if k in patched else k
+            mapped_wins[real_name] = mapped_wins.get(real_name, 0) + v
+        return mapped_wins
+    finally:
+        for name in patched.keys():
+            teams_ratings.pop(name, None)
 
-    # Sample a concrete team per simulation run based on qualification probabilities
-    def sample_qualifier(placeholder):
-        """
-        Sample a concrete team for a placeholder based on pre-calculated qualification probabilities.
-        """
-        prob_dist = qualifier_probabilities.get(placeholder, {})
-        return sample_qualifier_from_probs(prob_dist)
 
-    # Create resolved GROUPS with placeholders still present (we'll resolve per-simulation)
-    # Store the original structure for per-simulation resolution
-    original_groups_structure = {}
-    for group_key, group in GROUPS.items():
-        original_groups_structure[group_key] = {
-            'teams': group['teams'].copy(),
-            'matches': group['matches'].copy()
+def sample_qualifier_from_probs(prob_dict):
+    """
+    Weighted-random selection of a team from a {team: count} probability dict.
+    """
+    if not prob_dict:
+        return None
+    total = sum(prob_dict.values())
+    if total == 0:
+        return random.choice(list(prob_dict.keys()))
+    r = random.uniform(0, total)
+    cumulative = 0
+    for team, count in prob_dict.items():
+        cumulative += count
+        if r <= cumulative:
+            return team
+    return list(prob_dict.keys())[-1]
+
+
+def _build_qualifier_probabilities(groups_structure):
+    """
+    Pre-calculate qualification probability distributions for every placeholder
+    found in groups_structure['possible_winners']. Returns a dict of
+    {placeholder_name: {team_name: weight}}.
+    """
+    probs = {}
+    for group in groups_structure.values():
+        for placeholder, opts in group.get('possible_winners', {}).items():
+            if len(opts) == 3 and all(isinstance(o, tuple) for o in opts):
+                prob_dist = simulate_round_robin_candidates(opts)
+            elif len(opts) == 4:
+                prob_dist = simulate_bracket_by_candidates(opts)
+            else:
+                prob_dist = {}
+                total_w = 0
+                for o in opts:
+                    name = o[0] if isinstance(o, tuple) else o
+                    rating = float(o[1]) if isinstance(o, tuple) else BASE_TEAM_RATINGS.get(name, 1500.0)
+                    w = np.exp((rating - 1500) / 200)
+                    prob_dist[name] = w
+                    total_w += w
+                for name in prob_dist:
+                    prob_dist[name] = prob_dist[name] / total_w * QUALIFIER_SIMS
+            probs[placeholder] = prob_dist
+    return probs
+
+
+def sample_qualifier(placeholder):
+    """Sample a concrete team for a placeholder based on pre-calculated probs."""
+    return sample_qualifier_from_probs(qualifier_probabilities.get(placeholder, {}))
+
+
+def calculate_group_closeness_rating(group_data, num_sims):
+    """
+    Calculate a Group Closeness Rating (0-10) measuring competitive balance.
+
+    Compares each team's simulated probability of finishing in each group position
+    against a perfectly even distribution (25% per position for 4-team groups,
+    20% per position for 5-team groups). Maps the average total variation distance
+    to a 0-10 scale where 10 = perfectly balanced, 0 = completely lopsided.
+
+    Parameters:
+    - group_data: dict of {team: {'1st_Place': n, '2nd_Place': n, ...}}
+    - num_sims: total number of simulations run
+
+    Returns:
+    - closeness_rating: float 0.0-10.0
+    """
+    teams = [t for t, d in group_data.items()
+             if d.get('1st_Place', 0) + d.get('2nd_Place', 0) +
+             d.get('3rd_Place', 0) + d.get('4th_Place', 0) > 0]
+    n_teams = len(teams)
+    if n_teams < 2:
+        return 0.0
+
+    ideal_prob = 1.0 / n_teams
+    total_deviation = 0.0
+    count = 0
+
+    for team in teams:
+        data = group_data[team]
+        for pos in ['1st_Place', '2nd_Place', '3rd_Place', '4th_Place']:
+            actual = data.get(pos, 0) / num_sims if num_sims > 0 else 0
+            total_deviation += abs(actual - ideal_prob)
+            count += 1
+
+    avg_deviation = total_deviation / count if count > 0 else 0
+    # Normalize: max avg deviation is (n-1)/n, map 0 deviation -> 10, max deviation -> 0
+    max_deviation = (n_teams - 1) / n_teams
+    if max_deviation <= 0:
+        return 10.0
+    closeness_rating = 10.0 * (1.0 - avg_deviation / max_deviation)
+    return round(max(0.0, min(10.0, closeness_rating)), 1)
+
+
+def display_group_position_probabilities(group_position_results, num_sims):
+    """
+    Calculate and display the probability distribution for each team's final
+    position within their World Cup group.
+
+    For each group, shows every team's percentage chance of finishing 1st, 2nd,
+    3rd, and 4th based on simulation results, formatted as a clear breakdown table.
+
+    Parameters:
+    - group_position_results: dict of {group_key: {team: {'1st_Place': n, '2nd_Place': n, ...}}}
+    - num_sims: total number of simulations run
+    """
+    print("\n## Group Position Probability Distributions")
+    print("---")
+    for group_key in sorted(group_position_results.keys()):
+        group_data = group_position_results[group_key]
+        if not group_data:
+            continue
+        print(f"\n### Group {group_key}")
+        position_percentages = {}
+        for team, data in group_data.items():
+            total_appearances = data.get('1st_Place', 0) + data.get('2nd_Place', 0) + \
+                                data.get('3rd_Place', 0) + data.get('4th_Place', 0)
+            if total_appearances == 0:
+                continue
+            position_percentages[team] = {
+                '1st (%)': round((data.get('1st_Place', 0) / num_sims) * 100, 2),
+                '2nd (%)': round((data.get('2nd_Place', 0) / num_sims) * 100, 2),
+                '3rd (%)': round((data.get('3rd_Place', 0) / num_sims) * 100, 2),
+                '4th (%)': round((data.get('4th_Place', 0) / num_sims) * 100, 2),
+            }
+        if position_percentages:
+            closeness = calculate_group_closeness_rating(group_data, num_sims)
+            print(f"**Group Closeness Rating: {closeness}/10**")
+            df = pd.DataFrame.from_dict(position_percentages, orient='index')
+            df = df.sort_values(by='1st (%)', ascending=False)
+            print(df.to_markdown())
+
+
+# -------------------------
+# Build original_groups_structure (preserves possible_winners for both modes)
+# -------------------------
+original_groups_structure = {}
+for _gk, _grp in GROUPS.items():
+    original_groups_structure[_gk] = {
+        'teams': _grp['teams'].copy(),
+        'matches': _grp['matches'].copy(),
+    }
+    if 'possible_winners' in _grp:
+        original_groups_structure[_gk]['possible_winners'] = {
+            k: list(v) for k, v in _grp['possible_winners'].items()
         }
 
-    # Remove possible_winners from GROUPS (we'll handle it per-simulation)
-    for group in GROUPS.values():
-        if 'possible_winners' in group:
-            del group['possible_winners']
+# Store original possible_winners for scenario printing
+original_possible = {g: grp.get('possible_winners', {}).copy() for g, grp in GROUPS.items()}
 
-    # -------------------------
-    # Build all_teams_points using get_rating exclusively
-    # -------------------------
-    all_teams_points = {}
-    for group in GROUPS.values():
-        for team in group['teams']:
-            # Skip placeholders - they'll be resolved per-simulation
-            if team not in qualifier_probabilities:
-                all_teams_points[team] = get_rating(team)
+# Pre-calculate qualification probabilities (shared by both modes)
+print("Pre-calculating qualifier probabilities...")
+qualifier_probabilities = _build_qualifier_probabilities(original_groups_structure)
+
+# Remove possible_winners from live GROUPS now that probabilities are stored
+for _grp in GROUPS.values():
+    _grp.pop('possible_winners', None)
 
 # -------------------------
 # MAIN SIMULATION
 # -------------------------
+from collections import defaultdict
+
+def _empty_knockout_record():
+    return {'Round_of_32': 0, 'Round_of_16': 0, 'Quarterfinals': 0,
+            'Semifinals': 0, 'Final': 0, 'Winner': 0,
+            'Third': 0, 'Runner_up': 0, 'Fourth': 0}
+
 unique_finals = set()
-knockout_results = {team: {'Round_of_32': 0, 'Round_of_16': 0, 'Quarterfinals': 0, 'Semifinals': 0, 'Final': 0, 'Winner': 0, 'Third': 0, 'Runner_up': 0, 'Fourth': 0} for team in all_possible_teams}
+# Use defaultdict so any dynamically-sampled team name is handled safely
+knockout_results = defaultdict(_empty_knockout_record)
+for team in all_possible_teams:
+    knockout_results[team]  # pre-populate known teams
 
 if mode == 'all':
-    # Monte Carlo mode: Sample qualification outcomes probabilistically
-    # This avoids combinatorial explosion while still capturing uncertainty
-    NUM_SIMULATIONS = 10000 # Default Monte Carlo simulations
-    
-    # Check if qualifier_probabilities exists (from most_likely setup)
-    # If not, initialize it using the same logic
-    if 'qualifier_probabilities' not in dir() or not qualifier_probabilities:
-        qualifier_probabilities = {}
-        for group_key, group in original_groups_structure.items():
-            if 'possible_winners' in group:
-                for placeholder, opts in list(group['possible_winners'].items()):
-                    if len(opts) == 3 and all(isinstance(o, tuple) for o in opts):
-                        prob_dist = simulate_round_robin_candidates(opts)
-                    elif len(opts) == 4:
-                        prob_dist = simulate_bracket_by_candidates(opts)
-                    else:
-                        prob_dist = {}
-                        total_rating = 0
-                        for o in opts:
-                            name = o[0] if isinstance(o, tuple) else o
-                            rating = float(o[1]) if isinstance(o, tuple) else BASE_TEAM_RATINGS.get(name, 1500.0)
-                            weight = np.exp((rating - 1500) / 200)
-                            prob_dist[name] = weight
-                            total_rating += weight
-                        for name in prob_dist:
-                            prob_dist[name] = prob_dist[name] / total_rating * QUALIFIER_SIMS
-                    qualifier_probabilities[placeholder] = prob_dist
-    
-    # Monte Carlo sampling: Each simulation samples concrete qualifiers
+    NUM_SIMULATIONS = 10000
     total_sims = NUM_SIMULATIONS
     print(f"Monte Carlo mode: {NUM_SIMULATIONS} simulations")
     print("Qualification outcomes sampled probabilistically per simulation")
+
+    # Track group position results for probability distribution display
+    group_position_results = {}
+    for gk in original_groups_structure:
+        group_position_results[gk] = defaultdict(lambda: {'1st_Place': 0, '2nd_Place': 0, '3rd_Place': 0, '4th_Place': 0})
     
     for _ in tqdm(range(NUM_SIMULATIONS)):
         # Sample concrete teams for each placeholder this simulation
@@ -1328,6 +1211,12 @@ if mode == 'all':
             # Sort by: points (desc), goal diff (desc), goals scored (desc), Elo rating (desc)
             standings_list.sort(key=lambda x: (x[1], x[2], x[3], x[4]), reverse=True)
             group_standings[group_key] = standings_list
+
+            # Track group position results
+            group_position_results[group_key][standings_list[0][0]]['1st_Place'] += 1
+            group_position_results[group_key][standings_list[1][0]]['2nd_Place'] += 1
+            group_position_results[group_key][standings_list[2][0]]['3rd_Place'] += 1
+            group_position_results[group_key][standings_list[3][0]]['4th_Place'] += 1
 
         # Determine advancing teams: top 2 from each group + best 8 thirds
         winners = {group: group_standings[group][0][0] for group in 'ABCDEFGHIJKL'}
@@ -1719,6 +1608,12 @@ if mode == 'most_likely':
                         df_final = df_final.round(2).astype(str) + '%'
                         print(f"**Teams:** {', '.join(temp_group['teams'])}")
                         print(df_final.to_markdown())
+
+if mode == 'all':
+    display_group_position_probabilities(group_position_results, total_sims)
+
+if mode == 'most_likely':
+    display_group_position_probabilities(results, NUM_SIMULATIONS)
 
 print("\n## Final Positions Matrix")
 print("\n---")

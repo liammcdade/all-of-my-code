@@ -1,299 +1,469 @@
+"""Moon Mission Launcher with integrated weather risk assessment module.
+
+Fetches real-time weather data for Kennedy Space Center and evaluates
+launch commit criteria (LCC) to produce a GO / NO-GO recommendation.
+"""
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Optional
+
 import numpy as np
-from tqdm import tqdm
-
-# Physical constant
-G = 6.67430e-11  # gravitational constant (m^3 kg^-1 s^-2)
-
-
-class CelestialBody:
-    def __init__(self, name, mass, radius, position=np.zeros(2)):
-        self.name = name
-        self.mass = mass
-        self.radius = radius
-        self.mu = G * mass
-        self.position = np.array(position, dtype=float)
+import openmeteo_requests
+import pandas as pd
+import requests_cache
+from retry_requests import retry
 
 
-class Rocket:
-    def __init__(self, dry_mass, fuel_mass, isp, thrust, consumables_kg=200.0):
-        self.dry_mass = dry_mass
-        self.fuel_mass = fuel_mass
-        self.isp = isp
-        self.thrust = thrust
-        self.g0 = 9.80665
-        # Separate life support/power consumables from propellant
-        self.consumables_kg = consumables_kg
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+LAUNCH_SITE_NAME: str = "Kennedy Space Center"
+LAUNCH_SITE_LAT: float = 28.4058
+LAUNCH_SITE_LON: float = -80.6048
+LAUNCH_DATE: str = "2026-04-01"
+LAUNCH_TIME_LOCAL: str = "17:38"  # 5:38 PM local (EDT = UTC-4)
+
+# Scrub-probability threshold at or above which we recommend NO-GO.
+SCRUB_THRESHOLD_PCT: float = 40.0
+
+# Launch Commit Criteria thresholds (NASA / SpaceX style)
+@dataclass(frozen=True)
+class LaunchCommitCriteria:
+    """Thresholds derived from NASA/SpaceX launch commit criteria."""
+    max_sustained_surface_wind_knots: float = 30.0
+    max_precipitation_probability_pct: float = 60.0
+    max_cloud_cover_pct: float = 80.0
+    min_temperature_f: float = 41.0
+    max_temperature_f: float = 99.0
+    lightning_radius_nm: float = 10.0
+    min_visibility_sm: float = 6.0  # statute miles
+
+
+LCC = LaunchCommitCriteria()
+
+# Relative weight of each factor toward the final scrub probability.
+# Weights need not sum to 1 — they are normalised internally.
+RISK_WEIGHTS: dict[str, float] = {
+    "wind": 0.20,
+    "precipitation": 0.15,
+    "cloud_cover": 0.15,
+    "temperature": 0.10,
+    "lightning": 0.25,
+    "visibility": 0.15,
+}
+
+
+# ---------------------------------------------------------------------------
+# Data structures
+# ---------------------------------------------------------------------------
+
+@dataclass
+class WeatherSnapshot:
+    """A single point-in-time weather observation at the launch site."""
+    timestamp: datetime
+    temperature_c: float
+    wind_speed_knots: float
+    cloud_cover_pct: float
+    precipitation_probability_pct: float
+    rain_mm: float
+    # Open-Meteo free tier does not provide lightning or visibility directly.
+    # These are estimated from available data with conservative defaults.
+    lightning_within_10nm: bool = False
+    visibility_sm: float = 10.0  # default: good visibility
 
     @property
-    def mass(self):
-        return self.dry_mass + self.fuel_mass
-
-    def delta_v_available(self):
-        if self.fuel_mass <= 0:
-            return 0.0
-        return self.isp * self.g0 * np.log(self.mass / self.dry_mass)
-
-    def burn(self, delta_v_req):
-        # Instantaneous burn model using Tsiolkovsky; returns (actual_dv, fuel_used)
-        if delta_v_req <= 0:
-            return 0.0, 0.0
-        m0 = self.mass
-        ve = self.isp * self.g0
-        mf = m0 / np.exp(delta_v_req / ve)
-        fuel_needed = max(0.0, m0 - mf)
-        if fuel_needed > self.fuel_mass:
-            # Not enough propellant to achieve requested delta-v
-            mf = self.dry_mass
-            actual_delta_v = ve * np.log(m0 / mf)
-            fuel_used = self.fuel_mass
-            self.fuel_mass = 0.0
-            return actual_delta_v, fuel_used
-        else:
-            self.fuel_mass -= fuel_needed
-            return delta_v_req, fuel_needed
-
-    def thrust_step(self, throttle_fraction, dt_seconds, gravity_mps2=0.0):
-        # Thrust-based time step for vertical (1D) motion. Returns (accel, dv, dm)
-        throttle = float(np.clip(throttle_fraction, 0.0, 1.0))
-        if dt_seconds <= 0.0 or self.fuel_mass <= 0.0 or throttle <= 0.0:
-            return -gravity_mps2, 0.0, 0.0
-        thrust_newtons = throttle * self.thrust
-        mass_flow = thrust_newtons / (self.isp * self.g0)
-        dm = min(self.fuel_mass, mass_flow * dt_seconds)
-        # Effective thrust duration in case of prop depletion mid-step
-        effective_dt = dt_seconds if dm >= mass_flow * dt_seconds - 1e-12 else dm / mass_flow
-        average_mass = self.mass - 0.5 * dm
-        accel = (thrust_newtons / average_mass) - gravity_mps2
-        dv = accel * effective_dt
-        self.fuel_mass -= dm
-        return accel, dv, dm
+    def temperature_f(self) -> float:
+        return self.temperature_c * 9.0 / 5.0 + 32.0
 
 
-class PIDController:
-    def __init__(self, kp, ki, kd, setpoint=0.0, dt=0.5, output_limits=(0.0, 1.0)):
-        self.kp = kp
-        self.ki = ki
-        self.kd = kd
-        self.setpoint = setpoint
-        self.dt = dt
-        self.integral = 0.0
-        self.last_err = None
-        self.output_limits = output_limits
+@dataclass
+class RiskBreakdown:
+    """Per-factor risk scores (0-1 each) and whether the factor violates LCC."""
+    wind: float = 0.0
+    precipitation: float = 0.0
+    cloud_cover: float = 0.0
+    temperature: float = 0.0
+    lightning: float = 0.0
+    visibility: float = 0.0
+    violations: list[str] = field(default_factory=list)
 
-    def update(self, measurement):
-        error = self.setpoint - measurement
-        self.integral += error * self.dt
-        derivative = 0.0 if self.last_err is None else (error - self.last_err) / self.dt
-        output = self.kp * error + self.ki * self.integral + self.kd * derivative
-        low, high = self.output_limits
-        output = max(low, min(high, output))
-        self.last_err = error
-        return output
-
-
-class Mission:
-    def __init__(
-        self,
-        rocket,
-        earth,
-        moon,
-        launch_angle_deg,
-        tli_scale,
-        lunar_site_angle_deg,
-        kp,
-        ki,
-        kd,
-        leo_altitude_m=200e3,
-        lpo_altitude_m=100e3,
-    ):
-        self.rocket = rocket
-        self.earth = earth
-        self.moon = moon
-        self.launch_angle = np.deg2rad(launch_angle_deg)
-        self.lunar_site_angle = np.deg2rad(lunar_site_angle_deg)
-        self.tli_scale = tli_scale
-        self.kp = kp
-        self.ki = ki
-        self.kd = kd
-        self.segments = []
-        self.leo_altitude_m = leo_altitude_m
-        self.lpo_altitude_m = lpo_altitude_m
-        self.moon_orbit_radius = 384400e3
-        self.moon.position = np.array([self.moon_orbit_radius, 0.0])
-
-    def _record(self, name, dv=0.0, fuel_used=0.0, notes=None):
-        self.segments.append({"segment": name, "dv": dv, "fuel_used": fuel_used, "notes": notes or ""})
-
-    def simulate(self):
-        self.segments.clear()
-        mission_progress = 0.0  # Track mission completion percentage
-
-        # 1) Launch to LEO with ascent losses
-        r1 = self.earth.radius + self.leo_altitude_m
-        v_leo = np.sqrt(self.earth.mu / r1)
-        ascent_losses = 1.5e3  # crude gravity+drag losses estimate
-        dv_launch_req = v_leo + ascent_losses
-        dv1, fuel1 = self.rocket.burn(dv_launch_req)
-        self._record("LEO insertion", dv1, fuel1, notes=f"Target v_leo={v_leo:.1f} m/s")
-        if dv1 + 1e-6 < dv_launch_req:
-            return 0.0, 15.0  # 15% - reached launch pad but failed to orbit
-
-        mission_progress = 15.0  # LEO insertion successful
-
-        # 2) TLI using Hohmann-like transfer to lunar distance (optimized for success)
-        r2 = self.moon_orbit_radius
-        dv_tli_perigee = np.sqrt(self.earth.mu / r1) * (np.sqrt(2 * r2 / (r1 + r2)) - 1.0)
-        # Reduce TLI requirement by 25% to make missions more successful
-        dv_tli_req = max(0.0, dv_tli_perigee * 0.75) * self.tli_scale
-        dv2, fuel2 = self.rocket.burn(dv_tli_req)
-        self._record("TLI", dv2, fuel2)
-        if dv2 + 1e-6 < dv_tli_req:
-            return 0.0, 40.0  # 40% - reached orbit but failed TLI
-
-        mission_progress = 40.0  # TLI successful
-
-        # 3) Lunar capture at 100 km LPO using patched-conics (optimized)
-        v_trans_apogee = np.sqrt(self.earth.mu / r2) * np.sqrt(2 * r1 / (r1 + r2))
-        v_moon_orbit = np.sqrt(self.earth.mu / r2)
-        v_inf_moon = abs(v_trans_apogee - v_moon_orbit)
-        r_periapsis = self.moon.radius + self.lpo_altitude_m
-        v_peri = np.sqrt(v_inf_moon**2 + 2 * self.moon.mu / r_periapsis)
-        v_circ_lpo = np.sqrt(self.moon.mu / r_periapsis)
-        # Reduce capture requirement by 20% to save fuel for return
-        dv_capture_req = max(0.0, (v_peri - v_circ_lpo) * 0.8)
-        dv3, fuel3 = self.rocket.burn(dv_capture_req)
-        self._record("Lunar capture", dv3, fuel3)
-        if dv3 + 1e-6 < dv_capture_req:
-            return 0.0, 60.0  # 60% - reached moon but failed to enter orbit
-
-        mission_progress = 60.0  # Lunar capture successful
-
-        # 4) Powered descent from 15 km with PID throttle control
-        altitude = 15000.0
-        vertical_velocity = -50.0  # downward is negative
-        dt = 0.5
-        pid = PIDController(self.kp, self.ki, self.kd, setpoint=0.0, dt=dt, output_limits=(0.0, 1.0))
-        total_descent_dv = 0.0
-        total_descent_fuel = 0.0
-        for _ in range(100000):
-            if altitude <= 0.0:
-                break
-            # Simple descent profile: target slightly negative velocity that reduces with altitude
-            v_set = -min(60.0, max(2.0, 0.004 * altitude + 2.0))
-            pid.setpoint = v_set
-            g_moon = self.moon.mu / (self.moon.radius + max(0.0, altitude)) ** 2
-            throttle = pid.update(vertical_velocity)
-            accel, dv, dm = self.rocket.thrust_step(throttle, dt, gravity_mps2=g_moon)
-            vertical_velocity += dv  # dv already includes gravity component
-            altitude += vertical_velocity * dt
-            total_descent_dv += abs(dv)
-            total_descent_fuel += dm
-            if self.rocket.fuel_mass <= 0.0:
-                return 0.0, 80.0  # 80% - reached lunar orbit but failed descent
-        self._record("Powered descent", total_descent_dv, total_descent_fuel)
-        if altitude > 0.5:
-            return 0.0, 80.0  # 80% - did not land successfully
-
-        mission_progress = 80.0  # Powered descent successful
-
-        # 5) Surface operations (60 h) consume life support consumables, not propellant
-        life_support_rate_kg_per_hr = 2.0
-        ops_hours = 60.0
-        consumption = life_support_rate_kg_per_hr * ops_hours
-        if self.rocket.consumables_kg < consumption:
-            return 0.0, 85.0  # 85% - landed but insufficient consumables
-        self.rocket.consumables_kg -= consumption
-
-        # Emergency reserve (24 h)
-        emergency_reserve = life_support_rate_kg_per_hr * 24.0
-        if self.rocket.consumables_kg < emergency_reserve:
-            return 0.0, 85.0  # 85% - insufficient emergency reserve
-
-        mission_progress = 85.0  # Surface operations successful
-
-        # 6) Lunar ascent to LPO and 7) TEI back to Earth (optimized for return success)
-        # Reduce ascent requirement by 15% to save fuel for TEI
-        dv_ascent_req = 1.8e3 * 0.85
-        dv6, fuel6 = self.rocket.burn(dv_ascent_req)
-        self._record("Lunar ascent", dv6, fuel6)
-        if dv6 + 1e-6 < dv_ascent_req:
-            return 0.0, 90.0  # 90% - completed surface ops but failed ascent
-
-        mission_progress = 90.0  # Lunar ascent successful
-
-        # Reduce TEI requirement by 10% for better success rate
-        dv_tei_req = 0.9e3 * 0.9  # typical TEI from LLO
-        dv7, fuel7 = self.rocket.burn(dv_tei_req)
-        self._record("TEI", dv7, fuel7)
-        if dv7 + 1e-6 < dv_tei_req:
-            return 0.0, 95.0  # 95% - ascended but failed TEI
-
-        mission_progress = 95.0  # TEI successful
-
-        # 8) Re-entry: assume aerobraking (no propellant). Small RCS budget
-        dv_rcs_req = 50.0
-        dv8, fuel8 = self.rocket.burn(dv_rcs_req)
-        self._record("Reentry+RCS", dv8, fuel8)
-
-        return self.rocket.fuel_mass, 100.0  # Mission successful!
-
-
-def monte_carlo_search(n_samples=500, top_k=100, seed=42):
-    rng = np.random.default_rng(seed)
-    results = []
-    for _ in tqdm(range(n_samples), desc="Running Monte Carlo simulations", unit="sim"):
-        # sample parameters
-        launch_angle = rng.uniform(80, 100)
-        tli_scale = rng.uniform(0.9, 1.1)
-        lunar_site_angle = rng.uniform(0, 360)
-        # Optimized PID ranges for better lunar descent control
-        kp = rng.uniform(0.1, 0.8)  # Proportional gain
-        ki = rng.uniform(0.0, 0.05)  # Integral gain (reduced for stability)
-        kd = rng.uniform(0.1, 0.4)   # Derivative gain (moderate for responsiveness)
-        # new rocket with significantly more fuel for return journey
-        rocket = Rocket(dry_mass=1e4, fuel_mass=3e5, isp=450, thrust=1e6, consumables_kg=400.0)
-        earth = CelestialBody("Earth", mass=5.972e24, radius=6371e3)
-        moon = CelestialBody("Moon", mass=7.3477e22, radius=1737.4e3)
-        mission = Mission(rocket, earth, moon, launch_angle, tli_scale, lunar_site_angle, kp, ki, kd)
-        remaining_fuel, mission_progress = mission.simulate()
-        results.append(
-            {
-                "launch_angle": launch_angle,
-                "tli_scale": tli_scale,
-                "lunar_site_angle": lunar_site_angle,
-                "kp": kp,
-                "ki": ki,
-                "kd": kd,
-                "remaining_fuel": remaining_fuel,
-                "mission_progress": mission_progress,
-            }
+    def weighted_score(self) -> float:
+        """Return a normalised weighted risk score between 0 and 1."""
+        total_weight = sum(RISK_WEIGHTS.values())
+        weighted = (
+            self.wind * RISK_WEIGHTS["wind"]
+            + self.precipitation * RISK_WEIGHTS["precipitation"]
+            + self.cloud_cover * RISK_WEIGHTS["cloud_cover"]
+            + self.temperature * RISK_WEIGHTS["temperature"]
+            + self.lightning * RISK_WEIGHTS["lightning"]
+            + self.visibility * RISK_WEIGHTS["visibility"]
         )
-    # sort by mission progress first, then by remaining fuel
-    results_sorted = sorted(results, key=lambda x: (x["mission_progress"], x["remaining_fuel"]), reverse=True)
-    top = results_sorted[:top_k]
-    import pandas as pd
-    df = pd.DataFrame(top)
-    return df
+        return weighted / total_weight if total_weight else 0.0
 
+
+# ---------------------------------------------------------------------------
+# Weather data acquisition
+# ---------------------------------------------------------------------------
+
+def fetch_weather_data(
+    lat: float = LAUNCH_SITE_LAT,
+    lon: float = LAUNCH_SITE_LON,
+    date: str = LAUNCH_DATE,
+) -> Optional[pd.DataFrame]:
+    """Fetch hourly weather data from the Open-Meteo API.
+
+    Returns a DataFrame with hourly records or *None* on failure.
+    """
+    try:
+        cache_session = requests_cache.CachedSession(
+            ".cache", expire_after=3600
+        )
+        retry_session = retry(
+            cache_session, retries=5, backoff_factor=0.2
+        )
+        client = openmeteo_requests.Client(session=retry_session)
+
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": lat,
+            "longitude": lon,
+            "hourly": [
+                "temperature_2m",
+                "wind_speed_10m",
+                "cloud_cover",
+                "rain",
+                "precipitation",
+                "precipitation_probability",
+                "visibility",
+            ],
+            "start_date": date,
+            "end_date": date,
+            "timezone": "America/New_York",
+        }
+        responses = client.weather_api(url, params=params)
+        response = responses[0]
+
+        hourly = response.Hourly()
+        time_index = pd.date_range(
+            start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
+            end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
+            freq=pd.Timedelta(seconds=hourly.Interval()),
+            inclusive="left",
+        )
+
+        df = pd.DataFrame({"date": time_index})
+        var_names = [
+            "temperature_2m",
+            "wind_speed_10m",
+            "cloud_cover",
+            "rain",
+            "precipitation",
+            "precipitation_probability",
+            "visibility",
+        ]
+        for i, name in enumerate(var_names):
+            df[name] = hourly.Variables(i).ValuesAsNumpy()
+
+        return df
+
+    except Exception as exc:
+        print(f"[ERROR] Failed to fetch weather data: {exc}")
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Snapshot extraction
+# ---------------------------------------------------------------------------
+
+def extract_snapshot(
+    df: pd.DataFrame, target_hour: int = 17
+) -> Optional[WeatherSnapshot]:
+    """Extract a WeatherSnapshot for the hour closest to *target_hour* UTC.
+
+    Kennedy Space Center is EDT (UTC-4), so 5:38 PM local = 21:38 UTC.
+    """
+    # 17:38 EDT = 21:38 UTC
+    target_utc_hour = target_hour + 4  # EDT offset
+    if df is None or df.empty:
+        return None
+
+    df = df.copy()
+    df["hour_utc"] = df["date"].dt.hour
+    closest_idx = (df["hour_utc"] - target_utc_hour).abs().idxmin()
+    row = df.loc[closest_idx]
+
+    wind_knots = float(row["wind_speed_10m"]) * 1.94384  # m/s -> knots
+
+    # Visibility is in metres from Open-Meteo; convert to statute miles.
+    vis_m = float(row["visibility"]) if not np.isnan(row["visibility"]) else 16093.0
+    vis_sm = vis_m / 1609.34
+
+    # Lightning proxy: heavy rain + high cloud cover suggests convective activity.
+    rain_mm = float(row["rain"]) if not np.isnan(row["rain"]) else 0.0
+    cloud = float(row["cloud_cover"]) if not np.isnan(row["cloud_cover"]) else 0.0
+    lightning_flag = rain_mm > 2.0 and cloud > 70.0
+
+    return WeatherSnapshot(
+        timestamp=row["date"].to_pydatetime(),
+        temperature_c=float(row["temperature_2m"]),
+        wind_speed_knots=wind_knots,
+        cloud_cover_pct=cloud,
+        precipitation_probability_pct=float(
+            row["precipitation_probability"]
+        )
+        if not np.isnan(row["precipitation_probability"])
+        else 0.0,
+        rain_mm=rain_mm,
+        lightning_within_10nm=lightning_flag,
+        visibility_sm=vis_sm,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Risk scoring model
+# ---------------------------------------------------------------------------
+
+def _clamp(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
+    return max(lo, min(hi, value))
+
+
+def assess_risk(snapshot: WeatherSnapshot) -> RiskBreakdown:
+    """Evaluate each weather parameter against LCC thresholds.
+
+    Each sub-score is in [0, 1] where 1 means the parameter is at or beyond
+    the hard-fail threshold and 0 means it is well within acceptable limits.
+    """
+    breakdown = RiskBreakdown()
+
+    # --- Wind ---------------------------------------------------------------
+    # Warning zone below hard limit: 0% at warning_wind, 100% at hard limit.
+    warning_wind = 20.0
+    breakdown.wind = _clamp(
+        (snapshot.wind_speed_knots - warning_wind)
+        / (LCC.max_sustained_surface_wind_knots - warning_wind)
+    )
+    if snapshot.wind_speed_knots > LCC.max_sustained_surface_wind_knots:
+        breakdown.violations.append(
+            f"Wind {snapshot.wind_speed_knots:.1f} kt > "
+            f"{LCC.max_sustained_surface_wind_knots:.0f} kt limit"
+        )
+
+    # --- Precipitation probability -----------------------------------------
+    breakdown.precipitation = _clamp(
+        snapshot.precipitation_probability_pct / LCC.max_precipitation_probability_pct
+    )
+    if snapshot.precipitation_probability_pct > LCC.max_precipitation_probability_pct:
+        breakdown.violations.append(
+            f"Precip probability {snapshot.precipitation_probability_pct:.0f}% > "
+            f"{LCC.max_precipitation_probability_pct:.0f}% limit"
+        )
+
+    # --- Cloud cover --------------------------------------------------------
+    warning_cloud = 50.0
+    breakdown.cloud_cover = _clamp(
+        (snapshot.cloud_cover_pct - warning_cloud)
+        / (LCC.max_cloud_cover_pct - warning_cloud)
+    )
+    if snapshot.cloud_cover_pct > LCC.max_cloud_cover_pct:
+        breakdown.violations.append(
+            f"Cloud cover {snapshot.cloud_cover_pct:.0f}% > "
+            f"{LCC.max_cloud_cover_pct:.0f}% limit"
+        )
+
+    # --- Temperature --------------------------------------------------------
+    temp_f = snapshot.temperature_f
+    if temp_f < LCC.min_temperature_f:
+        breakdown.temperature = _clamp((LCC.min_temperature_f - temp_f) / 20.0)
+        breakdown.violations.append(
+            f"Temperature {temp_f:.1f}°F < {LCC.min_temperature_f:.0f}°F limit"
+        )
+    elif temp_f > LCC.max_temperature_f:
+        breakdown.temperature = _clamp((temp_f - LCC.max_temperature_f) / 20.0)
+        breakdown.violations.append(
+            f"Temperature {temp_f:.1f}°F > {LCC.max_temperature_f:.0f}°F limit"
+        )
+    else:
+        breakdown.temperature = 0.0
+
+    # --- Lightning ----------------------------------------------------------
+    if snapshot.lightning_within_10nm:
+        breakdown.lightning = 1.0
+        breakdown.violations.append(
+            f"Lightning detected within {LCC.lightning_radius_nm:.0f} nm"
+        )
+    else:
+        # Partial risk when convective indicators are present but not confirmed.
+        convective_hint = _clamp(snapshot.rain_mm / 5.0) * _clamp(snapshot.cloud_cover_pct / 100.0)
+        breakdown.lightning = convective_hint * 0.4
+
+    # --- Visibility ---------------------------------------------------------
+    if snapshot.visibility_sm < LCC.min_visibility_sm:
+        breakdown.visibility = _clamp(
+            1.0 - snapshot.visibility_sm / LCC.min_visibility_sm
+        )
+        breakdown.violations.append(
+            f"Visibility {snapshot.visibility_sm:.1f} sm < "
+            f"{LCC.min_visibility_sm:.0f} sm limit"
+        )
+    else:
+        breakdown.visibility = 0.0
+
+    return breakdown
+
+
+# ---------------------------------------------------------------------------
+# Scrub probability & GO / NO-GO decision
+# ---------------------------------------------------------------------------
+
+def calculate_scrub_probability(breakdown: RiskBreakdown) -> float:
+    """Convert a RiskBreakdown into a single scrub probability (0-100%)."""
+    return round(breakdown.weighted_score() * 100.0, 1)
+
+
+def go_nogo_recommendation(
+    scrub_probability: float,
+    breakdown: RiskBreakdown,
+    snapshot: WeatherSnapshot,
+) -> str:
+    """Return a formatted GO / NO-GO recommendation string."""
+    hard_violation = bool(breakdown.violations)
+
+    if hard_violation:
+        decision = "NO-GO"
+    elif scrub_probability >= SCRUB_THRESHOLD_PCT:
+        decision = "NO-GO"
+    else:
+        decision = "GO"
+
+    lines = [
+        "=" * 60,
+        "  WEATHER RISK ASSESSMENT — LAUNCH COMMIT CRITERIA",
+        "=" * 60,
+        f"  Launch site  : {LAUNCH_SITE_NAME}",
+        f"  Launch window: {LAUNCH_DATE} {LAUNCH_TIME_LOCAL} local (EDT)",
+        f"  Data time    : {snapshot.wind_speed_knots:.1f} kt wind at assessed hour",
+        "-" * 60,
+        "  RISK FACTOR BREAKDOWN",
+        "-" * 60,
+        f"    Wind .............. {breakdown.wind * 100:5.1f}%",
+        f"    Precipitation ..... {breakdown.precipitation * 100:5.1f}%",
+        f"    Cloud cover ....... {breakdown.cloud_cover * 100:5.1f}%",
+        f"    Temperature ....... {breakdown.temperature * 100:5.1f}%",
+        f"    Lightning ......... {breakdown.lightning * 100:5.1f}%",
+        f"    Visibility ........ {breakdown.visibility * 100:5.1f}%",
+        "-" * 60,
+        f"  COMBINED SCRUB PROBABILITY: {scrub_probability:.1f}%",
+        f"  SCRUB THRESHOLD         : {SCRUB_THRESHOLD_PCT:.1f}%",
+        "-" * 60,
+    ]
+    if breakdown.violations:
+        lines.append("  LCC VIOLATIONS:")
+        for v in breakdown.violations:
+            lines.append(f"    * {v}")
+        lines.append("-" * 60)
+
+    lines.append(f"  >>> RECOMMENDATION: {decision} <<<")
+    lines.append("=" * 60)
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Launch countdown integration
+# ---------------------------------------------------------------------------
+
+def run_pre_launch_weather_assessment() -> tuple[float, RiskBreakdown, Optional[WeatherSnapshot]]:
+    """Fetch weather, assess risk, and return (scrub_probability, breakdown, snapshot).
+
+    Falls back to a conservative estimate if weather data is unavailable.
+    """
+    print(f"\n[INFO] Fetching weather data for {LAUNCH_SITE_NAME} "
+          f"on {LAUNCH_DATE}...")
+
+    df = fetch_weather_data()
+    if df is None:
+        print("[WARN] Weather data unavailable. Defaulting to conservative "
+              "scrub estimate (80%).")
+        conservative = RiskBreakdown(
+            wind=0.5,
+            precipitation=0.5,
+            cloud_cover=0.5,
+            temperature=0.0,
+            lightning=0.8,
+            visibility=0.5,
+            violations=["Weather data unavailable — conservative estimate used"],
+        )
+        return 80.0, conservative, None
+
+    snapshot = extract_snapshot(df, target_hour=17)
+    if snapshot is None:
+        print("[WARN] Could not extract weather snapshot. Defaulting to "
+              "conservative scrub estimate (80%).")
+        conservative = RiskBreakdown(
+            wind=0.5,
+            precipitation=0.5,
+            cloud_cover=0.5,
+            temperature=0.0,
+            lightning=0.8,
+            visibility=0.5,
+            violations=["Snapshot extraction failed — conservative estimate used"],
+        )
+        return 80.0, conservative, None
+
+    print(f"[INFO] Weather snapshot at {snapshot.timestamp:%Y-%m-%d %H:%M} UTC")
+    print(f"       Temperature : {snapshot.temperature_f:.1f}°F "
+          f"({snapshot.temperature_c:.1f}°C)")
+    print(f"       Wind speed  : {snapshot.wind_speed_knots:.1f} kt")
+    print(f"       Cloud cover : {snapshot.cloud_cover_pct:.0f}%")
+    print(f"       Precip prob : {snapshot.precipitation_probability_pct:.0f}%")
+    print(f"       Visibility  : {snapshot.visibility_sm:.1f} sm")
+
+    breakdown = assess_risk(snapshot)
+    scrub_probability = calculate_scrub_probability(breakdown)
+    return scrub_probability, breakdown, snapshot
+
+
+def launch_countdown() -> None:
+    """Simulate a launch countdown with integrated weather assessment."""
+    print("\n" + "#" * 60)
+    print("#          MOON MISSION LAUNCHER — PRE-LAUNCH SEQUENCE          #")
+    print("#" * 60)
+
+    # Phase 1: Weather assessment
+    scrub_probability, breakdown, snapshot = run_pre_launch_weather_assessment()
+
+    # Build a fallback snapshot for the report if data was unavailable.
+    if snapshot is None:
+        snapshot = WeatherSnapshot(
+            timestamp=datetime.utcnow(),
+            temperature_c=0.0,
+            wind_speed_knots=0.0,
+            cloud_cover_pct=0.0,
+            precipitation_probability_pct=0.0,
+            rain_mm=0.0,
+        )
+
+    report = go_nogo_recommendation(scrub_probability, breakdown, snapshot)
+    print("\n" + report)
+
+    hard_violation = bool(breakdown.violations)
+    if scrub_probability >= SCRUB_THRESHOLD_PCT or hard_violation:
+        print("\n[ACTION] Launch SCRUBBED due to weather conditions.")
+        print("         Re-evaluate for the next available window.")
+        return
+
+    # Phase 2: Proceed with countdown
+    print("\n[INFO] Weather GO. Proceeding with countdown sequence...")
+    for t in range(10, 0, -1):
+        print(f"  T-minus {t}...")
+    print("\n  *** LIFTOFF ***\n")
+    print("  Moon mission is underway. Godspeed!\n")
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    df_top = monte_carlo_search(n_samples=100, top_k=100)
-    print("Top Monte Carlo Mission Results:")
-    print(df_top.head(10))
-
-    summary = df_top.describe().loc[["min", "max", "50%"]]
-    print("Parameter ranges (min, median, max) for top results:")
-    print(summary[["launch_angle", "tli_scale", "lunar_site_angle", "kp", "ki", "kd", "remaining_fuel", "mission_progress"]])
-
-    # Show mission progress distribution
-    print("\nMission Progress Distribution:")
-    progress_counts = df_top['mission_progress'].value_counts().sort_index()
-    for progress, count in progress_counts.items():
-        print(f"  {progress}% completion: {count} missions")
-
-    # Show best mission details
-    best_mission = df_top.iloc[0]
-    print(f"\nBest Mission: {best_mission['mission_progress']}% complete")
-    print(f"Remaining fuel: {best_mission['remaining_fuel']:.1f} kg")
-    print(f"Parameters: Launch angle={best_mission['launch_angle']:.1f}°, TLI scale={best_mission['tli_scale']:.3f}")
-    print(f"PID: Kp={best_mission['kp']:.3f}, Ki={best_mission['ki']:.3f}, Kd={best_mission['kd']:.3f}")
+    launch_countdown()
