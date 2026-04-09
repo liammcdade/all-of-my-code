@@ -13,72 +13,21 @@ CONFIG = {
     'ELO': {'K_BASE': 40, 'HOME_ADV': 100, 'INITIAL_RATING': 1800}
 }
 
-# FA Cup teams in Fourth Round
-FA_CUP_TEAMS = [
-    "Hull City", "Chelsea", "Wrexham", "Ipswich Town", "Burton Albion", "West Ham United",
-    "Burnley", "Mansfield Town", "Manchester City", "Salford City", "Norwich City",
-    "West Bromwich Albion", "Southampton", "Leicester City", "Liverpool", "Brighton & Hove Albion",
-    "Birmingham City", "Leeds United", "Grimsby Town", "Wolverhampton Wanderers", "Oxford United",
-    "Sunderland", "Stoke City", "Fulham", "Arsenal", "Wigan Athletic", "Port Vale", "Bristol City",
-    "Macclesfield", "Brentford", "Aston Villa", "Newcastle United"
+# FA Cup Quarter-finalists (as of April 2026)
+QF_TEAMS = [
+    "Manchester City", "Liverpool", "Chelsea", "Port Vale", "Southampton", "Arsenal", "West Ham United", "Leeds United"
 ]
 
-# FA Cup Fourth Round fixtures
-FA_CUP_MATCHES = [
-    ("Hull City", "Chelsea"),
-    ("Wrexham", "Ipswich Town"),
-    ("Burton Albion", "West Ham United"),
-    ("Burnley", "Mansfield Town"),
-    ("Manchester City", "Salford City"),
-    ("Norwich City", "West Bromwich Albion"),
-    ("Southampton", "Leicester City"),
-    ("Liverpool", "Brighton & Hove Albion"),
-    ("Birmingham City", "Leeds United"),
-    ("Grimsby Town", "Wolverhampton Wanderers"),
-    ("Oxford United", "Sunderland"),
-    ("Stoke City", "Fulham"),
-    ("Arsenal", "Wigan Athletic"),
-    ("Macclesfield", "Brentford"),
-    ("Port Vale", "Bristol City"),
-    ("Aston Villa", "Newcastle United")
-]
-
-knownwinners = [
-    "Chelsea", "Wrexham", "West Ham United", "Mansfield Town", "Manchester City",
-    "Norwich City", "Southampton", "Newcastle United", "Liverpool"
-]
-
-# Basic Elo ratings - higher for Premier League teams, lower for lower league teams
+# Basic Elo ratings for FA Cup quarter-finalists (updated from 25-26 season)
 elo_ratings = {
-    # Premier League teams
-    "Arsenal": 2042, "Aston Villa": 1830, "Bournemouth": 1770, "Brighton & Hove Albion": 1820,
-    "Burnley": 1750, "Chelsea": 1910, "Crystal Palace": 1805, "Everton": 1800,
-    "Fulham": 1810, "Liverpool": 2034, "Manchester City": 1978, "Manchester United": 1900,
-    "Newcastle United": 1897, "Nottingham Forest": 1780, "Tottenham Hotspur": 1890, "West Ham United": 1790,
-    "Wolverhampton Wanderers": 1840, "Southampton": 1810,
-
-    # Championship teams
-    "Blackburn Rovers": 1640, "Brentford": 1700, "Derby County": 1570, "Hull City": 1720,
-    "Ipswich Town": 1760, "Leeds United": 1770, "Leicester City": 1780, "Middlesbrough": 1680,
-    "Millwall": 1630, "Norwich City": 1690, "Portsmouth": 1580, "Preston North End": 1710,
-    "Queens Park Rangers": 1590, "Sheffield United": 1650, "Sheffield Wednesday": 1660,
-    "Sunderland": 1730, "Swansea City": 1610, "West Bromwich Albion": 1740,
-    "Stoke City": 1640, "Bristol City": 1670, "Birmingham City": 1580,
-
-    # League One teams
-    "Barnsley": 1520, "Blackpool": 1510, "Charlton Athletic": 1460, "Cheltenham Town": 1450,
-    "Exeter City": 1480, "Fleetwood Town": 1420, "Milton Keynes Dons": 1380, "Oxford United": 1540,
-    "Port Vale": 1410, "Wigan Athletic": 1470, "Burton Albion": 1450,
-
-    # League Two teams
-    "Grimsby Town": 1180, "Mansfield Town": 1360, "Salford City": 1340, "Swindon Town": 1350,
-    "Walsall": 1190, "Wrexham": 1370,
-
-    # National League teams
-    "Boreham Wood": 1180, "Brackley Town": 1170,
-
-    # Other teams
-    "Macclesfield": 950, "Weston-super-Mare": 900
+    "Arsenal": 2061,
+    "Chelsea": 1885,
+    "Liverpool": 1936,
+    "Manchester City": 1941,
+    "Southampton": 1810,
+    "West Ham United": 1746,
+    "Port Vale": 1410,
+    "Leeds United": 1764
 }
 
 def generate_pairings(teams, strategy, rng):
@@ -105,21 +54,21 @@ def generate_pairings(teams, strategy, rng):
     
     if strategy == 0:  # Seeded pairing (best vs worst, 2nd best vs 2nd worst, etc.)
         # Sort teams by Elo rating
-        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, CONFIG['ELO']['INITIAL_RATING']), reverse=True)
+        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, 1800), reverse=True)
         matches = []
         for i in range(len(sorted_teams) // 2):
             matches.append((sorted_teams[i], sorted_teams[-(i+1)]))
         return matches
     
     elif strategy == 1:  # Reverse seeded (best vs 2nd best, 3rd vs 4th, etc.)
-        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, CONFIG['ELO']['INITIAL_RATING']), reverse=True)
+        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, 1800), reverse=True)
         matches = []
         for i in range(0, len(sorted_teams), 2):
             matches.append((sorted_teams[i], sorted_teams[i+1]))
         return matches
     
     elif strategy == 2:  # Balanced brackets (split into two halves, pair across halves)
-        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, CONFIG['ELO']['INITIAL_RATING']), reverse=True)
+        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, 1800), reverse=True)
         mid = len(sorted_teams) // 2
         top_half = sorted_teams[:mid]
         bottom_half = sorted_teams[mid:]
@@ -136,14 +85,14 @@ def generate_pairings(teams, strategy, rng):
         return matches
     
     elif strategy == 4:  # Alternating strength (1st vs 3rd, 2nd vs 4th, etc.)
-        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, CONFIG['ELO']['INITIAL_RATING']), reverse=True)
+        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, 1800), reverse=True)
         matches = []
         for i in range(len(sorted_teams) // 2):
             matches.append((sorted_teams[i], sorted_teams[i + len(sorted_teams) // 2]))
         return matches
     
     else:  # strategy == 5: Random with slight seeding bias
-        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, CONFIG['ELO']['INITIAL_RATING']), reverse=True)
+        sorted_teams = sorted(teams, key=lambda x: elo_ratings.get(x, 1800), reverse=True)
         # Shuffle but keep some structure - swap pairs
         rng.shuffle(sorted_teams)
         # Group into pairs and swap occasionally
@@ -167,8 +116,8 @@ def simulate_fa_cup_match(home_team, away_team, rng, fixed_winner=None):
     league_avg = CONFIG['MATCH_SIMULATION']['LEAGUE_AVG_GOALS']
     rho = CONFIG['MATCH_SIMULATION']['DIXON_COLES_RHO']
 
-    home_elo = elo_ratings.get(home_team, CONFIG['ELO']['INITIAL_RATING']) + home_adv
-    away_elo = elo_ratings.get(away_team, CONFIG['ELO']['INITIAL_RATING'])
+    home_elo = elo_ratings.get(home_team, 1800) + home_adv
+    away_elo = elo_ratings.get(away_team, 1800)
 
     # Normalize Elo ratings to create attack/defense strengths
     max_elo = max(elo_ratings.values())
@@ -216,96 +165,138 @@ def simulate_fa_cup_match(home_team, away_team, rng, fixed_winner=None):
         return home_goals, away_goals, away_team, f"{away_team} {away_goals}-{home_goals} {home_team}"
 
 def simulate_full_fa_cup_tournament(rng, pairing_strategy=0):
-    """Simulate a complete FA Cup tournament from Round 4 to Final"""
-    # Round 4 - handle known winners
-    round4_winners = []
-
-    for home, away in FA_CUP_MATCHES:
-        # Check if either team is a known winner
-        if home in knownwinners:
-            _, _, winner, _ = simulate_fa_cup_match(home, away, rng, fixed_winner=home)
-        elif away in knownwinners:
-            _, _, winner, _ = simulate_fa_cup_match(home, away, rng, fixed_winner=away)
-        else:
-            _, _, winner, _ = simulate_fa_cup_match(home, away, rng)
-        round4_winners.append(winner)
-
-    # Round 5 - use pairing strategy
-    round5_matches = generate_pairings(round4_winners, pairing_strategy, rng)
-    round5_winners = []
-    for home, away in round5_matches:
-        _, _, winner, _ = simulate_fa_cup_match(home, away, rng)
-        round5_winners.append(winner)
-
-    # Quarter-finals - use pairing strategy
-    qf_matches = generate_pairings(round5_winners, pairing_strategy + 1, rng)
+    """Simulate a complete FA Cup tournament from Quarter-finals to Final"""
+    # Fixed Quarter-finals
+    qf_matches = [
+        ("Manchester City", "Liverpool"),
+        ("Chelsea", "Port Vale"),
+        ("Southampton", "Arsenal"),
+        ("West Ham United", "Leeds United")
+    ]
+    # Known winners from actual results
+    known_qf_winners = {
+        ("Manchester City", "Liverpool"): "Manchester City",
+        ("Chelsea", "Port Vale"): "Chelsea",
+        ("Southampton", "Arsenal"): "Southampton",
+        ("West Ham United", "Leeds United"): "Leeds United"
+    }
     qf_winners = []
     for home, away in qf_matches:
-        _, _, winner, _ = simulate_fa_cup_match(home, away, rng)
+        match_key = (home, away)
+        if match_key in known_qf_winners:
+            winner = known_qf_winners[match_key]
+        else:
+            _, _, winner, _ = simulate_fa_cup_match(home, away, rng)
         qf_winners.append(winner)
 
-    # Semi-finals - use pairing strategy
-    sf_matches = generate_pairings(qf_winners, pairing_strategy + 2, rng)
+    # Fixed Semi-finals (25-26 April 2026)
+    sf_matches = [
+        ("Chelsea", "Leeds United"),
+        ("Manchester City", "Southampton")
+    ]
     sf_winners = []
     for home, away in sf_matches:
         _, _, winner, _ = simulate_fa_cup_match(home, away, rng)
         sf_winners.append(winner)
 
-    # Final - 1 match
-    if len(sf_winners) < 2:
-        # If we don't have 2 semifinal winners, this shouldn't happen, but handle it
-        available_teams = [team for team in FA_CUP_TEAMS]
-        if len(sf_winners) == 1:
-            sf_winners.append(rng.choice([t for t in available_teams if t != sf_winners[0]]))
-        else:
-            sf_winners = rng.choice(available_teams, 2, replace=False).tolist()
-
+    # Final
     final_match = (sf_winners[0], sf_winners[1])
     _, _, winner, _ = simulate_fa_cup_match(final_match[0], final_match[1], rng)
 
-    return winner
+    return winner, qf_winners, sf_winners
 
 def run_fa_cup_simulation(num_simulations=5000, random_seed=42):
     """Run Monte Carlo simulation of the complete FA Cup tournament with all pairing strategies"""
     rng = np.random.default_rng(random_seed)
 
-    # Track only teams that actually advance to Round 5 (Round 4 winners)
-    # First, get all Round 4 winners (both known and potential)
-    round4_winners = set()
-    for home, away in FA_CUP_MATCHES:
-        if home in knownwinners:
-            round4_winners.add(home)
-        elif away in knownwinners:
-            round4_winners.add(away)
-        else:
-            # These matches are simulated, so both teams could advance
-            round4_winners.add(home)
-            round4_winners.add(away)
-
-    # Track only final winners among teams that could still win
-    final_winners = {team: 0 for team in round4_winners}
+    # Track final winners among quarter-finalists
+    final_winners = {team: 0 for team in QF_TEAMS}
+    sf_advance = {team: 0 for team in QF_TEAMS}
+    final_advance = {team: 0 for team in QF_TEAMS}
 
     print(f"Running {num_simulations} FA Cup tournament simulations with all pairing strategies...")
     for sim in tqdm(range(num_simulations), desc="Simulating"):
         # Cycle through pairing strategies (6 strategies total)
         pairing_strategy = sim % 6
-        winner = simulate_full_fa_cup_tournament(rng, pairing_strategy=pairing_strategy)
+        winner, qf_winners, sf_winners = simulate_full_fa_cup_tournament(rng, pairing_strategy=pairing_strategy)
+        for team in qf_winners:
+            sf_advance[team] += 1
+        for team in sf_winners:
+            final_advance[team] += 1
         if winner in final_winners:
             final_winners[winner] += 1
         else:
             final_winners[winner] = 1  # Handle teams not in initial list
 
-    return final_winners
+    return final_winners, sf_advance, final_advance
 
-def print_fa_cup_win_percentages(final_winners, num_simulations):
+def print_fa_cup_win_percentages(final_winners, sf_advance, final_advance, num_simulations):
     """Print FA Cup win percentage table for teams still in contention"""
     console = Console()
 
-    console.print("\n[bold green]FA CUP WIN PERCENTAGES[/bold green]")
+    console.print("\n[bold green]FA CUP ADVANCEMENT PROBABILITIES FROM QUARTER-FINALS[/bold green]")
     console.print(f"Based on {num_simulations} simulations with all possible pairing strategies")
-    console.print(f"Showing only teams that can still advance past Round 4\n")
+    console.print(f"Showing quarter-finalists\n")
 
-    # Only show teams that are still mathematically in contention (Round 4 participants)
+    # Semi-final advancement
+    sf_results = []
+    for team in sf_advance.keys():
+        advances = sf_advance[team]
+        probability = (advances / num_simulations) * 100
+        sf_results.append({
+            'Team': team,
+            'Advances': advances,
+            'Probability': probability
+        })
+
+    sf_results.sort(key=lambda x: x['Probability'], reverse=True)
+
+    sf_table = Table(box=box.SQUARE, border_style="blue", title="Semi-Final Advancement Probabilities")
+    sf_table.add_column("Rank", style="dim", header_style="bold dim", justify="right", width=6)
+    sf_table.add_column("Team", style="cyan", header_style="bold cyan")
+    sf_table.add_column("Advances", style="green", header_style="bold green", justify="right", width=8)
+    sf_table.add_column("Advance %", style="yellow", header_style="bold yellow", justify="right", width=10)
+
+    for rank, result in enumerate(sf_results, 1):
+        sf_table.add_row(
+            str(rank),
+            result['Team'],
+            str(int(result['Advances'])),
+            f"{result['Probability']:.2f}%"
+        )
+
+    console.print(sf_table)
+
+    # Final advancement
+    final_results = []
+    for team in final_advance.keys():
+        advances = final_advance[team]
+        probability = (advances / num_simulations) * 100
+        final_results.append({
+            'Team': team,
+            'Advances': advances,
+            'Probability': probability
+        })
+
+    final_results.sort(key=lambda x: x['Probability'], reverse=True)
+
+    final_table = Table(box=box.SQUARE, border_style="blue", title="Final Advancement Probabilities")
+    final_table.add_column("Rank", style="dim", header_style="bold dim", justify="right", width=6)
+    final_table.add_column("Team", style="cyan", header_style="bold cyan")
+    final_table.add_column("Advances", style="green", header_style="bold green", justify="right", width=8)
+    final_table.add_column("Advance %", style="yellow", header_style="bold yellow", justify="right", width=10)
+
+    for rank, result in enumerate(final_results, 1):
+        final_table.add_row(
+            str(rank),
+            result['Team'],
+            str(int(result['Advances'])),
+            f"{result['Probability']:.2f}%"
+        )
+
+    console.print(final_table)
+
+    # Championship
     results = []
     for team in final_winners.keys():
         wins = final_winners[team]
@@ -316,17 +307,14 @@ def print_fa_cup_win_percentages(final_winners, num_simulations):
             'Probability': probability
         })
 
-    # Sort by probability (descending)
     results.sort(key=lambda x: x['Probability'], reverse=True)
 
-    # Create comprehensive table
     table = Table(box=box.SQUARE, border_style="blue", title="FA Cup Championship Probabilities")
     table.add_column("Rank", style="dim", header_style="bold dim", justify="right", width=6)
     table.add_column("Team", style="cyan", header_style="bold cyan")
     table.add_column("Wins", style="green", header_style="bold green", justify="right", width=8)
     table.add_column("Win %", style="yellow", header_style="bold yellow", justify="right", width=10)
 
-    # Add all teams to table
     for rank, result in enumerate(results, 1):
         table.add_row(
             str(rank),
@@ -338,19 +326,18 @@ def print_fa_cup_win_percentages(final_winners, num_simulations):
     console.print(table)
 
 def main():
-    parser = argparse.ArgumentParser(description='FA Cup Tournament Simulation - All Pairing Strategies')
+    parser = argparse.ArgumentParser(description='FA Cup Tournament Simulation from Quarter-finals - All Pairing Strategies')
     parser.add_argument('--nsims', type=int, default=5000, help='Number of simulations to run (default 5000)')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
 
     args = parser.parse_args()
 
     console = Console()
-    console.print("[bold green]FA CUP TOURNAMENT SIMULATION[/bold green]")
-    console.print("[bold yellow]Running all rounds with all possible pairing strategies[/bold yellow]")
-    console.print("[bold yellow]Using known winners for Round 4 matches[/bold yellow]\n")
+    console.print("[bold green]FA CUP TOURNAMENT SIMULATION FROM QUARTER-FINALS[/bold green]")
+    console.print("[bold yellow]Using fixed quarter-final matches, then pairing strategies for semi-finals and final[/bold yellow]\n")
 
-    final_winners = run_fa_cup_simulation(num_simulations=args.nsims, random_seed=args.seed)
-    print_fa_cup_win_percentages(final_winners, args.nsims)
+    final_winners, sf_advance, final_advance = run_fa_cup_simulation(num_simulations=args.nsims, random_seed=args.seed)
+    print_fa_cup_win_percentages(final_winners, sf_advance, final_advance, args.nsims)
 
 if __name__ == "__main__":
     main()

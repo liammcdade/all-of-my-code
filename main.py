@@ -20,6 +20,7 @@ def main():
             "5": ("RCV Simulator", "rcv_simulator.py"),
             "6": ("Minecraft World Calc", "minecraft_world_calc.py"),
             "7": ("Match Analyzer", "match_analyzer.py"),
+            "8": ("Tetris RL", "tetris/main.py"),
             "q": ("Quit", None)
         }
         

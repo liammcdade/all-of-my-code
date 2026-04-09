@@ -1,0 +1,23 @@
+# Viral Clip Generator - Dependencies
+# ================================
+# Core video/audio processing
+openai-whisper>=20231117
+librosa>=0.10.0
+numpy>=1.24.0
+scipy>=1.10.0
+opencv-python>=4.8.0
+
+# Scene detection
+scenedetect>=0.6.0
+
+# Face detection/tracking
+mediapipe>=0.10.0
+
+# ML/NLP
+torch>=2.0.0
+transformers>=4.30.0
+
+# FFmpeg (system requirement - install separately)
+# Windows: https://ffmpeg.org/download.html
+# macOS: brew install ffmpeg
+# Linux: sudo apt install ffmpeg

@@ -53,17 +53,31 @@ elo = {
     "Bolivia": 1658.75,
 }
 
+# Average goals per match (international football baseline)
+AVG_GOALS_PER_MATCH = 2.55
+
 # =========================
-# ELO MATCH FUNCTION
+# ELO PROBABILITY & EXPECTED GOALS
 # =========================
-def match(team1, team2, home_adv=50):
+def win_probability(team1, team2, home_adv=85):
+    """Return probability team1 wins (with home advantage)."""
     e1 = elo[team1] + home_adv
     e2 = elo[team2]
+    return 1 / (1 + 10 ** ((e2 - e1) / 400))
 
-    p1 = 1 / (1 + 10 ** ((e2 - e1) / 400))
+def expected_goals(team1, team2, home_adv=85):
+    """Return (xG_team1, xG_team2) derived from ELO ratings."""
+    p1 = win_probability(team1, team2, home_adv)
+    p2 = 1 - p1
+    # Split average goals by strength ratio
+    total = AVG_GOALS_PER_MATCH
+    xg1 = total * (p1 / (p1 + p2))
+    xg2 = total * (p2 / (p1 + p2))
+    return xg1, xg2
 
+def match(team1, team2, home_adv=85):
+    p1 = win_probability(team1, team2, home_adv)
     r = random.random()
-
     if r < p1:
         return team1
     else:
@@ -95,9 +109,26 @@ for _ in range(NUM_SIMULATIONS):
 # =========================
 # OUTPUT
 # =========================
+
+all_games = [(h, a, "UEFA Final") for h, a in UEFA_FINALS] + \
+            [(h, a, "Intercontinental") for h, a in INTERCONTINENTAL_FINALS]
+
+print(f"{'='*65}")
+print(f"  GAME-BY-GAME BREAKDOWN ({NUM_SIMULATIONS} sims)")
+print(f"{'='*65}")
+
+for home, away, label in all_games:
+    p_home = win_probability(home, away)
+    p_away = 1 - p_home
+    xg_home, xg_away = expected_goals(home, away)
+    print(f"\n  [{label}] {home} vs {away}")
+    print(f"    {home:<30s}  Win: {p_home*100:5.1f}%   xG: {xg_home:.2f}")
+    print(f"    {away:<30s}  Win: {p_away*100:5.1f}%   xG: {xg_away:.2f}")
+
+print(f"\n{'='*65}")
+print(f"  QUALIFICATION PROBABILITIES ({NUM_SIMULATIONS} sims)")
+print(f"{'='*65}\n")
+
 sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)
-
-print(f"QUALIFICATION PROBABILITIES ({NUM_SIMULATIONS} sims):\n")
-
 for team, count in sorted_results:
-    print(f"{team}: {count/NUM_SIMULATIONS*100:.1f}%")
+    print(f"  {team:<30s}  {count/NUM_SIMULATIONS*100:5.1f}%")

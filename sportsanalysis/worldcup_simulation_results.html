@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup 2026 Simulation Results</title>
+<style>
+  *, *::before, *::after {{ color: #39ff14 !important; border-color: #39ff14 !important; background-color: transparent; }}
+  body {{ font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 20px; background-color: #000000; }}
+  .container {{ max-width: 1200px; margin: 0 auto; }}
+  h1 {{ text-shadow: 0 0 15px #39ff14, 0 0 30px #39ff14; text-align: center; font-size: 2.2em; margin-bottom: 5px; }}
+  h2 {{ text-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14; border-bottom: 2px solid #39ff14 !important; padding-bottom: 8px; margin-top: 40px; }}
+  h3 {{ text-shadow: 0 0 5px #39ff14; margin-bottom: 5px; }}
+  p, li {{ text-shadow: 0 0 5px #39ff14; }}
+  .subtitle {{ text-align: center; font-size: 0.95em; margin-bottom: 30px; }}
+  table {{ border-collapse: collapse; width: 100%; margin-bottom: 15px; border: 2px solid #39ff14 !important; box-shadow: 0 0 15px rgba(57,255,20,0.3); font-size: 0.9em; background-color: #000000; }}
+  th, td {{ border: 1px solid #39ff14 !important; padding: 8px 10px; text-align: left; }}
+  th {{ background-color: #0a0a0a !important; text-shadow: 0 0 8px #39ff14; font-weight: bold; }}
+  td {{ background-color: #000000 !important; text-shadow: none; }}
+  tbody tr:nth-child(even) td {{ background-color: #080808 !important; }}
+  tbody tr:nth-child(odd) td {{ background-color: #000000 !important; }}
+  tbody tr:hover td {{ background-color: #0a1a0a !important; }}
+  .group-section {{ margin-bottom: 40px; padding: 15px 20px; background-color: #050505 !important; border: 1px solid #39ff14 !important; border-radius: 8px; box-shadow: 0 0 10px rgba(57,255,20,0.15); }}
+  .closeness-badge {{ display: inline-block; padding: 4px 14px; border-radius: 12px; font-weight: bold; font-size: 1.1em; margin: 8px 0 12px 0; text-shadow: 0 0 8px #39ff14; background-color: rgba(57,255,20,0.15) !important; border: 1px solid #39ff14 !important; }}
+  .closeness-label {{ font-size: 0.75em; font-weight: normal; opacity: 0.8; }}
+  .teams-list {{ font-size: 0.9em; margin-bottom: 10px; }}
+  .knockout-section {{ margin-top: 40px; padding: 15px 20px; background-color: #050505 !important; border: 1px solid #39ff14 !important; border-radius: 8px; }}
+  .cool-facts {{ margin-top: 40px; padding: 15px 20px; background-color: #050505 !important; border: 1px solid #39ff14 !important; border-radius: 8px; }}
+  .cool-facts li {{ margin-bottom: 6px; }}
+  .matchup-count {{ font-size: 1.1em; margin-top: 10px; text-shadow: 0 0 5px #39ff14; }}
+  footer {{ text-align: center; margin-top: 50px; padding-top: 15px; border-top: 1px solid #39ff14 !important; font-size: 0.85em; }}
+  a {{ text-decoration: underline; }}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>World Cup 2026 Simulation Results</h1>
+  <p class="subtitle">Monte Carlo Simulation &mdash; 10,000 Iterations &mdash; Mode: All Possibilities</p>
+<div class='group-section'><h2>Group A</h2><p class='teams-list'><strong>Teams:</strong> Mexico, South Africa, South Korea, Czech Republic</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 7.3/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Mexico</th>
+      <td>73.23</td>
+      <td>19.96</td>
+      <td>6.45</td>
+      <td>0.36</td>
+    </tr>
+    <tr>
+      <th>South Korea</th>
+      <td>18.11</td>
+      <td>45.68</td>
+      <td>31.02</td>
+      <td>5.19</td>
+    </tr>
+    <tr>
+      <th>Czech Republic</th>
+      <td>8.46</td>
+      <td>31.46</td>
+      <td>49.18</td>
+      <td>10.90</td>
+    </tr>
+    <tr>
+      <th>South Africa</th>
+      <td>0.20</td>
+      <td>2.90</td>
+      <td>13.35</td>
+      <td>83.55</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Mexico</th>
+      <td>7.16</td>
+      <td>8.42</td>
+      <td>3.18</td>
+      <td>5.24</td>
+    </tr>
+    <tr>
+      <th>South Korea</th>
+      <td>4.84</td>
+      <td>5.28</td>
+      <td>4.25</td>
+      <td>1.02</td>
+    </tr>
+    <tr>
+      <th>Czech Republic</th>
+      <td>3.91</td>
+      <td>4.60</td>
+      <td>5.08</td>
+      <td>-0.48</td>
+    </tr>
+    <tr>
+      <th>South Africa</th>
+      <td>0.97</td>
+      <td>2.33</td>
+      <td>8.12</td>
+      <td>-5.79</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group B</h2><p class='teams-list'><strong>Teams:</strong> Canada, Qatar, Switzerland, Bosnia and Herzegovina</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 7.1/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Switzerland</th>
+      <td>54.04</td>
+      <td>39.89</td>
+      <td>5.25</td>
+      <td>0.82</td>
+    </tr>
+    <tr>
+      <th>Canada</th>
+      <td>44.01</td>
+      <td>48.54</td>
+      <td>6.62</td>
+      <td>0.83</td>
+    </tr>
+    <tr>
+      <th>Bosnia and Herzegovina</th>
+      <td>1.53</td>
+      <td>8.29</td>
+      <td>57.15</td>
+      <td>33.03</td>
+    </tr>
+    <tr>
+      <th>Qatar</th>
+      <td>0.42</td>
+      <td>3.28</td>
+      <td>30.98</td>
+      <td>65.32</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Switzerland</th>
+      <td>6.75</td>
+      <td>6.78</td>
+      <td>2.75</td>
+      <td>4.03</td>
+    </tr>
+    <tr>
+      <th>Canada</th>
+      <td>6.41</td>
+      <td>7.44</td>
+      <td>3.46</td>
+      <td>3.98</td>
+    </tr>
+    <tr>
+      <th>Bosnia and Herzegovina</th>
+      <td>2.40</td>
+      <td>3.34</td>
+      <td>6.41</td>
+      <td>-3.07</td>
+    </tr>
+    <tr>
+      <th>Qatar</th>
+      <td>1.38</td>
+      <td>2.57</td>
+      <td>7.51</td>
+      <td>-4.94</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group C</h2><p class='teams-list'><strong>Teams:</strong> Brazil, Morocco, Haiti, Scotland</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 7.4/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Brazil</th>
+      <td>69.82</td>
+      <td>22.00</td>
+      <td>7.53</td>
+      <td>0.65</td>
+    </tr>
+    <tr>
+      <th>Morocco</th>
+      <td>16.37</td>
+      <td>39.40</td>
+      <td>37.01</td>
+      <td>7.22</td>
+    </tr>
+    <tr>
+      <th>Scotland</th>
+      <td>13.47</td>
+      <td>35.46</td>
+      <td>42.09</td>
+      <td>8.98</td>
+    </tr>
+    <tr>
+      <th>Haiti</th>
+      <td>0.34</td>
+      <td>3.14</td>
+      <td>13.37</td>
+      <td>83.15</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Brazil</th>
+      <td>6.98</td>
+      <td>6.81</td>
+      <td>2.49</td>
+      <td>4.32</td>
+    </tr>
+    <tr>
+      <th>Morocco</th>
+      <td>4.51</td>
+      <td>4.78</td>
+      <td>4.12</td>
+      <td>0.66</td>
+    </tr>
+    <tr>
+      <th>Scotland</th>
+      <td>4.26</td>
+      <td>4.59</td>
+      <td>4.32</td>
+      <td>0.28</td>
+    </tr>
+    <tr>
+      <th>Haiti</th>
+      <td>1.00</td>
+      <td>2.13</td>
+      <td>7.39</td>
+      <td>-5.26</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group D</h2><p class='teams-list'><strong>Teams:</strong> United States, Paraguay, Australia, Turkey</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 9.0/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Paraguay</th>
+      <td>41.41</td>
+      <td>28.52</td>
+      <td>19.84</td>
+      <td>10.23</td>
+    </tr>
+    <tr>
+      <th>United States</th>
+      <td>28.27</td>
+      <td>29.30</td>
+      <td>24.97</td>
+      <td>17.46</td>
+    </tr>
+    <tr>
+      <th>Australia</th>
+      <td>22.69</td>
+      <td>27.52</td>
+      <td>28.27</td>
+      <td>21.52</td>
+    </tr>
+    <tr>
+      <th>Turkey</th>
+      <td>7.63</td>
+      <td>14.66</td>
+      <td>26.92</td>
+      <td>50.79</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Paraguay</th>
+      <td>5.19</td>
+      <td>5.31</td>
+      <td>3.80</td>
+      <td>1.51</td>
+    </tr>
+    <tr>
+      <th>United States</th>
+      <td>4.49</td>
+      <td>5.17</td>
+      <td>4.62</td>
+      <td>0.55</td>
+    </tr>
+    <tr>
+      <th>Australia</th>
+      <td>4.12</td>
+      <td>4.53</td>
+      <td>4.50</td>
+      <td>0.03</td>
+    </tr>
+    <tr>
+      <th>Turkey</th>
+      <td>2.61</td>
+      <td>3.55</td>
+      <td>5.64</td>
+      <td>-2.09</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group E</h2><p class='teams-list'><strong>Teams:</strong> Germany, Curaçao, Ivory Coast, Ecuador</p><div class='closeness-badge closeness-medium'>Group Closeness Rating: 6.9/10 <span class='closeness-label'>&mdash; Moderately Balanced</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Ecuador</th>
+      <td>49.42</td>
+      <td>42.36</td>
+      <td>7.76</td>
+      <td>0.46</td>
+    </tr>
+    <tr>
+      <th>Germany</th>
+      <td>47.08</td>
+      <td>43.93</td>
+      <td>8.41</td>
+      <td>0.58</td>
+    </tr>
+    <tr>
+      <th>Ivory Coast</th>
+      <td>3.43</td>
+      <td>12.63</td>
+      <td>68.99</td>
+      <td>14.95</td>
+    </tr>
+    <tr>
+      <th>Curaçao</th>
+      <td>0.07</td>
+      <td>1.08</td>
+      <td>14.84</td>
+      <td>84.01</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Ecuador</th>
+      <td>6.56</td>
+      <td>6.62</td>
+      <td>2.67</td>
+      <td>3.95</td>
+    </tr>
+    <tr>
+      <th>Germany</th>
+      <td>6.48</td>
+      <td>6.52</td>
+      <td>2.74</td>
+      <td>3.78</td>
+    </tr>
+    <tr>
+      <th>Ivory Coast</th>
+      <td>3.11</td>
+      <td>3.73</td>
+      <td>5.45</td>
+      <td>-1.72</td>
+    </tr>
+    <tr>
+      <th>Curaçao</th>
+      <td>0.79</td>
+      <td>1.85</td>
+      <td>7.87</td>
+      <td>-6.02</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group F</h2><p class='teams-list'><strong>Teams:</strong> Netherlands, Japan, Sweden, Tunisia</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 7.6/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Netherlands</th>
+      <td>64.23</td>
+      <td>28.43</td>
+      <td>6.14</td>
+      <td>1.20</td>
+    </tr>
+    <tr>
+      <th>Japan</th>
+      <td>30.86</td>
+      <td>49.93</td>
+      <td>15.54</td>
+      <td>3.67</td>
+    </tr>
+    <tr>
+      <th>Sweden</th>
+      <td>3.82</td>
+      <td>15.41</td>
+      <td>50.07</td>
+      <td>30.70</td>
+    </tr>
+    <tr>
+      <th>Tunisia</th>
+      <td>1.09</td>
+      <td>6.23</td>
+      <td>28.25</td>
+      <td>64.43</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Netherlands</th>
+      <td>6.77</td>
+      <td>6.60</td>
+      <td>2.57</td>
+      <td>4.03</td>
+    </tr>
+    <tr>
+      <th>Japan</th>
+      <td>5.54</td>
+      <td>5.54</td>
+      <td>3.44</td>
+      <td>2.10</td>
+    </tr>
+    <tr>
+      <th>Sweden</th>
+      <td>2.78</td>
+      <td>3.43</td>
+      <td>5.50</td>
+      <td>-2.08</td>
+    </tr>
+    <tr>
+      <th>Tunisia</th>
+      <td>1.62</td>
+      <td>2.56</td>
+      <td>6.61</td>
+      <td>-4.05</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group G</h2><p class='teams-list'><strong>Teams:</strong> Belgium, Egypt, Iran, New Zealand</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 8.1/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Belgium</th>
+      <td>63.36</td>
+      <td>24.90</td>
+      <td>9.19</td>
+      <td>2.55</td>
+    </tr>
+    <tr>
+      <th>Iran</th>
+      <td>25.47</td>
+      <td>42.52</td>
+      <td>22.67</td>
+      <td>9.34</td>
+    </tr>
+    <tr>
+      <th>Egypt</th>
+      <td>8.57</td>
+      <td>21.71</td>
+      <td>39.57</td>
+      <td>30.15</td>
+    </tr>
+    <tr>
+      <th>New Zealand</th>
+      <td>2.60</td>
+      <td>10.87</td>
+      <td>28.57</td>
+      <td>57.96</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Belgium</th>
+      <td>6.46</td>
+      <td>6.22</td>
+      <td>2.83</td>
+      <td>3.39</td>
+    </tr>
+    <tr>
+      <th>Iran</th>
+      <td>4.86</td>
+      <td>4.93</td>
+      <td>3.87</td>
+      <td>1.07</td>
+    </tr>
+    <tr>
+      <th>Egypt</th>
+      <td>3.19</td>
+      <td>3.75</td>
+      <td>5.09</td>
+      <td>-1.33</td>
+    </tr>
+    <tr>
+      <th>New Zealand</th>
+      <td>2.04</td>
+      <td>2.95</td>
+      <td>6.07</td>
+      <td>-3.12</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group H</h2><p class='teams-list'><strong>Teams:</strong> Spain, Cape Verde, Saudi Arabia, Uruguay</p><div class='closeness-badge closeness-medium'>Group Closeness Rating: 6.6/10 <span class='closeness-label'>&mdash; Moderately Balanced</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Spain</th>
+      <td>87.38</td>
+      <td>11.88</td>
+      <td>0.66</td>
+      <td>0.08</td>
+    </tr>
+    <tr>
+      <th>Uruguay</th>
+      <td>12.13</td>
+      <td>77.07</td>
+      <td>9.21</td>
+      <td>1.59</td>
+    </tr>
+    <tr>
+      <th>Saudi Arabia</th>
+      <td>0.27</td>
+      <td>6.18</td>
+      <td>49.07</td>
+      <td>44.48</td>
+    </tr>
+    <tr>
+      <th>Cape Verde</th>
+      <td>0.22</td>
+      <td>4.87</td>
+      <td>41.06</td>
+      <td>53.85</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Spain</th>
+      <td>8.07</td>
+      <td>8.41</td>
+      <td>1.67</td>
+      <td>6.75</td>
+    </tr>
+    <tr>
+      <th>Uruguay</th>
+      <td>5.49</td>
+      <td>5.74</td>
+      <td>3.68</td>
+      <td>2.06</td>
+    </tr>
+    <tr>
+      <th>Saudi Arabia</th>
+      <td>1.87</td>
+      <td>2.62</td>
+      <td>6.82</td>
+      <td>-4.20</td>
+    </tr>
+    <tr>
+      <th>Cape Verde</th>
+      <td>1.61</td>
+      <td>2.44</td>
+      <td>7.05</td>
+      <td>-4.61</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group I</h2><p class='teams-list'><strong>Teams:</strong> France, Senegal, Iraq, Norway</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 7.1/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>France</th>
+      <td>72.99</td>
+      <td>20.03</td>
+      <td>6.58</td>
+      <td>0.40</td>
+    </tr>
+    <tr>
+      <th>Norway</th>
+      <td>16.70</td>
+      <td>45.42</td>
+      <td>33.82</td>
+      <td>4.06</td>
+    </tr>
+    <tr>
+      <th>Senegal</th>
+      <td>10.19</td>
+      <td>33.09</td>
+      <td>49.35</td>
+      <td>7.37</td>
+    </tr>
+    <tr>
+      <th>Iraq</th>
+      <td>0.12</td>
+      <td>1.46</td>
+      <td>10.25</td>
+      <td>88.17</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>France</th>
+      <td>7.18</td>
+      <td>7.01</td>
+      <td>2.31</td>
+      <td>4.71</td>
+    </tr>
+    <tr>
+      <th>Norway</th>
+      <td>4.81</td>
+      <td>5.04</td>
+      <td>3.92</td>
+      <td>1.12</td>
+    </tr>
+    <tr>
+      <th>Senegal</th>
+      <td>4.12</td>
+      <td>4.57</td>
+      <td>4.52</td>
+      <td>0.05</td>
+    </tr>
+    <tr>
+      <th>Iraq</th>
+      <td>0.76</td>
+      <td>1.89</td>
+      <td>7.77</td>
+      <td>-5.88</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group J</h2><p class='teams-list'><strong>Teams:</strong> Argentina, Algeria, Austria, Jordan</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 7.5/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Argentina</th>
+      <td>89.20</td>
+      <td>9.31</td>
+      <td>1.28</td>
+      <td>0.21</td>
+    </tr>
+    <tr>
+      <th>Austria</th>
+      <td>7.74</td>
+      <td>51.27</td>
+      <td>27.20</td>
+      <td>13.79</td>
+    </tr>
+    <tr>
+      <th>Algeria</th>
+      <td>1.93</td>
+      <td>23.94</td>
+      <td>39.54</td>
+      <td>34.59</td>
+    </tr>
+    <tr>
+      <th>Jordan</th>
+      <td>1.13</td>
+      <td>15.48</td>
+      <td>31.98</td>
+      <td>51.41</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Argentina</th>
+      <td>7.85</td>
+      <td>7.74</td>
+      <td>1.85</td>
+      <td>5.89</td>
+    </tr>
+    <tr>
+      <th>Austria</th>
+      <td>4.12</td>
+      <td>4.37</td>
+      <td>4.62</td>
+      <td>-0.25</td>
+    </tr>
+    <tr>
+      <th>Algeria</th>
+      <td>2.71</td>
+      <td>3.35</td>
+      <td>5.70</td>
+      <td>-2.35</td>
+    </tr>
+    <tr>
+      <th>Jordan</th>
+      <td>2.10</td>
+      <td>2.88</td>
+      <td>6.17</td>
+      <td>-3.29</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group K</h2><p class='teams-list'><strong>Teams:</strong> Portugal, Congo DR, Uzbekistan, Colombia</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 7.4/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Colombia</th>
+      <td>48.55</td>
+      <td>41.18</td>
+      <td>8.65</td>
+      <td>1.62</td>
+    </tr>
+    <tr>
+      <th>Portugal</th>
+      <td>47.44</td>
+      <td>41.66</td>
+      <td>9.45</td>
+      <td>1.45</td>
+    </tr>
+    <tr>
+      <th>Uzbekistan</th>
+      <td>3.14</td>
+      <td>12.35</td>
+      <td>52.65</td>
+      <td>31.86</td>
+    </tr>
+    <tr>
+      <th>Congo DR</th>
+      <td>0.87</td>
+      <td>4.81</td>
+      <td>29.25</td>
+      <td>65.07</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Colombia</th>
+      <td>6.31</td>
+      <td>6.19</td>
+      <td>2.86</td>
+      <td>3.33</td>
+    </tr>
+    <tr>
+      <th>Portugal</th>
+      <td>6.27</td>
+      <td>6.14</td>
+      <td>2.85</td>
+      <td>3.29</td>
+    </tr>
+    <tr>
+      <th>Uzbekistan</th>
+      <td>2.64</td>
+      <td>3.33</td>
+      <td>5.72</td>
+      <td>-2.39</td>
+    </tr>
+    <tr>
+      <th>Congo DR</th>
+      <td>1.54</td>
+      <td>2.48</td>
+      <td>6.71</td>
+      <td>-4.22</td>
+    </tr>
+  </tbody>
+</table></div><div class='group-section'><h2>Group L</h2><p class='teams-list'><strong>Teams:</strong> England, Croatia, Panama, Ghana</p><div class='closeness-badge closeness-high'>Group Closeness Rating: 7.0/10 <span class='closeness-label'>&mdash; Highly Competitive</span></div><h3>Predicted Finishing Positions</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1st (%)</th>
+      <th>2nd (%)</th>
+      <th>3rd (%)</th>
+      <th>4th (%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>England</th>
+      <td>62.64</td>
+      <td>31.19</td>
+      <td>5.82</td>
+      <td>0.35</td>
+    </tr>
+    <tr>
+      <th>Croatia</th>
+      <td>33.77</td>
+      <td>52.20</td>
+      <td>13.12</td>
+      <td>0.91</td>
+    </tr>
+    <tr>
+      <th>Panama</th>
+      <td>3.52</td>
+      <td>15.45</td>
+      <td>66.84</td>
+      <td>14.19</td>
+    </tr>
+    <tr>
+      <th>Ghana</th>
+      <td>0.07</td>
+      <td>1.16</td>
+      <td>14.22</td>
+      <td>84.55</td>
+    </tr>
+  </tbody>
+</table><h3>Expected Points</h3><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Exp Pts</th>
+      <th>Exp GF</th>
+      <th>Exp GA</th>
+      <th>Exp GD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>England</th>
+      <td>6.99</td>
+      <td>6.95</td>
+      <td>2.43</td>
+      <td>4.52</td>
+    </tr>
+    <tr>
+      <th>Croatia</th>
+      <td>5.97</td>
+      <td>6.12</td>
+      <td>3.14</td>
+      <td>2.98</td>
+    </tr>
+    <tr>
+      <th>Panama</th>
+      <td>3.20</td>
+      <td>3.82</td>
+      <td>5.37</td>
+      <td>-1.55</td>
+    </tr>
+    <tr>
+      <th>Ghana</th>
+      <td>0.78</td>
+      <td>1.88</td>
+      <td>7.83</td>
+      <td>-5.95</td>
+    </tr>
+  </tbody>
+</table></div><div class='knockout-section'><h2>Knockout Stage Probabilities</h2><table><thead><tr><th>Team</th><th>Round of 32</th><th>Round of 16</th><th>Quarterfinals</th><th>Semifinals</th><th>Final</th><th>Winner</th><th>Runner-up</th><th>3rd Place</th><th>4th Place</th></tr></thead><tbody><tr><td><strong>Spain</strong></td><td>99.9%</td><td>90.1%</td><td>77.4%</td><td>71.8%</td><td>57.9%</td><td>42.6%</td><td>15.3%</td><td>11.4%</td><td>2.5%</td></tr><tr><td><strong>Argentina</strong></td><td>99.7%</td><td>79.9%</td><td>74.4%</td><td>60.8%</td><td>46.9%</td><td>24.0%</td><td>22.9%</td><td>10.0%</td><td>3.9%</td></tr><tr><td><strong>France</strong></td><td>99.1%</td><td>89.4%</td><td>73.3%</td><td>58.2%</td><td>28.0%</td><td>15.6%</td><td>12.4%</td><td>22.3%</td><td>7.8%</td></tr><tr><td><strong>England</strong></td><td>99.1%</td><td>80.7%</td><td>54.4%</td><td>36.2%</td><td>16.0%</td><td>5.8%</td><td>10.2%</td><td>11.1%</td><td>9.2%</td></tr><tr><td><strong>Colombia</strong></td><td>97.0%</td><td>70.1%</td><td>39.8%</td><td>16.0%</td><td>7.6%</td><td>2.1%</td><td>5.5%</td><td>4.3%</td><td>4.1%</td></tr><tr><td><strong>Portugal</strong></td><td>96.9%</td><td>69.1%</td><td>39.7%</td><td>15.7%</td><td>7.2%</td><td>2.0%</td><td>5.2%</td><td>3.9%</td><td>4.6%</td></tr><tr><td><strong>Netherlands</strong></td><td>97.9%</td><td>68.4%</td><td>48.9%</td><td>21.2%</td><td>6.1%</td><td>1.8%</td><td>4.3%</td><td>6.9%</td><td>8.2%</td></tr><tr><td><strong>Brazil</strong></td><td>98.6%</td><td>66.8%</td><td>41.0%</td><td>19.8%</td><td>6.4%</td><td>1.7%</td><td>4.6%</td><td>6.3%</td><td>7.2%</td></tr><tr><td><strong>Croatia</strong></td><td>97.0%</td><td>60.6%</td><td>28.6%</td><td>14.6%</td><td>4.7%</td><td>1.1%</td><td>3.6%</td><td>4.0%</td><td>6.0%</td></tr><tr><td><strong>Germany</strong></td><td>98.4%</td><td>62.6%</td><td>23.9%</td><td>11.2%</td><td>2.9%</td><td>0.6%</td><td>2.3%</td><td>3.2%</td><td>5.1%</td></tr><tr><td><strong>Ecuador</strong></td><td>98.6%</td><td>64.1%</td><td>25.4%</td><td>12.7%</td><td>3.3%</td><td>0.6%</td><td>2.7%</td><td>3.5%</td><td>5.9%</td></tr><tr><td><strong>Norway</strong></td><td>89.8%</td><td>51.1%</td><td>25.9%</td><td>10.4%</td><td>2.6%</td><td>0.5%</td><td>2.1%</td><td>2.6%</td><td>5.3%</td></tr><tr><td><strong>Mexico</strong></td><td>99.2%</td><td>69.6%</td><td>23.6%</td><td>7.7%</td><td>1.7%</td><td>0.3%</td><td>1.4%</td><td>2.0%</td><td>4.0%</td></tr><tr><td><strong>Switzerland</strong></td><td>98.3%</td><td>70.4%</td><td>27.3%</td><td>6.5%</td><td>1.5%</td><td>0.2%</td><td>1.2%</td><td>1.6%</td><td>3.4%</td></tr><tr><td><strong>Uruguay</strong></td><td>95.7%</td><td>25.0%</td><td>14.2%</td><td>6.2%</td><td>1.8%</td><td>0.2%</td><td>1.6%</td><td>1.4%</td><td>3.0%</td></tr><tr><td><strong>Japan</strong></td><td>93.1%</td><td>44.5%</td><td>22.2%</td><td>6.2%</td><td>1.3%</td><td>0.2%</td><td>1.1%</td><td>1.3%</td><td>3.6%</td></tr><tr><td><strong>Senegal</strong></td><td>81.9%</td><td>38.6%</td><td>17.1%</td><td>5.2%</td><td>0.9%</td><td>0.2%</td><td>0.8%</td><td>1.1%</td><td>3.2%</td></tr><tr><td><strong>Belgium</strong></td><td>96.1%</td><td>62.8%</td><td>29.9%</td><td>4.2%</td><td>1.0%</td><td>0.1%</td><td>0.9%</td><td>0.8%</td><td>2.3%</td></tr><tr><td><strong>Paraguay</strong></td><td>85.9%</td><td>53.9%</td><td>20.1%</td><td>3.0%</td><td>0.6%</td><td>0.1%</td><td>0.5%</td><td>0.6%</td><td>1.8%</td></tr><tr><td><strong>Canada</strong></td><td>98.4%</td><td>60.4%</td><td>17.6%</td><td>2.8%</td><td>0.4%</td><td>0.1%</td><td>0.4%</td><td>0.5%</td><td>1.9%</td></tr><tr><td><strong>United States</strong></td><td>77.6%</td><td>36.5%</td><td>8.9%</td><td>0.9%</td><td>0.1%</td><td>0.0%</td><td>0.1%</td><td>0.2%</td><td>0.6%</td></tr><tr><td><strong>Australia</strong></td><td>72.0%</td><td>34.6%</td><td>8.8%</td><td>1.0%</td><td>0.2%</td><td>0.0%</td><td>0.2%</td><td>0.1%</td><td>0.7%</td></tr><tr><td><strong>Uzbekistan</strong></td><td>49.0%</td><td>10.1%</td><td>1.9%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.2%</td></tr><tr><td><strong>Iran</strong></td><td>85.4%</td><td>36.1%</td><td>8.0%</td><td>0.7%</td><td>0.1%</td><td>0.0%</td><td>0.1%</td><td>0.1%</td><td>0.5%</td></tr><tr><td><strong>Scotland</strong></td><td>81.7%</td><td>23.5%</td><td>7.9%</td><td>1.1%</td><td>0.2%</td><td>0.0%</td><td>0.1%</td><td>0.1%</td><td>0.8%</td></tr><tr><td><strong>Morocco</strong></td><td>85.0%</td><td>25.8%</td><td>9.4%</td><td>1.8%</td><td>0.2%</td><td>0.0%</td><td>0.2%</td><td>0.3%</td><td>1.3%</td></tr><tr><td><strong>Egypt</strong></td><td>57.9%</td><td>11.8%</td><td>1.5%</td><td>0.1%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.1%</td></tr><tr><td><strong>Turkey</strong></td><td>41.7%</td><td>12.6%</td><td>2.0%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.1%</td></tr><tr><td><strong>Tunisia</strong></td><td>22.8%</td><td>2.4%</td><td>0.3%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Cape Verde</strong></td><td>22.7%</td><td>0.8%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Austria</strong></td><td>77.7%</td><td>13.8%</td><td>5.2%</td><td>1.4%</td><td>0.2%</td><td>0.0%</td><td>0.2%</td><td>0.2%</td><td>1.0%</td></tr><tr><td><strong>Sweden</strong></td><td>51.8%</td><td>8.9%</td><td>1.6%</td><td>0.1%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.1%</td></tr><tr><td><strong>Jordan</strong></td><td>33.7%</td><td>3.4%</td><td>0.6%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Bosnia and Herzegovina</strong></td><td>41.9%</td><td>4.0%</td><td>0.4%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Iraq</strong></td><td>5.8%</td><td>0.6%</td><td>0.1%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>South Korea</strong></td><td>88.1%</td><td>36.5%</td><td>8.7%</td><td>1.4%</td><td>0.1%</td><td>0.0%</td><td>0.1%</td><td>0.2%</td><td>1.0%</td></tr><tr><td><strong>Saudi Arabia</strong></td><td>28.8%</td><td>1.7%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Curaçao</strong></td><td>6.6%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Congo DR</strong></td><td>21.3%</td><td>2.4%</td><td>0.4%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Ivory Coast</strong></td><td>63.1%</td><td>8.9%</td><td>1.2%</td><td>0.1%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.1%</td></tr><tr><td><strong>Czech Republic</strong></td><td>75.9%</td><td>20.8%</td><td>3.7%</td><td>0.3%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.3%</td></tr><tr><td><strong>Algeria</strong></td><td>48.4%</td><td>6.5%</td><td>1.5%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.2%</td></tr><tr><td><strong>Ghana</strong></td><td>6.8%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>New Zealand</strong></td><td>31.4%</td><td>3.8%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Panama</strong></td><td>65.3%</td><td>14.1%</td><td>2.8%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.2%</td></tr><tr><td><strong>Haiti</strong></td><td>10.2%</td><td>0.5%</td><td>0.1%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>South Africa</strong></td><td>9.0%</td><td>0.5%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Qatar</strong></td><td>18.0%</td><td>0.8%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr></tbody></table><div style='border:1px solid #39ff14 !important; border-radius:8px; padding:12px 16px; margin:20px 0; background-color:#050505 !important;'><h3 style='margin-top:0;'>Group Stage Advancement</h3><table style='margin-bottom:0;'><thead><tr><th>Team</th><th>Round of 32</th></tr></thead><tbody><tr><td><strong>Spain</strong></td><td>99.9%</td></tr><tr><td><strong>Argentina</strong></td><td>99.7%</td></tr><tr><td><strong>Mexico</strong></td><td>99.2%</td></tr><tr><td><strong>France</strong></td><td>99.1%</td></tr><tr><td><strong>England</strong></td><td>99.1%</td></tr><tr><td><strong>Ecuador</strong></td><td>98.6%</td></tr><tr><td><strong>Brazil</strong></td><td>98.6%</td></tr><tr><td><strong>Canada</strong></td><td>98.4%</td></tr><tr><td><strong>Germany</strong></td><td>98.4%</td></tr><tr><td><strong>Switzerland</strong></td><td>98.3%</td></tr><tr><td><strong>Netherlands</strong></td><td>97.9%</td></tr><tr><td><strong>Croatia</strong></td><td>97.0%</td></tr><tr><td><strong>Colombia</strong></td><td>97.0%</td></tr><tr><td><strong>Portugal</strong></td><td>96.9%</td></tr><tr><td><strong>Belgium</strong></td><td>96.1%</td></tr><tr><td><strong>Uruguay</strong></td><td>95.7%</td></tr><tr><td><strong>Japan</strong></td><td>93.1%</td></tr><tr><td><strong>Norway</strong></td><td>89.8%</td></tr><tr><td><strong>South Korea</strong></td><td>88.1%</td></tr><tr><td><strong>Paraguay</strong></td><td>85.9%</td></tr><tr><td><strong>Iran</strong></td><td>85.4%</td></tr><tr><td><strong>Morocco</strong></td><td>85.0%</td></tr><tr><td><strong>Senegal</strong></td><td>81.9%</td></tr><tr><td><strong>Scotland</strong></td><td>81.7%</td></tr><tr><td><strong>Austria</strong></td><td>77.7%</td></tr><tr><td><strong>United States</strong></td><td>77.6%</td></tr><tr><td><strong>Czech Republic</strong></td><td>75.9%</td></tr><tr><td><strong>Australia</strong></td><td>72.0%</td></tr><tr><td><strong>Panama</strong></td><td>65.3%</td></tr><tr><td><strong>Ivory Coast</strong></td><td>63.1%</td></tr><tr><td><strong>Egypt</strong></td><td>57.9%</td></tr><tr><td><strong>Sweden</strong></td><td>51.8%</td></tr><tr><td><strong>Uzbekistan</strong></td><td>49.0%</td></tr><tr><td><strong>Algeria</strong></td><td>48.4%</td></tr><tr><td><strong>Bosnia and Herzegovina</strong></td><td>41.9%</td></tr><tr><td><strong>Turkey</strong></td><td>41.7%</td></tr><tr><td><strong>Jordan</strong></td><td>33.7%</td></tr><tr><td><strong>New Zealand</strong></td><td>31.4%</td></tr><tr><td><strong>Saudi Arabia</strong></td><td>28.8%</td></tr><tr><td><strong>Tunisia</strong></td><td>22.8%</td></tr><tr><td><strong>Cape Verde</strong></td><td>22.7%</td></tr><tr><td><strong>Congo DR</strong></td><td>21.3%</td></tr><tr><td><strong>Qatar</strong></td><td>18.0%</td></tr><tr><td><strong>Haiti</strong></td><td>10.2%</td></tr><tr><td><strong>South Africa</strong></td><td>9.0%</td></tr><tr><td><strong>Ghana</strong></td><td>6.8%</td></tr><tr><td><strong>Curaçao</strong></td><td>6.6%</td></tr><tr><td><strong>Iraq</strong></td><td>5.8%</td></tr></tbody></table></div><div style='border:1px solid #39ff14 !important; border-radius:8px; padding:12px 16px; margin:20px 0; background-color:#050505 !important;'><h3 style='margin-top:0;'>Knockout Rounds</h3><table style='margin-bottom:0;'><thead><tr><th>Team</th><th>Round of 16</th><th>Quarterfinals</th><th>Semifinals</th></tr></thead><tbody><tr><td><strong>Spain</strong></td><td>90.1%</td><td>77.4%</td><td>71.8%</td></tr><tr><td><strong>France</strong></td><td>89.5%</td><td>73.3%</td><td>58.2%</td></tr><tr><td><strong>England</strong></td><td>80.7%</td><td>54.4%</td><td>36.2%</td></tr><tr><td><strong>Argentina</strong></td><td>79.9%</td><td>74.4%</td><td>60.9%</td></tr><tr><td><strong>Switzerland</strong></td><td>70.4%</td><td>27.3%</td><td>6.5%</td></tr><tr><td><strong>Colombia</strong></td><td>70.1%</td><td>39.8%</td><td>16.0%</td></tr><tr><td><strong>Mexico</strong></td><td>69.6%</td><td>23.6%</td><td>7.7%</td></tr><tr><td><strong>Portugal</strong></td><td>69.1%</td><td>39.7%</td><td>15.7%</td></tr><tr><td><strong>Netherlands</strong></td><td>68.4%</td><td>48.9%</td><td>21.2%</td></tr><tr><td><strong>Brazil</strong></td><td>66.8%</td><td>41.0%</td><td>19.8%</td></tr><tr><td><strong>Ecuador</strong></td><td>64.1%</td><td>25.4%</td><td>12.7%</td></tr><tr><td><strong>Belgium</strong></td><td>62.8%</td><td>29.9%</td><td>4.2%</td></tr><tr><td><strong>Germany</strong></td><td>62.6%</td><td>23.9%</td><td>11.2%</td></tr><tr><td><strong>Croatia</strong></td><td>60.6%</td><td>28.6%</td><td>14.6%</td></tr><tr><td><strong>Canada</strong></td><td>60.4%</td><td>17.6%</td><td>2.8%</td></tr><tr><td><strong>Paraguay</strong></td><td>53.9%</td><td>20.1%</td><td>3.0%</td></tr><tr><td><strong>Norway</strong></td><td>51.1%</td><td>25.9%</td><td>10.4%</td></tr><tr><td><strong>Japan</strong></td><td>44.5%</td><td>22.2%</td><td>6.2%</td></tr><tr><td><strong>Senegal</strong></td><td>38.6%</td><td>17.1%</td><td>5.2%</td></tr><tr><td><strong>United States</strong></td><td>36.5%</td><td>8.9%</td><td>0.9%</td></tr><tr><td><strong>South Korea</strong></td><td>36.5%</td><td>8.7%</td><td>1.4%</td></tr><tr><td><strong>Iran</strong></td><td>36.1%</td><td>8.0%</td><td>0.7%</td></tr><tr><td><strong>Australia</strong></td><td>34.6%</td><td>8.8%</td><td>1.0%</td></tr><tr><td><strong>Morocco</strong></td><td>25.8%</td><td>9.4%</td><td>1.8%</td></tr><tr><td><strong>Uruguay</strong></td><td>25.0%</td><td>14.2%</td><td>6.2%</td></tr><tr><td><strong>Scotland</strong></td><td>23.5%</td><td>7.9%</td><td>1.1%</td></tr><tr><td><strong>Czech Republic</strong></td><td>20.8%</td><td>3.7%</td><td>0.3%</td></tr><tr><td><strong>Panama</strong></td><td>14.1%</td><td>2.8%</td><td>0.2%</td></tr><tr><td><strong>Austria</strong></td><td>13.8%</td><td>5.2%</td><td>1.4%</td></tr><tr><td><strong>Turkey</strong></td><td>12.6%</td><td>2.0%</td><td>0.2%</td></tr><tr><td><strong>Egypt</strong></td><td>11.8%</td><td>1.5%</td><td>0.1%</td></tr><tr><td><strong>Uzbekistan</strong></td><td>10.1%</td><td>1.9%</td><td>0.2%</td></tr><tr><td><strong>Ivory Coast</strong></td><td>8.9%</td><td>1.2%</td><td>0.1%</td></tr><tr><td><strong>Sweden</strong></td><td>8.9%</td><td>1.6%</td><td>0.1%</td></tr><tr><td><strong>Algeria</strong></td><td>6.5%</td><td>1.5%</td><td>0.2%</td></tr><tr><td><strong>Bosnia and Herzegovina</strong></td><td>4.0%</td><td>0.4%</td><td>0.0%</td></tr><tr><td><strong>New Zealand</strong></td><td>3.8%</td><td>0.2%</td><td>0.0%</td></tr><tr><td><strong>Jordan</strong></td><td>3.4%</td><td>0.7%</td><td>0.0%</td></tr><tr><td><strong>Congo DR</strong></td><td>2.4%</td><td>0.4%</td><td>0.0%</td></tr><tr><td><strong>Tunisia</strong></td><td>2.4%</td><td>0.3%</td><td>0.0%</td></tr><tr><td><strong>Saudi Arabia</strong></td><td>1.7%</td><td>0.1%</td><td>0.0%</td></tr><tr><td><strong>Cape Verde</strong></td><td>0.9%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Qatar</strong></td><td>0.9%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Iraq</strong></td><td>0.6%</td><td>0.1%</td><td>0.0%</td></tr><tr><td><strong>Haiti</strong></td><td>0.5%</td><td>0.1%</td><td>0.0%</td></tr><tr><td><strong>South Africa</strong></td><td>0.5%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Ghana</strong></td><td>0.2%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Curaçao</strong></td><td>0.2%</td><td>0.0%</td><td>0.0%</td></tr></tbody></table></div><div style='border:1px solid #39ff14 !important; border-radius:8px; padding:12px 16px; margin:20px 0; background-color:#050505 !important;'><h3 style='margin-top:0;'>Finals</h3><table style='margin-bottom:0;'><thead><tr><th>Team</th><th>Final</th><th>Winner</th><th>Runner-up</th><th>3rd Place</th><th>4th Place</th></tr></thead><tbody><tr><td><strong>Spain</strong></td><td>57.9%</td><td>42.6%</td><td>15.3%</td><td>11.4%</td><td>2.5%</td></tr><tr><td><strong>Argentina</strong></td><td>46.9%</td><td>24.0%</td><td>22.9%</td><td>10.0%</td><td>3.9%</td></tr><tr><td><strong>France</strong></td><td>28.0%</td><td>15.6%</td><td>12.4%</td><td>22.3%</td><td>7.8%</td></tr><tr><td><strong>England</strong></td><td>16.0%</td><td>5.8%</td><td>10.2%</td><td>11.1%</td><td>9.2%</td></tr><tr><td><strong>Netherlands</strong></td><td>6.1%</td><td>1.8%</td><td>4.3%</td><td>6.9%</td><td>8.2%</td></tr><tr><td><strong>Colombia</strong></td><td>7.6%</td><td>2.1%</td><td>5.5%</td><td>4.3%</td><td>4.1%</td></tr><tr><td><strong>Portugal</strong></td><td>7.2%</td><td>2.0%</td><td>5.2%</td><td>3.9%</td><td>4.6%</td></tr><tr><td><strong>Brazil</strong></td><td>6.3%</td><td>1.7%</td><td>4.6%</td><td>6.3%</td><td>7.2%</td></tr><tr><td><strong>Croatia</strong></td><td>4.7%</td><td>1.1%</td><td>3.6%</td><td>4.0%</td><td>6.0%</td></tr><tr><td><strong>Ecuador</strong></td><td>3.3%</td><td>0.6%</td><td>2.7%</td><td>3.5%</td><td>5.9%</td></tr><tr><td><strong>Norway</strong></td><td>2.6%</td><td>0.5%</td><td>2.1%</td><td>2.6%</td><td>5.3%</td></tr><tr><td><strong>Germany</strong></td><td>2.9%</td><td>0.7%</td><td>2.3%</td><td>3.2%</td><td>5.1%</td></tr><tr><td><strong>Mexico</strong></td><td>1.7%</td><td>0.3%</td><td>1.4%</td><td>2.0%</td><td>4.0%</td></tr><tr><td><strong>Japan</strong></td><td>1.3%</td><td>0.2%</td><td>1.1%</td><td>1.3%</td><td>3.6%</td></tr><tr><td><strong>Switzerland</strong></td><td>1.5%</td><td>0.2%</td><td>1.2%</td><td>1.6%</td><td>3.5%</td></tr><tr><td><strong>Senegal</strong></td><td>0.9%</td><td>0.1%</td><td>0.8%</td><td>1.1%</td><td>3.2%</td></tr><tr><td><strong>Uruguay</strong></td><td>1.8%</td><td>0.2%</td><td>1.6%</td><td>1.4%</td><td>3.0%</td></tr><tr><td><strong>Belgium</strong></td><td>1.0%</td><td>0.1%</td><td>0.9%</td><td>0.8%</td><td>2.3%</td></tr><tr><td><strong>Canada</strong></td><td>0.4%</td><td>0.1%</td><td>0.4%</td><td>0.5%</td><td>1.9%</td></tr><tr><td><strong>Paraguay</strong></td><td>0.6%</td><td>0.1%</td><td>0.5%</td><td>0.6%</td><td>1.8%</td></tr><tr><td><strong>Morocco</strong></td><td>0.2%</td><td>0.0%</td><td>0.1%</td><td>0.3%</td><td>1.3%</td></tr><tr><td><strong>South Korea</strong></td><td>0.1%</td><td>0.0%</td><td>0.1%</td><td>0.2%</td><td>1.0%</td></tr><tr><td><strong>Austria</strong></td><td>0.2%</td><td>0.0%</td><td>0.2%</td><td>0.2%</td><td>0.9%</td></tr><tr><td><strong>Scotland</strong></td><td>0.1%</td><td>0.0%</td><td>0.1%</td><td>0.1%</td><td>0.8%</td></tr><tr><td><strong>Australia</strong></td><td>0.2%</td><td>0.0%</td><td>0.2%</td><td>0.1%</td><td>0.7%</td></tr><tr><td><strong>United States</strong></td><td>0.1%</td><td>0.0%</td><td>0.1%</td><td>0.1%</td><td>0.6%</td></tr><tr><td><strong>Iran</strong></td><td>0.1%</td><td>0.0%</td><td>0.1%</td><td>0.1%</td><td>0.5%</td></tr><tr><td><strong>Czech Republic</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.3%</td></tr><tr><td><strong>Algeria</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.2%</td></tr><tr><td><strong>Uzbekistan</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.2%</td></tr><tr><td><strong>Panama</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.2%</td></tr><tr><td><strong>Turkey</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.1%</td></tr><tr><td><strong>Egypt</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.1%</td></tr><tr><td><strong>Ivory Coast</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.1%</td></tr><tr><td><strong>Sweden</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.1%</td></tr><tr><td><strong>Tunisia</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>Jordan</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr><tr><td><strong>New Zealand</strong></td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr></tbody></table></div></div><div class='cool-facts'><h2>Cool Facts</h2><ul><li>Teams that reached Round of 32 at least once: <strong>48</strong> (100.0%)</li><li>Teams that reached Round of 16 at least once: <strong>48</strong> (100.0%)</li><li>Teams that reached Quarterfinals at least once: <strong>48</strong> (100.0%)</li><li>Teams that reached Semifinals at least once: <strong>38</strong> (79.2%)</li><li>Teams that reached Final at least once: <strong>35</strong> (72.9%)</li><li>Teams that reached Winner at least once: <strong>26</strong> (54.2%)</li><li>Teams that reached Runner-up at least once: <strong>34</strong> (70.8%)</li><li>Teams that reached Third Place at least once: <strong>32</strong> (66.7%)</li><li>Teams that reached Fourth Place at least once: <strong>38</strong> (79.2%)</li><li class='matchup-count'>Number of different final matchups: <strong>236</strong></li></ul></div>
+    <footer>World Cup 2026 &mdash; Monte Carlo Simulation Engine</footer>
+</div>
+</body>
+</html>
