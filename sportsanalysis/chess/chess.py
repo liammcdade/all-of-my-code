@@ -4,8 +4,13 @@ Target: Reach 2000 ELO rating through self-play learning
 """
 
 import numpy as np
-import chess as chess_lib
 import pandas as pd
+import sys
+
+# Import chess library avoiding name conflict with this file
+current_dir = sys.path.pop(0)
+import chess as chess_lib
+sys.path.insert(0, current_dir)
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 import json
@@ -16,10 +21,80 @@ from collections import defaultdict, deque
 import threading
 from concurrent.futures import ThreadPoolExecutor
 import logging
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+class ChessNet(nn.Module):
+    def __init__(self, input_planes=20, num_filters=256, num_res_blocks=19):
+        super(ChessNet, self).__init__()
+        self.input_planes = input_planes
+        self.num_filters = num_filters
+
+        # Initial convolution
+        self.conv1 = nn.Conv2d(input_planes, num_filters, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(num_filters)
+
+        # Residual blocks
+        self.res_blocks = nn.ModuleList([
+            ResidualBlock(num_filters) for _ in range(num_res_blocks)
+        ])
+
+        # Policy head
+        self.policy_conv = nn.Conv2d(num_filters, 2, kernel_size=1)
+        self.policy_bn = nn.BatchNorm2d(2)
+        self.policy_fc = nn.Linear(2 * 8 * 8, 4096)  # 64*64 for from*64 + to
+
+        # Value head
+        self.value_conv = nn.Conv2d(num_filters, 1, kernel_size=1)
+        self.value_bn = nn.BatchNorm2d(1)
+        self.value_fc1 = nn.Linear(1 * 8 * 8, 256)
+        self.value_fc2 = nn.Linear(256, 1)
+
+    def forward(self, x):
+        # Initial conv
+        x = F.relu(self.bn1(self.conv1(x)))
+
+        # Residual blocks
+        for block in self.res_blocks:
+            x = block(x)
+
+        # Policy head
+        policy = F.relu(self.policy_bn(self.policy_conv(x)))
+        policy = policy.view(policy.size(0), -1)
+        policy = self.policy_fc(policy)
+        policy = F.log_softmax(policy, dim=1)
+
+        # Value head
+        value = F.relu(self.value_bn(self.value_conv(x)))
+        value = value.view(value.size(0), -1)
+        value = F.relu(self.value_fc1(value))
+        value = torch.tanh(self.value_fc2(value))
+
+        return policy, value
+
+
+class ResidualBlock(nn.Module):
+    def __init__(self, num_filters):
+        super(ResidualBlock, self).__init__()
+        self.conv1 = nn.Conv2d(num_filters, num_filters, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(num_filters)
+        self.conv2 = nn.Conv2d(num_filters, num_filters, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(num_filters)
+
+    def forward(self, x):
+        residual = x
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = self.bn2(self.conv2(x))
+        x += residual
+        x = F.relu(x)
+        return x
+
 
 class ChessRLAgent:
     def __init__(self, model_path="chess_model.pkl", training_data_path="training_games.json"):
@@ -30,9 +105,9 @@ class ChessRLAgent:
         self.training_games = []
         self.load_training_data()
 
-        # Position evaluation model
-        self.model = None
-        self.scaler = StandardScaler()
+        # Neural network model
+        self.model = ChessNet()
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001, weight_decay=1e-4)
         self.load_model()
 
         # MCTS parameters
@@ -76,41 +151,89 @@ class ChessRLAgent:
             logger.error(f"Could not save training data: {e}")
 
     def load_model(self):
-        """Load or initialize the position evaluation model"""
+        """Load or initialize the neural network model"""
         try:
             if os.path.exists(self.model_path):
-                import joblib
-                self.model = joblib.load(self.model_path)
-                logger.info("Loaded existing model")
+                checkpoint = torch.load(self.model_path)
+                self.model.load_state_dict(checkpoint['model_state_dict'])
+                self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                logger.info("Loaded existing neural network model")
             else:
-                self.model = RandomForestRegressor(
-                    n_estimators=100,
-                    max_depth=10,
-                    random_state=42,
-                    n_jobs=-1
-                )
-                logger.info("Initialized new model")
+                logger.info("Initialized new neural network model")
         except Exception as e:
             logger.warning(f"Could not load model: {e}")
-            self.model = RandomForestRegressor(
-                n_estimators=100,
-                max_depth=10,
-                random_state=42,
-                n_jobs=-1
-            )
+            self.model = ChessNet()
+            self.optimizer = optim.Adam(self.model.parameters(), lr=0.001, weight_decay=1e-4)
 
     def save_model(self):
-        """Save the model to disk"""
+        """Save the neural network model to disk"""
         try:
-            import joblib
-            joblib.dump(self.model, self.model_path)
-            logger.info("Model saved")
+            checkpoint = {
+                'model_state_dict': self.model.state_dict(),
+                'optimizer_state_dict': self.optimizer.state_dict()
+            }
+            torch.save(checkpoint, self.model_path)
+            logger.info("Neural network model saved")
         except Exception as e:
             logger.error(f"Could not save model: {e}")
 
+    def board_to_tensor(self, board):
+        """
+        Convert chess board to tensor representation for neural network
+        Returns tensor of shape (planes, 8, 8)
+        """
+        planes = []
+
+        # Piece planes (12 total: 6 for white, 6 for black)
+        piece_types = ['P', 'N', 'B', 'R', 'Q', 'K']
+        for color in [chess_lib.WHITE, chess_lib.BLACK]:
+            for piece_type in piece_types:
+                plane = np.zeros((8, 8), dtype=np.float32)
+                for square in chess_lib.SQUARES:
+                    piece = board.piece_at(square)
+                    if piece and piece.symbol() == (piece_type if color == chess_lib.WHITE else piece_type.lower()):
+                        rank, file = divmod(square, 8)
+                        plane[rank, file] = 1.0
+                planes.append(plane)
+
+        # Additional planes
+        # Turn (1 if white to move)
+        turn_plane = np.full((8, 8), 1.0 if board.turn == chess_lib.WHITE else 0.0, dtype=np.float32)
+        planes.append(turn_plane)
+
+        # Castling rights (4 planes: KQkq)
+        castling_rights = [
+            board.has_kingside_castling_rights(chess_lib.WHITE),
+            board.has_queenside_castling_rights(chess_lib.WHITE),
+            board.has_kingside_castling_rights(chess_lib.BLACK),
+            board.has_queenside_castling_rights(chess_lib.BLACK)
+        ]
+        for right in castling_rights:
+            plane = np.full((8, 8), 1.0 if right else 0.0, dtype=np.float32)
+            planes.append(plane)
+
+        # En passant square
+        en_passant_plane = np.zeros((8, 8), dtype=np.float32)
+        if board.ep_square is not None:
+            rank, file = divmod(board.ep_square, 8)
+            en_passant_plane[rank, file] = 1.0
+        planes.append(en_passant_plane)
+
+        # Halfmove clock (normalized)
+        halfmove_plane = np.full((8, 8), board.halfmove_clock / 100.0, dtype=np.float32)
+        planes.append(halfmove_plane)
+
+        # Fullmove number (normalized)
+        fullmove_plane = np.full((8, 8), board.fullmove_number / 100.0, dtype=np.float32)
+        planes.append(fullmove_plane)
+
+        # Stack planes into tensor (planes, 8, 8)
+        tensor = torch.from_numpy(np.stack(planes))
+        return tensor
+
     def extract_features(self, board):
         """
-        Extract comprehensive features from chess position
+        Extract comprehensive features from chess position (legacy for RandomForest)
         """
         # Cache features to avoid recomputation
         fen = board.fen()
@@ -188,35 +311,42 @@ class ChessRLAgent:
 
     def evaluate_position(self, board):
         """
-        Evaluate chess position using the trained model
+        Evaluate chess position using the neural network
         """
-        if self.model is None:
-            # Simple material evaluation fallback
-            piece_values = {'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0}
-            value = 0
-            for square in chess_lib.SQUARES:
-                piece = board.piece_at(square)
-                if piece:
-                    piece_value = piece_values[piece.symbol().lower()]
-                    value += piece_value if piece.color == chess_lib.WHITE else -piece_value
-            return value / 100  # Normalize
+        self.model.eval()
+        with torch.no_grad():
+            tensor = self.board_to_tensor(board).unsqueeze(0)  # Add batch dim
+            _, value = self.model(tensor)
+            return value.item()
 
-        features = self.extract_features(board)
-        features_scaled = self.scaler.transform([features])
-        return self.model.predict(features_scaled)[0]
+    def move_to_index(self, move):
+        """Convert move to index for policy vector"""
+        return move.from_square * 64 + move.to_square
 
-    def get_best_move_mcts(self, board, time_limit=5.0):
+    def get_best_move_mcts(self, board, time_limit=5.0, return_policy=False):
         """
         Use Monte Carlo Tree Search to find best move
+        If return_policy, also return the policy distribution
         """
         if not board.legal_moves:
             return None
 
         legal_moves = list(board.legal_moves)
         if len(legal_moves) == 1:
+            if return_policy:
+                policy = np.zeros(4096)
+                policy[self.move_to_index(legal_moves[0])] = 1.0
+                return legal_moves[0], policy
             return legal_moves[0]
 
         start_time = time.time()
+
+        # Get policy priors from NN
+        self.model.eval()
+        with torch.no_grad():
+            tensor = self.board_to_tensor(board).unsqueeze(0)
+            policy_pred, _ = self.model(tensor)
+            policy = torch.exp(policy_pred).squeeze().numpy()
 
         # Initialize MCTS root
         root = MCTSNode(board)
@@ -236,32 +366,18 @@ class ChessRLAgent:
                     move = random.choice(untried_moves)
                     new_board = node.board.copy()
                     new_board.push(move)
-                    node.children[move] = MCTSNode(new_board, parent=node, move=move)
+                    prior = policy[self.move_to_index(move)] if node.parent is None else 0.0
+                    node.children[move] = MCTSNode(new_board, parent=node, move=move, prior=prior)
 
-            # Simulation
+            # Simulation (using neural network for evaluation)
             sim_board = node.board.copy()
             depth = 0
             while not sim_board.is_game_over() and depth < 50:
-                if random.random() < 0.1:  # 10% chance of random move
-                    move = random.choice(list(sim_board.legal_moves))
-                else:
-                    # Use model evaluation to guide random play
-                    moves = list(sim_board.legal_moves)
-                    if moves:
-                        move_values = []
-                        for move in moves:
-                            temp_board = sim_board.copy()
-                            temp_board.push(move)
-                            value = self.evaluate_position(temp_board)
-                            move_values.append(value)
-                        # Choose move with best evaluation for current player
-                        if sim_board.turn == chess_lib.WHITE:
-                            move = moves[np.argmax(move_values)]
-                        else:
-                            move = moves[np.argmin(move_values)]
-                    else:
-                        break
-
+                moves = list(sim_board.legal_moves)
+                if not moves:
+                    break
+                # Use random move for simulation (can be improved)
+                move = random.choice(moves)
                 sim_board.push(move)
                 depth += 1
 
@@ -273,9 +389,21 @@ class ChessRLAgent:
         if root.children:
             best_move = max(root.children.items(),
                           key=lambda x: x[1].visits)[0]
+            if return_policy:
+                policy = np.zeros(4096)
+                total_visits = sum(child.visits for child in root.children.values())
+                for move, child in root.children.items():
+                    policy[self.move_to_index(move)] = child.visits / total_visits if total_visits > 0 else 1.0 / len(root.children)
+                return best_move, policy
             return best_move
 
-        return random.choice(legal_moves)
+        # Fallback
+        move = random.choice(legal_moves)
+        if return_policy:
+            policy = np.zeros(4096)
+            policy[self.move_to_index(move)] = 1.0
+            return move, policy
+        return move
 
     def get_game_result(self, board):
         """
@@ -298,26 +426,27 @@ class ChessRLAgent:
         move_count = 0
 
         while not board.is_game_over() and move_count < max_moves:
+            # Store position before move
+            tensor = self.board_to_tensor(board)
+            policy = None
+
             if opponent_agent and board.turn == chess_lib.BLACK:
                 # Play against opponent
                 move = opponent_agent.get_best_move_mcts(board, time_limit=2.0)
             else:
-                # Self-play or white's turn
-                move = self.get_best_move_mcts(board, time_limit=2.0)
+                # Self-play
+                move, policy = self.get_best_move_mcts(board, time_limit=2.0, return_policy=True)
 
-            if move is None:
-                break
-
-            # Store position before move
-            features = self.extract_features(board)
             game_history.append({
                 'fen': board.fen(),
                 'move': move.uci(),
-                'features': features,
+                'tensor': tensor,
+                'policy': policy,
                 'turn': board.turn
             })
 
             board.push(move)
+            print(f"Move {move_count}: {move.uci()}")
             move_count += 1
 
         # Determine result
@@ -341,23 +470,22 @@ class ChessRLAgent:
 
     def train_on_game(self, game_data):
         """
-        Train the model on a completed game
+        Train the neural network on a completed game
         """
         training_samples = []
 
-        # Calculate target values using TD learning
+        # Calculate target values
         for i, move_data in enumerate(game_data['moves']):
-            features = move_data['features']
-            fen = move_data['fen']
+            if 'policy' in move_data and move_data['policy'] is not None:
+                tensor = move_data['tensor']
+                policy = torch.from_numpy(move_data['policy']).float()
 
-            # Target is the final result with discount
-            target = game_data['result']
+                # Target value is the final result with discount
+                target_value = game_data['result']
+                discount = 0.99 ** (len(game_data['moves']) - i - 1)
+                target_value *= discount
 
-            # Discount based on move number (later moves matter less)
-            discount = 0.99 ** (len(game_data['moves']) - i - 1)
-            target *= discount
-
-            training_samples.append((features, target))
+                training_samples.append((tensor, policy, target_value))
 
         # Add to memory
         self.memory.extend(training_samples)
@@ -367,24 +495,34 @@ class ChessRLAgent:
             self._train_model()
 
     def _train_model(self):
-        """Train the position evaluation model"""
+        """Train the neural network model"""
         if len(self.memory) < self.batch_size:
             return
 
         # Sample batch
         batch = random.sample(list(self.memory), min(self.batch_size, len(self.memory)))
-        X = np.array([sample[0] for sample in batch])
-        y = np.array([sample[1] for sample in batch])
+        tensors = torch.stack([sample[0] for sample in batch])
+        policies = torch.stack([sample[1] for sample in batch])
+        values = torch.tensor([sample[2] for sample in batch], dtype=torch.float32)
 
-        # Fit scaler if not fitted
-        if not hasattr(self.scaler, 'mean_'):
-            self.scaler.fit(X)
+        self.model.train()
+        self.optimizer.zero_grad()
 
-        X_scaled = self.scaler.transform(X)
+        # Forward pass
+        policy_pred, value_pred = self.model(tensors)
 
-        # Train model
-        self.model.fit(X_scaled, y)
-        logger.info(f"Trained model on {len(batch)} samples")
+        # Compute losses
+        value_loss = F.mse_loss(value_pred.squeeze(), values)
+        policy_loss = F.kl_div(policy_pred, policies, reduction='batchmean')
+
+        # Total loss
+        loss = value_loss + policy_loss
+
+        # Backward pass
+        loss.backward()
+        self.optimizer.step()
+
+        logger.info(f"Trained NN on {len(batch)} samples, loss: {loss.item():.4f}")
 
     def train_self_play(self, num_games=100, save_interval=10):
         """
@@ -509,19 +647,20 @@ class ChessRLAgent:
 
 
 class MCTSNode:
-    def __init__(self, board, parent=None, move=None):
+    def __init__(self, board, parent=None, move=None, prior=0.0):
         self.board = board.copy()
         self.parent = parent
         self.move = move
         self.children = {}
         self.visits = 0
         self.value = 0.0
+        self.prior = prior
 
-    def ucb1(self, total_visits):
+    def ucb1(self, total_visits, c_puct=1.4):
         if self.visits == 0:
-            return float('inf')
+            return float('inf') if self.prior == 0 else c_puct * self.prior * np.sqrt(total_visits)
         exploitation = self.value / self.visits
-        exploration = 1.4 * np.sqrt(np.log(total_visits) / self.visits)
+        exploration = c_puct * self.prior * np.sqrt(total_visits) / (1 + self.visits)
         return exploitation + exploration
 
     def backpropagate(self, result):
@@ -536,7 +675,7 @@ def main():
     agent = ChessRLAgent()
 
     # Train through self-play
-    agent.train_self_play(num_games=50, save_interval=5)
+    agent.train_self_play(num_games=1, save_interval=1)
 
     # Generate final report
     final_report = agent.generate_report()

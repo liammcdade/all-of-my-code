@@ -443,11 +443,103 @@ COMPLETED_MATCHES = [
     ("Darlington", "Kidderminster", 0, 2),
     ("Hereford Utd", "Spennymoor", 1, 2),
     ("Leamington", "Kings Lynn", 2, 5),
+
+    # March 2025 (remaining)
+    ("AFC Fylde", "Darlington", 4, 1),
+    ("Curzon", "Chester", 0, 1),
+    ("Hereford Utd", "Buxton", 0, 2),
+    ("Kings Lynn", "Spennymoor", 0, 1),
+    ("Leamington", "Peterborough S.", 4, 2),
+    ("Oxford City", "Kidderminster", 3, 2),
+    ("Scarborough", "Chorley", 0, 0),
+    ("South Shields", "Alfreton Town", 3, 0),
+    ("Telford Utd", "Bedford Town", 2, 2),
+    ("Worksop Town", "Radcliffe", 2, 0),
+    ("AFC Fylde", "Marine", 2, 0),
+    ("Alfreton Town", "Chorley", 1, 0),
+    ("Hereford Utd", "Macclesfield", 0, 2),
+    ("Spennymoor", "Kidderminster", 3, 1),
+
+    # April 2025
+    ("Alfreton Town", "Worksop Town", 1, 1),
+    ("Bedford Town", "Leamington", 3, 1),
+    ("Buxton", "Macclesfield", 2, 4),
+    ("Chester", "Telford Utd", 2, 1),
+    ("Chorley", "AFC Fylde", 2, 0),
+    ("Darlington", "Scarborough", 1, 2),
+    ("Kidderminster", "Hereford Utd", 2, 1),
+    ("Merthyr Town", "Oxford City", 1, 1),
+    ("Peterborough S.", "Kings Lynn", 2, 2),
+    ("Radcliffe", "Curzon", 3, 3),
+    ("Southport", "Marine", 2, 1),
+    ("Spennymoor", "South Shields", 1, 1),
+    ("AFC Fylde", "Radcliffe", 4, 3),
+    ("Curzon", "Southport", 1, 3),
+    ("Hereford Utd", "Merthyr Town", 3, 0),
+    ("Kings Lynn", "Bedford Town", 0, 1),
+    ("Leamington", "Alfreton Town", 1, 2),
+    ("Macclesfield", "Chester", 0, 2),
+    ("Marine", "Chorley", 2, 1),
+    ("Oxford City", "Peterborough S.", 2, 0),
+    ("Scarborough", "Spennymoor", 1, 0),
+    ("South Shields", "Darlington", 0, 1),
+    ("Telford Utd", "Kidderminster", 1, 2),
+    ("Worksop Town", "Buxton", 1, 2),
+    ("Marine", "Hereford Utd", 0, 1),
+    ("Alfreton Town", "Oxford City", 1, 1),
+    ("Bedford Town", "Hereford Utd", 2, 2),
+    ("Buxton", "Scarborough", 2, 0),
+    ("Chester", "AFC Fylde", 1, 0),
+    ("Chorley", "Curzon", 0, 1),
+    ("Darlington", "Marine", 2, 3),
+    ("Kidderminster", "Kings Lynn", 4, 1),
+    ("Merthyr Town", "Macclesfield", 1, 2),
+    ("Peterborough S.", "Telford Utd", 2, 3),
+    ("Radcliffe", "South Shields", 2, 5),
+    ("Southport", "Leamington", 1, 2),
+    ("Spennymoor", "Worksop Town", 0, 1),
 ]
 
-# UPCOMING_FIXTURES are now automatically generated - no manual list needed
-# The system generates all possible home-and-away fixtures and filters out completed matches
-UPCOMING_FIXTURES = []
+# UPCOMING_FIXTURES - Scheduled postponed matches with confirmed dates
+UPCOMING_FIXTURES = [
+    # Tuesday 14 April 2025
+    ("Alfreton Town", "Buxton"),
+    ("Marine", "Merthyr Town"),
+    ("Radcliffe", "Kidderminster"),
+    ("South Shields", "Macclesfield"),
+    
+    # Saturday 18 April 2025
+    ("AFC Fylde", "Southport"),
+    ("Curzon", "Buxton"),
+    ("Hereford Utd", "Radcliffe"),
+    ("Kings Lynn", "Chorley"),
+    ("Leamington", "Kidderminster"),
+    ("Macclesfield", "Spennymoor"),
+    ("Marine", "Alfreton Town"),
+    ("Oxford City", "Chester"),
+    ("Scarborough", "Merthyr Town"),
+    ("South Shields", "Bedford Town"),
+    ("Telford Utd", "Darlington"),
+    ("Worksop Town", "Peterborough S."),
+    
+    # Tuesday 21 April 2025
+    ("Macclesfield", "Southport"),
+    
+    # Saturday 25 April 2025
+    ("Alfreton Town", "Curzon"),
+    ("Bedford Town", "Scarborough"),
+    ("Buxton", "Leamington"),
+    ("Chester", "Kings Lynn"),
+    ("Chorley", "Worksop Town"),
+    ("Darlington", "Oxford City"),
+    ("Kidderminster", "South Shields"),
+    ("Merthyr Town", "AFC Fylde"),
+    ("Radcliffe", "Macclesfield"),
+    ("Southport", "Telford Utd"),
+    ("Spennymoor", "Marine"),
+]
+
+# The system will generate additional remaining home-and-away fixtures after processing these scheduled matches
 
 # ===============================
 # SIMULATION ENGINE

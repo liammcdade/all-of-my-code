@@ -4,78 +4,66 @@ import numpy as np
 from collections import defaultdict
 from tqdm import tqdm
 
+
+
 # ====================== ELO RATINGS ======================
 elo = {
     "Coventry": 1643,
-    "Ipswich": 1627,
-    "Southampton": 1591,
-    "Millwall": 1587,
-    "Middlesbrough": 1579,
-    "Sheff Utd": 1545,
-    "Norwich": 1543,
-    "Wrexham": 1534,
-    "Hull City": 1532,
-    "Derby": 1529,
-    "Swansea": 1505,
-    "Watford": 1504,
-    "Leicester": 1503,
-    "QPR": 1502,
-    "Bristol City": 1494,
-    "Stoke": 1493,
-    "Blackburn": 1482,
-    "Preston": 1478,
-    "West Brom": 1477,
-    "Birmingham": 1472,
-    "Charlton": 1456,
-    "Oxford": 1452,
-    "Portsmouth": 1451,
-    "Sheff Wed": 1317,
+    "Ipswich": 1633,
+    "Southampton": 1609,
+    "Middlesbrough": 1581,
+    "Millwall": 1579,
+    "Norwich": 1556,
+    "Derby": 1541,
+    "Sheff Utd": 1540,
+    "Hull City": 1537,
+    "Wrexham": 1522,
+    "Swansea": 1509,
+    "Bristol City": 1506,
+    "QPR": 1506,
+    "Watford": 1505,
+    "Leicester": 1502,
+    "Stoke": 1487,
+    "Blackburn": 1483,
+    "West Brom": 1481,
+    "Preston": 1481,
+    "Birmingham": 1471,
+    "Charlton": 1461,
+    "Oxford": 1455,
+    "Portsmouth": 1453,
+    "Sheff Wed": 1324,
 }
 
 # ====================== CURRENT TABLE ======================
 current = {
-    "Coventry": {"Pts":84,"GF":84,"GA":42},
-    "Ipswich": {"Pts":72,"GF":69,"GA":40},
-    "Middlesbrough": {"Pts":72,"GF":62,"GA":41},
-    "Millwall": {"Pts":72,"GF":56,"GA":47},
-    "Hull City": {"Pts":68,"GF":63,"GA":58},
-    "Wrexham": {"Pts":64,"GF":62,"GA":53},
-    "Southampton": {"Pts":63,"GF":63,"GA":48},
-    "Derby": {"Pts":63,"GF":60,"GA":51},
-    "Norwich": {"Pts":58,"GF":55,"GA":48},
-    "Watford": {"Pts":57,"GF":52,"GA":49},
-    "Bristol City": {"Pts":57,"GF":52,"GA":51},
-    "QPR": {"Pts":57,"GF":58,"GA":63},
-    "Stoke": {"Pts":54,"GF":48,"GA":45},
-    "Preston": {"Pts":54,"GF":48,"GA":52},
-    "Swansea": {"Pts":54,"GF":49,"GA":54},
-    "Birmingham": {"Pts":53,"GF":49,"GA":52},
-    "Sheff Utd": {"Pts":51,"GF":57,"GA":58},
-    "Charlton": {"Pts":49,"GF":38,"GA":49},
-    "Blackburn": {"Pts":47,"GF":37,"GA":49},
-    "West Brom": {"Pts":45,"GF":42,"GA":56},
-    "Portsmouth": {"Pts":42,"GF":40,"GA":57},
-    "Leicester": {"Pts":41,"GF":54,"GA":63},
-    "Oxford": {"Pts":41,"GF":39,"GA":54},
-    "Sheff Wed": {"Pts":-5,"GF":25,"GA":82},
+    "Coventry": {"Pts":85,"GF":84,"GA":42},
+    "Ipswich": {"Pts":75,"GF":71,"GA":40},
+    "Millwall": {"Pts":73,"GF":56,"GA":47},
+    "Middlesbrough": {"Pts":72,"GF":62,"GA":42},
+    "Southampton": {"Pts":72,"GF":70,"GA":50},
+    "Hull City": {"Pts":68,"GF":64,"GA":60},
+    "Wrexham": {"Pts":64,"GF":63,"GA":60},
+    "Derby": {"Pts":63,"GF":61,"GA":53},
+    "Norwich": {"Pts":58,"GF":55,"GA":50},
+    "Bristol City": {"Pts":58,"GF":52,"GA":51},
+    "QPR": {"Pts":58,"GF":58,"GA":63},
+    "Watford": {"Pts":57,"GF":52,"GA":51},
+    "Preston": {"Pts":57,"GF":50,"GA":53},
+    "Swansea": {"Pts":57,"GF":50,"GA":54},
+    "Birmingham": {"Pts":56,"GF":51,"GA":52},
+    "Stoke": {"Pts":55,"GF":49,"GA":46},
+    "Sheff Utd": {"Pts":54,"GF":59,"GA":59},
+    "Charlton": {"Pts":49,"GF":39,"GA":51},
+    "Blackburn": {"Pts":48,"GF":38,"GA":50},
+    "West Brom": {"Pts":46,"GF":42,"GA":56},
+    "Portsmouth": {"Pts":48,"GF":41,"GA":57},
+    "Oxford": {"Pts":44,"GF":41,"GA":54},
+    "Leicester": {"Pts":41,"GF":54,"GA":64},
+    "Sheff Wed": {"Pts":-4,"GF":25,"GA":82},
 }
 
 # ====================== REMAINING FIXTURES ======================
 fixtures = [
-    ("Wrexham", "Southampton"),
-    ("West Brom", "Millwall"),
-    ("Coventry", "Sheff Wed"),
-    ("Norwich", "Ipswich"),
-    ("QPR", "Bristol City"),
-    ("Charlton", "Preston"),
-    ("Leicester", "Swansea"),
-    ("Middlesbrough", "Portsmouth"),
-    ("Oxford", "Watford"),
-    ("Sheff Utd", "Hull City"),
-    ("Southampton", "Derby"),
-    ("Stoke", "Blackburn"),
-    ("Birmingham", "Wrexham"),
-    ("Portsmouth", "Ipswich"),
     ("Blackburn", "Coventry"),
     ("Derby", "Oxford"),
     ("Millwall", "QPR"),
@@ -110,10 +98,20 @@ fixtures = [
     ("QPR", "Derby"),
     ("Sheff Utd", "Preston"),
     ("Stoke", "Portsmouth"),
-    ("Southampton", "Blackburn"),
     ("Coventry", "Wrexham"),
     ("Southampton", "Ipswich"),
-    # Add May fixtures if needed, but for sim, this is enough
+    ("Blackburn", "Leicester"),
+    ("Bristol City", "Stoke"),
+    ("Derby", "Sheff Utd"),
+    ("Hull City", "Norwich"),
+    ("Ipswich", "QPR"),
+    ("Millwall", "Oxford"),
+    ("Portsmouth", "Birmingham"),
+    ("Preston", "Southampton"),
+    ("Sheff Wed", "West Brom"),
+    ("Swansea", "Charlton"),
+    ("Watford", "Coventry"),
+    ("Wrexham", "Middlesbrough"),
 ]
 
 # ====================== MODEL PARAMETERS ======================
@@ -302,13 +300,13 @@ for team in sorted(current.keys(), key=lambda x: sum(avg_points[x]) / sims, reve
     )
 
 # Most likely promoted trio
-most_likely_trio = max(promoted_trios, key=promoted_trios.get)
+most_likely_trio = max(promoted_trios.keys(), key=lambda k: promoted_trios[k])
 combined_percent = promoted_trios[most_likely_trio] / sims * 100
 print(f"\nMost likely 3 teams to go up: {', '.join(sorted(most_likely_trio))}")
 print(f"Combined percentage: {combined_percent:.2f}%")
 
 # Most likely relegated trio
-most_likely_relegated = max(relegated_trios, key=relegated_trios.get)
+most_likely_relegated = max(relegated_trios.keys(), key=lambda k: relegated_trios[k])
 relegated_percent = relegated_trios[most_likely_relegated] / sims * 100
 print(f"\nMost likely 3 teams to go down: {', '.join(sorted(most_likely_relegated))}")
 print(f"Combined percentage: {relegated_percent:.2f}%")

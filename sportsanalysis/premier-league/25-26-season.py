@@ -6,86 +6,86 @@ from tqdm import tqdm
 
 # ====================== ELO RATINGS ======================
 elo = {
-    "Arsenal": 2061,
-    "Man City": 1941,
-    "Liverpool": 1936,
-    "Chelsea": 1885,
-    "Man Utd": 1881,
-    "Aston Villa": 1879,
-    "Newcastle": 1853,
-    "Brighton": 1834,
-    "Brentford": 1833,
-    "Bournemouth": 1821,
-    "Everton": 1815,
+    "Arsenal": 2050,
+    "Man City": 1953,
+    "Liverpool": 1915,
+    "Aston Villa": 1887,
+    "Man United": 1869,
+    "Chelsea": 1857,
+    "Brighton": 1850,
+    "Newcastle": 1832,
+    "Brentford": 1831,
+    "Everton": 1832,
+    "Bournemouth": 1837,
     "Fulham": 1795,
-    "Crystal Palace": 1794,
-    "Tottenham": 1769,
-    "Leeds": 1764,
-    "Nott'm Forest": 1769,
-    "West Ham": 1746,
-    "Wolves": 1701,
-    "Sunderland": 1691,
-    "Burnley": 1683,
+    "Crystal Palace": 1809,
+    "Forest": 1789,
+    "Leeds": 1777,
+    "Tottenham": 1744,
+    "West Ham": 1753,
+    "Sunderland": 1713,
+    "Wolves": 1689,
+    "Burnley": 1670,
 }
 
 # ====================== CURRENT TABLE ======================
 current = {
-    "Arsenal":       {"Pts":70,"GF":61,"GA":22},
-    "Man City":      {"Pts":61,"GF":60,"GA":28},
-    "Man Utd":       {"Pts":55,"GF":56,"GA":43},
-    "Aston Villa":   {"Pts":54,"GF":42,"GA":37},
-    "Liverpool":     {"Pts":49,"GF":50,"GA":42},
+    "Arsenal":       {"Pts":70,"GF":62,"GA":24},
+    "Man City":      {"Pts":64,"GF":63,"GA":28},
+    "Man United":    {"Pts":55,"GF":57,"GA":45},
+    "Aston Villa":   {"Pts":55,"GF":43,"GA":38},
+    "Liverpool":     {"Pts":52,"GF":52,"GA":42},
     "Chelsea":       {"Pts":48,"GF":53,"GA":38},
-    "Brentford":     {"Pts":46,"GF":46,"GA":42},
-    "Everton":       {"Pts":46,"GF":37,"GA":35},
-    "Fulham":        {"Pts":44,"GF":43,"GA":44},
-    "Brighton":      {"Pts":43,"GF":41,"GA":37},
-    "Sunderland":    {"Pts":43,"GF":32,"GA":36},
-    "Newcastle":     {"Pts":42,"GF":44,"GA":45},
-    "Bournemouth":   {"Pts":42,"GF":44,"GA":45},
-    "Crystal Palace":{"Pts":39,"GF":33,"GA":35},
-    "Leeds":         {"Pts":33,"GF":37,"GA":48},
-    "Nott'm Forest": {"Pts":32,"GF":31,"GA":43},
-    "Tottenham":     {"Pts":30,"GF":40,"GA":50},
-    "West Ham":      {"Pts":29,"GF":36,"GA":57},
-    "Burnley":       {"Pts":20,"GF":33,"GA":61},
-    "Wolves":        {"Pts":17,"GF":24,"GA":54},
+    "Brentford":     {"Pts":47,"GF":48,"GA":44},
+    "Everton":       {"Pts":47,"GF":39,"GA":37},
+    "Brighton":      {"Pts":46,"GF":43,"GA":37},
+    "Sunderland":    {"Pts":46,"GF":33,"GA":36},
+    "Bournemouth":   {"Pts":45,"GF":48,"GA":49},
+    "Fulham":        {"Pts":44,"GF":43,"GA":46},
+    "Crystal Palace":{"Pts":42,"GF":35,"GA":36},
+    "Newcastle":     {"Pts":42,"GF":45,"GA":47},
+    "Leeds":         {"Pts":36,"GF":39,"GA":49},
+    "Forest":        {"Pts":33,"GF":32,"GA":44},
+    "West Ham":      {"Pts":32,"GF":40,"GA":57},
+    "Tottenham":     {"Pts":30,"GF":40,"GA":51},
+    "Burnley":       {"Pts":20,"GF":33,"GA":63},
+    "Wolves":        {"Pts":17,"GF":24,"GA":58},
 }
 
 # ====================== EUROPA LEAGUE ELOS ======================
 el_elos = {
-    "Aston Villa": 1886,
-    "Bologna": 1704,
-    "Braga": 1709,
-    "Celta": 1748,
-    "Freiburg": 1694,
-    "Nott'm Forest": 1785,
+    "Aston Villa": 1890,
+    "Bologna": 1701,
+    "Braga": 1707,
+    "Celta": 1710,
+    "Freiburg": 1724,
+    "Forest": 1792,
     "Porto": 1809,
-    "Real Betis": 1750,
+    "Real Betis": 1752,
 }
 
 # ====================== CHAMPIONS LEAGUE ELOS ======================
 cl_elos = {
-    "Real Madrid": 2100,
-    "Bayern Munich": 2050,
-    "Arsenal": 2000,
+    "Real Madrid": 1930,
+    "Bayern Munich": 2017,
+    "Arsenal": 2052,
     "Barcelona": 1990,
-    "Paris Saint-Germain": 1970,
+    "Paris Saint-Germain": 2010,
     "Liverpool": 1960,
     "Atletico Madrid": 1950,
-    "Sporting CP": 1940,
+    "Sporting CP": 1868,
 }
 
 # ====================== CONFERENCE LEAGUE ELOS ======================
 conf_elos = {
-    "Crystal Palace": 1795,
-    "Strasbourg": 1715,
-    "Mainz 05": 1696,
-    "Rayo Vallecano": 1672,
-    "Fiorentina": 1670,
-    "AEK Athens": 1639,
-    "Shakhtar Donetsk": 1566,
-    "AZ Alkmaar": 1559,
+    "Crystal Palace": 1811,
+    "Strasbourg": 1706,
+    "Mainz 05": 1703,
+    "Rayo Vallecano": 1670,
+    "Fiorentina": 1668,
+    "AEK Athens": 1624,
+    "Shakhtar Donetsk": 1585,
+    "AZ Alkmaar": 1551,
 }
 
 # ====================== FA CUP ELOS ======================
@@ -113,7 +113,7 @@ league_cup_elos = {
     "Liverpool": 1936,
     "Man City": 1941,
     "Newcastle": 1853,
-    "Nott'm Forest": 1785,
+    "Forest": 1785,
     "Southampton": 1810,
     "Tottenham": 1769,
     "West Ham": 1746,
@@ -373,80 +373,162 @@ def conf_simulate_final(team_a, team_b, elos_dict):
 
 # ====================== FIXTURES ======================
 fixtures = [
-
-    ("West Ham","Wolves"), ("Arsenal","Bournemouth"), ("Brentford","Everton"),
-    ("Burnley","Brighton"), ("Crystal Palace","Newcastle"), ("Nott'm Forest","Aston Villa"),
-    ("Liverpool","Fulham"), ("Sunderland","Tottenham"), ("Chelsea","Man City"),
-    ("Man Utd","Leeds"),
-
-    ("Brentford","Fulham"), ("Aston Villa","Sunderland"), ("Leeds","Wolves"),
-    ("Newcastle","Bournemouth"), ("Nott'm Forest","Burnley"), ("Tottenham","Brighton"),
-    ("Chelsea","Man Utd"), ("Everton","Liverpool"), ("Man City","Arsenal"),
+    # Round 31 (postponed)
+    ("Crystal Palace","Man City"),
+    # Round 33
+    ("Brentford","Fulham"), ("Leeds","Wolves"), ("Newcastle","Bournemouth"),
+    ("Tottenham","Brighton"), ("Chelsea","Man United"), ("Aston Villa","Sunderland"),
+    ("Everton","Liverpool"), ("Forest","Burnley"), ("Man City","Arsenal"),
     ("Crystal Palace","West Ham"),
-
-    ("Sunderland","Nott'm Forest"), ("Fulham","Aston Villa"), ("Bournemouth","Leeds"),
-    ("Liverpool","Crystal Palace"), ("West Ham","Everton"), ("Wolves","Tottenham"),
-    ("Arsenal","Newcastle"), ("Burnley","Man City"), ("Brighton","Chelsea"),
-    ("Man Utd","Brentford"),
-
-    ("Arsenal","Fulham"), ("Aston Villa","Tottenham"), ("Bournemouth","Crystal Palace"),
-    ("Brentford","West Ham"), ("Chelsea","Nott'm Forest"), ("Everton","Man City"),
-    ("Leeds","Burnley"), ("Man Utd","Liverpool"), ("Newcastle","Brighton"),
-    ("Wolves","Sunderland"),
-
-    ("Brighton","Wolves"), ("Burnley","Aston Villa"), ("Crystal Palace","Everton"),
-    ("Fulham","Bournemouth"), ("Liverpool","Chelsea"), ("Man City","Brentford"),
-    ("Nott'm Forest","Newcastle"), ("Sunderland","Man Utd"), ("Tottenham","Leeds"),
-    ("West Ham","Arsenal"),
-
+    # Round 34
+    ("Brighton","Chelsea"), ("Bournemouth","Leeds"), ("Burnley","Man City"),
+    ("Sunderland","Forest"), ("Fulham","Aston Villa"), ("Liverpool","Crystal Palace"),
+    ("West Ham","Everton"), ("Wolves","Tottenham"), ("Arsenal","Newcastle"),
+    ("Man United","Brentford"),
+    # Round 35
+    ("Leeds","Burnley"), ("Aston Villa","Tottenham"), ("Bournemouth","Crystal Palace"),
+    ("Brentford","West Ham"), ("Newcastle","Brighton"), ("Wolves","Sunderland"),
+    ("Arsenal","Fulham"), ("Man United","Liverpool"), ("Chelsea","Forest"),
+    ("Everton","Man City"),
+    # Round 36
+    ("Liverpool","Chelsea"), ("Brighton","Wolves"), ("Burnley","Aston Villa"),
+    ("Crystal Palace","Everton"), ("Fulham","Bournemouth"), ("Sunderland","Man United"),
+    ("Man City","Brentford"), ("Forest","Newcastle"), ("West Ham","Arsenal"),
+    ("Tottenham","Leeds"),
+    # Round 37
     ("Arsenal","Burnley"), ("Aston Villa","Liverpool"), ("Bournemouth","Man City"),
     ("Brentford","Crystal Palace"), ("Chelsea","Tottenham"), ("Everton","Sunderland"),
-    ("Leeds","Brighton"), ("Man Utd","Nott'm Forest"), ("Newcastle","West Ham"),
+    ("Leeds","Brighton"), ("Man United","Forest"), ("Newcastle","West Ham"),
     ("Wolves","Fulham"),
-
-    ("Brighton","Man Utd"), ("Burnley","Wolves"), ("Crystal Palace","Arsenal"),
+    # Round 38
+    ("Brighton","Man United"), ("Burnley","Wolves"), ("Crystal Palace","Arsenal"),
     ("Fulham","Newcastle"), ("Liverpool","Brentford"), ("Man City","Aston Villa"),
-    ("Nott'm Forest","Bournemouth"), ("Sunderland","Chelsea"), ("Tottenham","Everton"),
+    ("Forest","Bournemouth"), ("Sunderland","Chelsea"), ("Tottenham","Everton"),
     ("West Ham","Leeds"),
 ]
 
+# ====================== FORM ADJUSTMENTS ======================
+# Based on current W-L differential per game played * 50
+form_adjustment = {
+    "Arsenal": (21 - 4) / 32 * 50,        # 17/32 * 50 ≈ 26.56
+    "Man City": (19 - 5) / 31 * 50,       # 14/31 * 50 ≈ 22.58
+    "Man United": (15 - 7) / 32 * 50,     # 8/32 * 50 = 12.5
+    "Aston Villa": (16 - 9) / 32 * 50,    # 7/32 * 50 ≈ 10.94
+    "Liverpool": (15 - 10) / 32 * 50,     # 5/32 * 50 ≈ 7.81
+    "Chelsea": (13 - 10) / 32 * 50,       # 3/32 * 50 ≈ 4.69
+    "Brentford": (13 - 11) / 32 * 50,     # 2/32 * 50 ≈ 3.13
+    "Everton": (13 - 11) / 32 * 50,       # 2/32 * 50 ≈ 3.13
+    "Brighton": (12 - 10) / 32 * 50,      # 2/32 * 50 ≈ 3.13
+    "Sunderland": (12 - 10) / 32 * 50,    # 2/32 * 50 ≈ 3.13
+    "Bournemouth": (10 - 7) / 32 * 50,    # 3/32 * 50 ≈ 4.69
+    "Fulham": (13 - 14) / 32 * 50,        # -1/32 * 50 ≈ -1.56
+    "Crystal Palace": (11 - 11) / 31 * 50,# 0/31 * 50 = 0
+    "Newcastle": (12 - 14) / 32 * 50,     # -2/32 * 50 ≈ -3.13
+    "Leeds": (8 - 12) / 32 * 50,          # -4/32 * 50 ≈ -6.25
+    "Forest": (8 - 15) / 32 * 50,         # -7/32 * 50 ≈ -10.94
+    "West Ham": (8 - 16) / 32 * 50,       # -8/32 * 50 ≈ -12.5
+    "Tottenham": (7 - 16) / 32 * 50,      # -9/32 * 50 ≈ -14.06
+    "Burnley": (4 - 20) / 32 * 50,        # -16/32 * 50 = -25
+    "Wolves": (3 - 21) / 32 * 50,         # -18/32 * 50 ≈ -28.13
+}
+
+# ====================== W/D/L RATES ======================
+wdl_rates = {
+    "Arsenal": {"win": 21/32, "draw": 7/32, "loss": 4/32},
+    "Man City": {"win": 19/31, "draw": 7/31, "loss": 5/31},
+    "Man United": {"win": 15/32, "draw": 10/32, "loss": 7/32},
+    "Aston Villa": {"win": 16/32, "draw": 7/32, "loss": 9/32},
+    "Liverpool": {"win": 15/32, "draw": 7/32, "loss": 10/32},
+    "Chelsea": {"win": 13/32, "draw": 9/32, "loss": 10/32},
+    "Brentford": {"win": 13/32, "draw": 8/32, "loss": 11/32},
+    "Everton": {"win": 13/32, "draw": 8/32, "loss": 11/32},
+    "Brighton": {"win": 12/32, "draw": 10/32, "loss": 10/32},
+    "Sunderland": {"win": 12/32, "draw": 10/32, "loss": 10/32},
+    "Bournemouth": {"win": 10/32, "draw": 15/32, "loss": 7/32},
+    "Fulham": {"win": 13/32, "draw": 5/32, "loss": 14/32},
+    "Crystal Palace": {"win": 11/31, "draw": 9/31, "loss": 11/31},
+    "Newcastle": {"win": 12/32, "draw": 6/32, "loss": 14/32},
+    "Leeds": {"win": 8/32, "draw": 12/32, "loss": 12/32},
+    "Forest": {"win": 8/32, "draw": 9/32, "loss": 15/32},
+    "West Ham": {"win": 8/32, "draw": 8/32, "loss": 16/32},
+    "Tottenham": {"win": 7/32, "draw": 9/32, "loss": 16/32},
+    "Burnley": {"win": 4/32, "draw": 8/32, "loss": 20/32},
+    "Wolves": {"win": 3/32, "draw": 8/32, "loss": 21/32},
+}
+
+# ====================== INJURY PENALTIES ======================
+# ELO reduction: TRACK number * 10 points (e.g., TRACK 3 = 30 points penalty)
+injury_penalty = {
+    "Bournemouth": 30,
+    "Arsenal": 50,
+    "Aston Villa": 50,
+    "Brentford": 80,
+    "Brighton": 40,
+    "Burnley": 70,
+    "Chelsea": 70,
+    "Crystal Palace": 30,
+    "Everton": 20,
+    "Fulham": 30,
+    "Leeds": 30,
+    "Liverpool": 50,
+    "Man City": 40,
+    "Man United": 50,
+    "Newcastle": 40,
+    "Forest": 50,
+    "Sunderland": 60,
+    "Tottenham": 80,
+    "West Ham": 10,
+    "Wolves": 40,
+}
+
 # ====================== MODEL PARAMETERS ======================
-HOME_ADVANTAGE = 65
-DRAW_BASE = 0.269
-DRAW_WIDTH = 240
+HOME_ADVANTAGE = 33.8
+
+# ====================== HELPER FUNCTIONS ======================
+def get_adjusted_elo(team):
+    penalty = injury_penalty.get(team, 0)
+    adjusted_penalty = penalty * (1 - math.exp(-penalty / 80))  # nonlinear injury penalty
+    return elo[team] - adjusted_penalty + form_adjustment.get(team, 0)
 
 # ====================== MATCH ENGINE ======================
 def simulate_match(home, away):
-    diff = elo[home] - elo[away] + HOME_ADVANTAGE
+    diff = get_adjusted_elo(home) - get_adjusted_elo(away) + HOME_ADVANTAGE
 
-    p_home_base = 1 / (1 + 10 ** (-diff / 400))
-    p_draw = DRAW_BASE * math.exp(-(diff**2)/(2 * DRAW_WIDTH**2))
+    # Base expected goals (logistic scaling for diminishing returns)
+    home_xg = 0.8 + 2.2 / (1 + math.exp(-diff / 250))
+    away_xg = 0.8 + 2.2 / (1 + math.exp(diff / 250))
 
-    p_home = p_home_base * (1 - p_draw)
-    p_away = (1 - p_home_base) * (1 - p_draw)
+    # Closeness factor
+    closeness = math.exp(-(diff**2)/(2 * 180**2))
 
-    r = random.random()
+    # W/D/L bias adjustment for expected goals
+    home_bias = wdl_rates[home]["win"] - wdl_rates[home]["loss"]
+    away_bias = wdl_rates[away]["win"] - wdl_rates[away]["loss"]
+    bias_diff = home_bias - away_bias
+    home_xg += bias_diff * 0.4
+    away_xg -= bias_diff * 0.4
 
-    home_xg = max(0.25, 1.45 + diff / 500)
-    away_xg = max(0.25, 1.10 - diff / 550)
+    # Tempo reduction (stronger effect for close games)
+    tempo_factor = 1 - 0.25 * closeness
+    home_xg *= tempo_factor
+    away_xg *= tempo_factor
 
-    if r < p_home:
-        while True:
-            hg = np.random.poisson(home_xg)
-            ag = np.random.poisson(away_xg)
-            if hg > ag:
-                return hg, ag
+    # Draw bias for bivariate Poisson
+    draw_bias = (wdl_rates[home]["draw"] + wdl_rates[away]["draw"]) / 2
+    closeness_boost = closeness * draw_bias * 0.5
+    lambda_shared = 0.15 + closeness_boost
 
-    elif r < p_home + p_draw:
-        g = np.random.poisson((home_xg + away_xg) / 2)
-        return g, g
+    lambda_home = max(0.05, home_xg - lambda_shared)
+    lambda_away = max(0.05, away_xg - lambda_shared)
 
-    else:
-        while True:
-            hg = np.random.poisson(home_xg)
-            ag = np.random.poisson(away_xg)
-            if ag > hg:
-                return hg, ag
+    shared_goals = np.random.poisson(lambda_shared)
+    home_goals = np.random.poisson(lambda_home)
+    away_goals = np.random.poisson(lambda_away)
+
+    hg = home_goals + shared_goals
+    ag = away_goals + shared_goals
+
+    return hg, ag
 
 # ====================== APPLY RESULT ======================
 def apply_result(table, home, away, hg, ag):
@@ -465,7 +547,7 @@ def apply_result(table, home, away, hg, ag):
         table[away]["Pts"] += 1
 
 # ====================== MONTE CARLO ======================
-sims = 50000
+sims = 10000
 
 title = defaultdict(int)
 cl = defaultdict(int)
@@ -473,7 +555,9 @@ el = defaultdict(int)
 conf = defaultdict(int)
 european = defaultdict(int)
 releg = defaultdict(int)
+uefa_pl_win_sims = 0
 avg_points = defaultdict(list)
+points_distribution = defaultdict(list)
 
 # ====================== EUROPA LEAGUE SIMULATION ======================
 NUM_SIMS_EL = 10000
@@ -483,7 +567,7 @@ el_qf_first_leg = {
     ("Real Betis", "Braga"): (1, 1),  # Real Betis home 1, Braga away 1
     ("Bologna", "Aston Villa"): (1, 3),  # Bologna home 1, Aston Villa away 3
     ("Freiburg", "Celta"): (3, 0),  # Freiburg home 3, Celta away 0
-    ("Porto", "Nott'm Forest"): (1, 1),  # Porto home 1, Nott'm Forest away 1
+    ("Porto", "Forest"): (1, 1),  # Porto home 1, Forest away 1
 }
 
 for sim in range(NUM_SIMS_EL):
@@ -499,17 +583,17 @@ for sim in range(NUM_SIMS_EL):
         qf_winners["qf1"] = "Bologna"
     else:
         qf_winners["qf1"] = el_simulate_penalties("Aston Villa", "Bologna", el_elos)
-    # Use real first leg for Porto vs Nott'm Forest
-    porto_h, forest_a = el_qf_first_leg[("Porto", "Nott'm Forest")]
-    h_l2, a_l2 = el_get_expected_goals(el_elos["Nott'm Forest"], el_elos["Porto"])
+    # Use real first leg for Porto vs Forest
+    porto_h, forest_a = el_qf_first_leg[("Porto", "Forest")]
+    h_l2, a_l2 = el_get_expected_goals(el_elos["Forest"], el_elos["Porto"])
     g_forest = el_poisson_random(h_l2) + forest_a
     g_porto = el_poisson_random(a_l2) + porto_h
     if g_forest > g_porto:
-        qf_winners["qf2"] = "Nott'm Forest"
+        qf_winners["qf2"] = "Forest"
     elif g_porto > g_forest:
         qf_winners["qf2"] = "Porto"
     else:
-        qf_winners["qf2"] = el_simulate_penalties("Nott'm Forest", "Porto", el_elos)
+        qf_winners["qf2"] = el_simulate_penalties("Forest", "Porto", el_elos)
     # Use real first leg for Real Betis vs Braga
     betis_h, braga_a = el_qf_first_leg[("Real Betis", "Braga")]
     h_l2, a_l2 = el_get_expected_goals(el_elos["Braga"], el_elos["Real Betis"])
@@ -557,25 +641,19 @@ for sim in range(NUM_SIMS_CL):
     barca_h, barca_a = cl_qf_first_leg[("Barcelona", "Atletico Madrid")]
     sporting_h, sporting_a = cl_qf_first_leg[("Sporting CP", "Arsenal")]
     
-    h_l2, a_l2 = cl_get_expected_goals(cl_elos["Liverpool"], cl_elos["Paris Saint-Germain"])
-    g_liv = cl_poisson_random(h_l2) + psg_a
-    g_psg = cl_poisson_random(a_l2) + psg_h
-    qf_winners["qf1"] = "Liverpool" if g_liv > g_psg else "Paris Saint-Germain"
+    # PSG won 2-0 on the night, progress 4-0 on aggregate
+    qf_winners["qf1"] = "Paris Saint-Germain"
     
-    h_l2, a_l2 = cl_get_expected_goals(cl_elos["Bayern Munich"], cl_elos["Real Madrid"])
-    g_bay = cl_poisson_random(h_l2) + real_a
-    g_real = cl_poisson_random(a_l2) + real_h
-    qf_winners["qf2"] = "Bayern Munich" if g_bay > g_real else "Real Madrid"
+    # Bayern Munich beat Real Madrid in quarterfinals
+    qf_winners["qf2"] = "Bayern Munich"
     
     h_l2, a_l2 = cl_get_expected_goals(cl_elos["Atletico Madrid"], cl_elos["Barcelona"])
     g_atl = cl_poisson_random(h_l2) + barca_a
     g_barca = cl_poisson_random(a_l2) + barca_h
     qf_winners["qf3"] = "Atletico Madrid" if g_atl > g_barca else "Barcelona"
     
-    h_l2, a_l2 = cl_get_expected_goals(cl_elos["Arsenal"], cl_elos["Sporting CP"])
-    g_ars = cl_poisson_random(h_l2) + sporting_a
-    g_sport = cl_poisson_random(a_l2) + sporting_h
-    qf_winners["qf4"] = "Arsenal" if g_ars > g_sport else "Sporting CP"
+    # Arsenal beat Sporting CP in quarterfinals
+    qf_winners["qf4"] = "Arsenal"
     
     sf1 = cl_simulate_two_leg_tie(qf_winners["qf1"], qf_winners["qf2"], True, cl_elos)
     sf2 = cl_simulate_two_leg_tie(qf_winners["qf3"], qf_winners["qf4"], True, cl_elos)
@@ -676,11 +754,23 @@ for _ in tqdm(range(sims), desc="Simulating", unit="sim"):
     el_winner = random.choices(list(el_win_probs.keys()), weights=list(el_win_probs.values()))[0]
     conf_winner = random.choices(list(conf_win_probs.keys()), weights=list(conf_win_probs.values()))[0]
     cl_winner = random.choices(list(cl_win_probs.keys()), weights=list(cl_win_probs.values()))[0]
+
+    uefa_winners = {cl_winner, el_winner, conf_winner}
+    if any(w in current for w in uefa_winners):
+        uefa_pl_win_sims += 1
+
     fa_winner = simulate_full_fa_cup_tournament()
     league_cup_winner = "Man City"
 
-    cl_teams = [ranking[i][0] for i in range(5)]
-    el_teams = [ranking[5][0], ranking[6][0]]
+    cl_teams = [ranking[i][0] for i in range(5)]  # Top 5 qualify for CL
+    el_teams = [ranking[5][0]]  # 6th qualifies for EL
+
+    # If EL winner is PL team not in CL top 5, they get CL spot
+    if el_winner in current and el_winner not in cl_teams:
+        cl_teams.append(el_winner)
+        # Remove from EL if they were assigned there
+        if el_winner in el_teams:
+            el_teams.remove(el_winner)
 
     if fa_winner in current and fa_winner not in cl_teams and fa_winner not in el_teams:
         el_teams.append(fa_winner)
@@ -688,12 +778,13 @@ for _ in tqdm(range(sims), desc="Simulating", unit="sim"):
     if conf_winner in current and conf_winner not in cl_teams and conf_winner not in el_teams:
         el_teams.append(conf_winner)
 
-    conf_team = ranking[7 + (len(el_teams) - 2)][0]
+    conf_team = ranking[6 + (len(el_teams) - 1)][0]
     if league_cup_winner in current and league_cup_winner not in cl_teams and league_cup_winner not in el_teams:
         conf_team = league_cup_winner
 
     for pos, (team, data) in enumerate(ranking, 1):
         avg_points[team].append(data["Pts"])
+        points_distribution[team].append(data["Pts"])
 
         if pos == 1:
             title[team] += 1
@@ -710,15 +801,48 @@ for _ in tqdm(range(sims), desc="Simulating", unit="sim"):
     for team in european_teams:
         european[team] += 1
 
+# ====================== STATISTICS ======================
+team_stats = {}
+for team in current.keys():
+    pts = points_distribution[team]
+    avg = np.mean(pts)
+    std = np.std(pts)
+    p25, med, p75 = np.percentile(pts, [25, 50, 75])
+    team_stats[team] = {'avg': avg, 'std': std, 'p25': p25, 'med': med, 'p75': p75}
+
+# ====================== MATCH PROBABILITIES ======================
+match_cache = {}
+
+def get_match_probs(home, away, n_sims=10000):
+    key = (home, away)
+    if key not in match_cache:
+        match_cache[key] = _get_match_probs(home, away, n_sims)
+    return match_cache[key]
+
+def _get_match_probs(home, away, n_sims=10000):
+    home_wins = 0
+    draws = 0
+    away_wins = 0
+    for _ in range(n_sims):
+        hg, ag = simulate_match(home, away)
+        if hg > ag:
+            home_wins += 1
+        elif hg == ag:
+            draws += 1
+        else:
+            away_wins += 1
+    return home_wins / n_sims * 100, draws / n_sims * 100, away_wins / n_sims * 100
+
 # ====================== OUTPUT ======================
-print(f"{'Team':<15}{'AvgPts':<8}{'Title%':<8}{'CL%':<8}{'EL%':<8}{'Conf%':<8}{'European%':<10}{'Releg%'}")
-print("-" * 90)
+print(f"{'Team':<15}{'AvgPts':<8}{'StdDev':<8}{'Title%':<8}{'CL%':<8}{'EL%':<8}{'Conf%':<8}{'European%':<10}{'Releg%'}")
+print("-" * 98)
 
 rank = 1
 for team in sorted(current.keys(), key=lambda x: sum(avg_points[x]) / sims, reverse=True):
     print(
         f"{team:<15}"
         f"{sum(avg_points[team])/sims:<8.2f}"
+        f"{team_stats[team]['std']:<8.2f}"
         f"{title[team]/sims*100:<8.2f}"
         f"{cl[team]/sims*100:<8.2f}"
         f"{el[team]/sims*100:<8.2f}"
@@ -727,3 +851,121 @@ for team in sorted(current.keys(), key=lambda x: sum(avg_points[x]) / sims, reve
         f"{releg[team]/sims*100:.2f}"
     )
     rank += 1
+
+uefa_win_percent = uefa_pl_win_sims / sims * 100
+print(f"\nPremier League teams win UEFA competitions: {uefa_win_percent:.2f}%")
+
+print("\n" + "="*60)
+print("MATCH PROBABILITIES (Home Win % | Draw % | Away Win %)")
+print("="*60)
+
+max_home_win = 0
+max_home_match = None
+max_draw = 0
+max_draw_match = None
+max_away_win = 0
+max_away_match = None
+
+first_home, first_away = fixtures[0]
+first_hw, first_d, first_aw = get_match_probs(first_home, first_away)
+max_home_win = first_hw
+max_home_match = (first_home, first_away)
+max_draw = first_d
+max_draw_match = (first_home, first_away)
+max_away_win = first_aw
+max_away_match = (first_home, first_away)
+
+for home, away in fixtures:
+    hw, d, aw = get_match_probs(home, away)
+    print(f"{home:<15} vs {away:<15}: {hw:<6.2f}% | {d:<6.2f}% | {aw:<6.2f}%")
+
+    if hw > max_home_win:
+        max_home_win = hw
+        max_home_match = (home, away)
+    if d > max_draw:
+        max_draw = d
+        max_draw_match = (home, away)
+    if aw > max_away_win:
+        max_away_win = aw
+        max_away_match = (home, away)
+
+print("\n" + "="*40)
+print("EXTREME MATCH PROBABILITIES")
+print("="*40)
+print(f"Biggest Home Win Chance: {max_home_match[0]} vs {max_home_match[1]} - {max_home_win:.2f}%")
+print(f"Most Likely Draw: {max_draw_match[0]} vs {max_draw_match[1]} - {max_draw:.2f}%")
+print(f"Biggest Away Win Chance: {max_away_match[0]} vs {max_away_match[1]} - {max_away_win:.2f}%")
+
+print("\n" + "="*60)
+print("TEAM REMAINING FIXTURE PROBABILITIES")
+print("="*60)
+
+# Get remaining fixtures per team
+team_fixtures = defaultdict(list)
+for home, away in fixtures:
+    team_fixtures[home].append(('home', away))
+    team_fixtures[away].append(('away', home))
+
+# Calculate win all / lose all / draw all probabilities
+win_all = {}
+lose_all = {}
+draw_all = {}
+
+for team in current.keys():
+    p_win_all = 1.0
+    p_lose_all = 1.0
+    p_draw_all = 1.0
+    
+    for is_home, opponent in team_fixtures[team]:
+        if is_home == 'home':
+            hw, d, aw = get_match_probs(team, opponent, n_sims=1000)
+            t_win = hw / 100
+            t_draw = d / 100
+            t_lose = aw / 100
+        else:
+            hw, d, aw = get_match_probs(opponent, team, n_sims=1000)
+            t_win = aw / 100
+            t_draw = d / 100
+            t_lose = hw / 100
+            
+        p_win_all *= t_win
+        p_lose_all *= t_lose
+        p_draw_all *= t_draw
+    
+    win_all[team] = p_win_all * 100
+    lose_all[team] = p_lose_all * 100
+    draw_all[team] = p_draw_all * 100
+
+# Calculate average win probability
+avg_win_prob = {}
+for team in current.keys():
+    win_probs = []
+    for is_home, opponent in team_fixtures[team]:
+        if is_home == 'home':
+            hw, d, aw = get_match_probs(team, opponent, n_sims=1000)
+            win_probs.append(hw / 100)
+        else:
+            hw, d, aw = get_match_probs(opponent, team, n_sims=1000)
+            win_probs.append(aw / 100)
+    if win_probs:
+        avg_win_prob[team] = sum(win_probs) / len(win_probs) * 100
+    else:
+        avg_win_prob[team] = 0
+
+print(f"{'Team':<15}{'Win All %':<12}{'Lose All %':<12}{'Draw All %':<12}{'Avg Win %'}")
+print("-" * 65)
+for team in sorted(current.keys(), key=lambda x: win_all[x], reverse=True):
+    print(f"{team:<15}{win_all[team]:<12.4f}{lose_all[team]:<12.4f}{draw_all[team]:<12.4f}{avg_win_prob[team]:.2f}%")
+
+print("\n" + "="*40)
+print("MOST LIKELY TEAMS")
+print("="*40)
+most_win_all = max(win_all.items(), key=lambda x: x[1])
+most_lose_all = max(lose_all.items(), key=lambda x: x[1])
+most_draw_all = max(draw_all.items(), key=lambda x: x[1])
+easiest_run = max(avg_win_prob.items(), key=lambda x: x[1])
+
+print(f"Most likely to win all remaining games: {most_win_all[0]} ({most_win_all[1]:.4f}%)")
+print(f"Most likely to lose all remaining games: {most_lose_all[0]} ({most_lose_all[1]:.4f}%)")
+print(f"Most likely to draw all remaining games: {most_draw_all[0]} ({most_draw_all[1]:.4f}%)")
+print(f"Easiest remaining fixtures (highest avg win %): {easiest_run[0]} ({easiest_run[1]:.2f}%)")
