@@ -2,17 +2,13 @@ import random
 import math
 from collections import Counter
 
-# Current Elo ratings from clubelo.com (as of April 8, 2026)
+# Current Elo ratings from clubelo.com (as of April 16, 2026)
 # Update these manually from https://clubelo.com/ if needed
 elos = {
-    "Crystal Palace": 1795,
-    "Strasbourg": 1715,
-    "Mainz 05": 1696,
-    "Rayo Vallecano": 1672,
-    "Fiorentina": 1670,
-    "AEK Athens": 1639,
-    "Shakhtar Donetsk": 1566,
-    "AZ Alkmaar": 1559,
+    "Crystal Palace": 1812,
+    "Rayo Vallecano": 1689,
+    "Strasbourg": 1732,
+    "Shakhtar Donetsk": 1583,
 }
 
 # Poisson random variable generator (pure Python)
@@ -97,35 +93,30 @@ def simulate_final(team_a, team_b, elos_dict):
     else:
         return simulate_penalties(team_a, team_b, elos_dict)
 
-# Quarter-finals (fixed as of April 8, 2026)
-qf_teams = list(elos.keys())
+# Quarter-finals COMPLETED (April 16, 2026 results):
+# AZ 2-2 Shakhtar Donetsk (agg 2-5) -> Shakhtar Donetsk advance
+# AEK Athens 3-1 Rayo Vallecano (agg 3-4) -> Rayo Vallecano advance
+# Fiorentina 2-1 Crystal Palace (agg 2-4) -> Crystal Palace advance
+# Strasbourg 4-0 Mainz 05 (agg 4-2) -> Strasbourg advance
+
+# Semi-finals (fixed as of April 16, 2026)
+sf_teams = list(elos.keys())
 
 # Run Monte Carlo simulations
 NUM_SIMS = 50000
 champion_counts = Counter()
 
-print("Simulating Europa Conference League (QF + SF + Final)...")
+print("Simulating Europa Conference League (SF + Final)...")
 print(f"Running {NUM_SIMS} simulations using current Elo + Poisson goals...\n")
+print("Quarter-finals completed. Semi-finalists: Crystal Palace, Rayo Vallecano, Strasbourg, Shakhtar Donetsk\n")
 
 for sim in range(NUM_SIMS):
-    # Quarter-finals (two-legged, first leg home advantage)
-    qf_winners = {}
-
-    # QF1: Rayo Vallecano vs AEK Athens - Rayo home first
-    qf_winners["qf1"] = simulate_two_leg_tie("Rayo Vallecano", "AEK Athens", True, elos)
-
-    # QF2: Crystal Palace vs Fiorentina - Crystal Palace home first
-    qf_winners["qf2"] = simulate_two_leg_tie("Crystal Palace", "Fiorentina", True, elos)
-
-    # QF3: Mainz 05 vs Strasbourg - Mainz home first
-    qf_winners["qf3"] = simulate_two_leg_tie("Mainz 05", "Strasbourg", True, elos)
-
-    # QF4: Shakhtar Donetsk vs AZ Alkmaar - Shakhtar home first
-    qf_winners["qf4"] = simulate_two_leg_tie("Shakhtar Donetsk", "AZ Alkmaar", True, elos)
-
-    # Semi-finals
-    sf1 = simulate_two_leg_tie(qf_winners["qf1"], qf_winners["qf2"], True, elos)  # QF1 winner home first
-    sf2 = simulate_two_leg_tie(qf_winners["qf3"], qf_winners["qf4"], True, elos)  # QF3 winner home first
+    # Semi-finals (two-legged, first leg home advantage)
+    # SF1: Rayo Vallecano vs Crystal Palace - Rayo Vallecano home first
+    sf1 = simulate_two_leg_tie("Rayo Vallecano", "Crystal Palace", True, elos)
+    
+    # SF2: Strasbourg vs Shakhtar Donetsk - Strasbourg home first
+    sf2 = simulate_two_leg_tie("Strasbourg", "Shakhtar Donetsk", True, elos)
 
     # Final (neutral)
     champion = simulate_final(sf1, sf2, elos)

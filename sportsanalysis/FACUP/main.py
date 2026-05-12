@@ -13,21 +13,21 @@ CONFIG = {
     'ELO': {'K_BASE': 40, 'HOME_ADV': 100, 'INITIAL_RATING': 1800}
 }
 
-# FA Cup Quarter-finalists (as of April 2026)
-QF_TEAMS = [
-    "Manchester City", "Liverpool", "Chelsea", "Port Vale", "Southampton", "Arsenal", "West Ham United", "Leeds United"
+# FA Cup Semi-finalists (as of April 2026) - Southampton eliminated by Man City
+SF_TEAMS = [
+    "Chelsea", "Leeds United", "Manchester City"
 ]
 
-# Basic Elo ratings for FA Cup quarter-finalists (updated from 25-26 season)
+# Basic Elo ratings for FA Cup semi-finalists (updated from 25-26 season)
 elo_ratings = {
-    "Arsenal": 2061,
-    "Chelsea": 1885,
-    "Liverpool": 1936,
-    "Manchester City": 1941,
-    "Southampton": 1810,
-    "West Ham United": 1746,
+    "Arsenal": 2044,
+    "Chelsea": 1840,
+    "Liverpool": 1926,
+    "Manchester City": 1969,
+    "Southampton": 1624,
+    "West Ham United": 1759,
     "Port Vale": 1410,
-    "Leeds United": 1764
+    "Leeds United": 1792	
 }
 
 def generate_pairings(teams, strategy, rng):
@@ -165,107 +165,65 @@ def simulate_fa_cup_match(home_team, away_team, rng, fixed_winner=None):
         return home_goals, away_goals, away_team, f"{away_team} {away_goals}-{home_goals} {home_team}"
 
 def simulate_full_fa_cup_tournament(rng, pairing_strategy=0):
-    """Simulate a complete FA Cup tournament from Quarter-finals to Final"""
-    # Fixed Quarter-finals
-    qf_matches = [
-        ("Manchester City", "Liverpool"),
-        ("Chelsea", "Port Vale"),
-        ("Southampton", "Arsenal"),
-        ("West Ham United", "Leeds United")
-    ]
-    # Known winners from actual results
-    known_qf_winners = {
-        ("Manchester City", "Liverpool"): "Manchester City",
-        ("Chelsea", "Port Vale"): "Chelsea",
-        ("Southampton", "Arsenal"): "Southampton",
-        ("West Ham United", "Leeds United"): "Leeds United"
-    }
-    qf_winners = []
-    for home, away in qf_matches:
-        match_key = (home, away)
-        if match_key in known_qf_winners:
-            winner = known_qf_winners[match_key]
-        else:
+    """Simulate a complete FA Cup tournament from Semi-finals to Final"""
+    teams = SF_TEAMS.copy()
+
+    if len(teams) == 3:
+        # Man City already advanced, remaining semi-final
+        remaining = [t for t in teams if t != "Manchester City"]
+        sf_match = (remaining[0], remaining[1])
+        _, _, sf_winner, _ = simulate_fa_cup_match(sf_match[0], sf_match[1], rng)
+        sf_winners = [sf_winner, "Manchester City"]
+
+        # Final
+        final_match = (sf_winners[0], sf_winners[1])
+        _, _, winner, _ = simulate_fa_cup_match(final_match[0], final_match[1], rng)
+    else:
+        # Standard 4-team simulation
+        # Semi-finals using pairing strategy
+        sf_matches = generate_pairings(teams, pairing_strategy, rng)
+        sf_winners = []
+        for home, away in sf_matches:
             _, _, winner, _ = simulate_fa_cup_match(home, away, rng)
-        qf_winners.append(winner)
+            sf_winners.append(winner)
 
-    # Fixed Semi-finals (25-26 April 2026)
-    sf_matches = [
-        ("Chelsea", "Leeds United"),
-        ("Manchester City", "Southampton")
-    ]
-    sf_winners = []
-    for home, away in sf_matches:
-        _, _, winner, _ = simulate_fa_cup_match(home, away, rng)
-        sf_winners.append(winner)
+        # Final
+        final_match = (sf_winners[0], sf_winners[1])
+        _, _, winner, _ = simulate_fa_cup_match(final_match[0], final_match[1], rng)
 
-    # Final
-    final_match = (sf_winners[0], sf_winners[1])
-    _, _, winner, _ = simulate_fa_cup_match(final_match[0], final_match[1], rng)
-
-    return winner, qf_winners, sf_winners
+    return winner, sf_winners
 
 def run_fa_cup_simulation(num_simulations=5000, random_seed=42):
     """Run Monte Carlo simulation of the complete FA Cup tournament with all pairing strategies"""
     rng = np.random.default_rng(random_seed)
 
-    # Track final winners among quarter-finalists
-    final_winners = {team: 0 for team in QF_TEAMS}
-    sf_advance = {team: 0 for team in QF_TEAMS}
-    final_advance = {team: 0 for team in QF_TEAMS}
+    # Track championship wins, final advancement, and final matchups
+    championship = {team: 0 for team in SF_TEAMS}
+    final_advance = {team: 0 for team in SF_TEAMS}
+    final_matchups = {}
 
     print(f"Running {num_simulations} FA Cup tournament simulations with all pairing strategies...")
     for sim in tqdm(range(num_simulations), desc="Simulating"):
         # Cycle through pairing strategies (6 strategies total)
         pairing_strategy = sim % 6
-        winner, qf_winners, sf_winners = simulate_full_fa_cup_tournament(rng, pairing_strategy=pairing_strategy)
-        for team in qf_winners:
-            sf_advance[team] += 1
+        winner, sf_winners = simulate_full_fa_cup_tournament(rng, pairing_strategy=pairing_strategy)
         for team in sf_winners:
             final_advance[team] += 1
-        if winner in final_winners:
-            final_winners[winner] += 1
-        else:
-            final_winners[winner] = 1  # Handle teams not in initial list
+        championship[winner] += 1
+        finalists = tuple(sorted(sf_winners))
+        if finalists not in final_matchups:
+            final_matchups[finalists] = 0
+        final_matchups[finalists] += 1
 
-    return final_winners, sf_advance, final_advance
+    return championship, final_advance, final_matchups
 
-def print_fa_cup_win_percentages(final_winners, sf_advance, final_advance, num_simulations):
+def print_fa_cup_win_percentages(championship, final_advance, final_matchups, num_simulations):
     """Print FA Cup win percentage table for teams still in contention"""
     console = Console()
 
-    console.print("\n[bold green]FA CUP ADVANCEMENT PROBABILITIES FROM QUARTER-FINALS[/bold green]")
+    console.print("\n[bold green]FA CUP ADVANCEMENT PROBABILITIES FROM SEMI-FINALS[/bold green]")
     console.print(f"Based on {num_simulations} simulations with all possible pairing strategies")
-    console.print(f"Showing quarter-finalists\n")
-
-    # Semi-final advancement
-    sf_results = []
-    for team in sf_advance.keys():
-        advances = sf_advance[team]
-        probability = (advances / num_simulations) * 100
-        sf_results.append({
-            'Team': team,
-            'Advances': advances,
-            'Probability': probability
-        })
-
-    sf_results.sort(key=lambda x: x['Probability'], reverse=True)
-
-    sf_table = Table(box=box.SQUARE, border_style="blue", title="Semi-Final Advancement Probabilities")
-    sf_table.add_column("Rank", style="dim", header_style="bold dim", justify="right", width=6)
-    sf_table.add_column("Team", style="cyan", header_style="bold cyan")
-    sf_table.add_column("Advances", style="green", header_style="bold green", justify="right", width=8)
-    sf_table.add_column("Advance %", style="yellow", header_style="bold yellow", justify="right", width=10)
-
-    for rank, result in enumerate(sf_results, 1):
-        sf_table.add_row(
-            str(rank),
-            result['Team'],
-            str(int(result['Advances'])),
-            f"{result['Probability']:.2f}%"
-        )
-
-    console.print(sf_table)
+    console.print(f"Showing semi-finalists\n")
 
     # Final advancement
     final_results = []
@@ -296,10 +254,38 @@ def print_fa_cup_win_percentages(final_winners, sf_advance, final_advance, num_s
 
     console.print(final_table)
 
+    # Final matchups
+    matchup_results = []
+    for matchup, count in final_matchups.items():
+        probability = (count / num_simulations) * 100
+        matchup_results.append({
+            'Matchup': f"{matchup[0]} vs {matchup[1]}",
+            'Occurrences': count,
+            'Probability': probability
+        })
+
+    matchup_results.sort(key=lambda x: x['Probability'], reverse=True)
+
+    matchup_table = Table(box=box.SQUARE, border_style="blue", title="Final Matchup Probabilities")
+    matchup_table.add_column("Rank", style="dim", header_style="bold dim", justify="right", width=6)
+    matchup_table.add_column("Matchup", style="cyan", header_style="bold cyan")
+    matchup_table.add_column("Occurrences", style="green", header_style="bold green", justify="right", width=12)
+    matchup_table.add_column("Matchup %", style="yellow", header_style="bold yellow", justify="right", width=10)
+
+    for rank, result in enumerate(matchup_results, 1):
+        matchup_table.add_row(
+            str(rank),
+            result['Matchup'],
+            str(int(result['Occurrences'])),
+            f"{result['Probability']:.2f}%"
+        )
+
+    console.print(matchup_table)
+
     # Championship
     results = []
-    for team in final_winners.keys():
-        wins = final_winners[team]
+    for team in championship.keys():
+        wins = championship[team]
         probability = (wins / num_simulations) * 100
         results.append({
             'Team': team,
@@ -326,18 +312,18 @@ def print_fa_cup_win_percentages(final_winners, sf_advance, final_advance, num_s
     console.print(table)
 
 def main():
-    parser = argparse.ArgumentParser(description='FA Cup Tournament Simulation from Quarter-finals - All Pairing Strategies')
+    parser = argparse.ArgumentParser(description='FA Cup Tournament Simulation from Semi-finals - All Pairing Strategies')
     parser.add_argument('--nsims', type=int, default=5000, help='Number of simulations to run (default 5000)')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
 
     args = parser.parse_args()
 
     console = Console()
-    console.print("[bold green]FA CUP TOURNAMENT SIMULATION FROM QUARTER-FINALS[/bold green]")
-    console.print("[bold yellow]Using fixed quarter-final matches, then pairing strategies for semi-finals and final[/bold yellow]\n")
+    console.print("[bold green]FA CUP TOURNAMENT SIMULATION FROM SEMI-FINALS[/bold green]")
+    console.print("[bold yellow]Using pairing strategies for semi-finals and final[/bold yellow]\n")
 
-    final_winners, sf_advance, final_advance = run_fa_cup_simulation(num_simulations=args.nsims, random_seed=args.seed)
-    print_fa_cup_win_percentages(final_winners, sf_advance, final_advance, args.nsims)
+    championship, final_advance, final_matchups = run_fa_cup_simulation(num_simulations=args.nsims, random_seed=args.seed)
+    print_fa_cup_win_percentages(championship, final_advance, final_matchups, args.nsims)
 
 if __name__ == "__main__":
     main()

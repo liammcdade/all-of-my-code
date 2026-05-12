@@ -688,7 +688,9 @@ PIECE_SYMBOLS = {
 }
 
 class ChessGUI:
-    def __init__(self):
+    def __init__(self, self_play=False):
+        pygame.init()
+        pygame.font.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("Chess RL Agent GUI")
         self.font = pygame.font.SysFont('segoeuisymbol', 60)  # For Unicode chess symbols
@@ -696,9 +698,15 @@ class ChessGUI:
         self.agent = ChessRLAgent()
         self.selected_square = None
         self.legal_moves = []
-        self.human_color = chess_lib.WHITE
+        self.human_color = chess_lib.WHITE if not self_play else None
         self.game_over = False
-        self.status_text = "White to move"
+        self.status_text = "White to move" if not self_play else "Self-play mode: AI vs AI"
+        self.self_play = self_play
+        self.ai_thinking = False
+        self.self_play_delay = 1.0  # seconds between moves
+        self.last_move_time = time.time() - self.self_play_delay if self_play else 0
+        self.ai_thread = None
+        self.pending_move = None
 
     def draw_board(self):
         for row in range(8):

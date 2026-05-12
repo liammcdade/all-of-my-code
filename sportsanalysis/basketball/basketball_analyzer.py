@@ -1,159 +1,127 @@
 import random
-import math
-from collections import defaultdict
+import copy
+from collections import Counter
 from tqdm import tqdm
 
-# ====================== UPDATED 2026 LIVE ELO ======================
-teams_elo = {
-    "Duke": 2200,
-    "Arizona": 2188,
-    "Michigan": 2176,
-    "Florida": 2168,
-    "Houston": 2160,
-    "UConn": 2135,
-    "Iowa State": 2118,
-    "Purdue": 2105,
-    "Michigan State": 2098,
-    "Kansas": 2088,
-    "Gonzaga": 2075,
-    "Nebraska": 2068,
-    "Illinois": 2062,
-    "Arkansas": 2054,
-    "Alabama": 2048,
-    "St. John's": 2040,
-    "Vanderbilt": 2028,
-    "Louisville": 2018,
-    "TCU": 2008,
-    "High Point": 1960
+# =========================
+# TEAM DATA
+# =========================
+teams = {
+    "Thunder": {"elo": 1764, "conf": "W"},
+    "Spurs": {"elo": 1728, "conf": "W"},
+    "Celtics": {"elo": 1640, "conf": "E"},
+    "Lakers": {"elo": 1641, "conf": "W"},
+    "Pistons": {"elo": 1657, "conf": "E"},
+    "Nuggets": {"elo": 1634, "conf": "W"},
+    "Cavaliers": {"elo": 1611, "conf": "E"},
+    "Knicks": {"elo": 1639, "conf": "E"},
+    "Timberwolves": {"elo": 1613, "conf": "W"},
+    "Hawks": {"elo": 1561, "conf": "E"},
+    "Magic": {"elo": 1554, "conf": "E"},
+    "Blazers": {"elo": 1532, "conf": "W"},
+    "76ers": {"elo": 1575, "conf": "E"},
+    "Raptors": {"elo": 1531, "conf": "E"},
+    "Suns": {"elo": 1497, "conf": "W"},
+    "Rockets": {"elo": 1590, "conf": "W"},
 }
 
-DEFAULT_ELO = 1850
+# =========================
+# CURRENT SERIES
+# =========================
+second_round = [
+    # East
+    ["Pistons", "Cavaliers", 0, 0],
+    ["Knicks", "76ers", 0, 0],
+    
+    # West
+    ["Thunder", "Lakers", 0, 0],
+    ["Timberwolves", "Spurs", 0, 0],
+]
 
-# ====================== LIVE LOCKED RESULTS ======================
-games = {
-    "East_R64_1": {"team1": "Duke", "team2": "Siena", "winner": "Duke"},
-    "East_R64_2": {"team1": "Ohio State", "team2": "TCU", "winner": "TCU"},
-    "East_R64_3": {"team1": "St. John's", "team2": "Northern Iowa", "winner": "St. John's"},
-    "East_R64_4": {"team1": "Kansas", "team2": "California Baptist", "winner": "Kansas"},
-    "East_R64_5": {"team1": "Louisville", "team2": "South Florida", "winner": "Louisville"},
-    "East_R64_6": {"team1": "Michigan State", "team2": "North Dakota State", "winner": "Michigan State"},
-    "East_R64_7": {"team1": "UCLA", "team2": "UCF", "winner": "UCLA"},
-    "East_R64_8": {"team1": "UConn", "team2": "Furman", "winner": "UConn"},
 
-    "South_R64_1": {"team1": "Florida", "team2": "Prairie View A&M", "winner": "Florida"},
-    "South_R64_2": {"team1": "Clemson", "team2": "Iowa", "winner": "Iowa"},
-    "South_R64_3": {"team1": "Vanderbilt", "team2": "McNeese", "winner": "Vanderbilt"},
-    "South_R64_4": {"team1": "Nebraska", "team2": "Troy", "winner": "Nebraska"},
-    "South_R64_5": {"team1": "North Carolina", "team2": "VCU", "winner": "VCU"},
-    "South_R64_6": {"team1": "Illinois", "team2": "Penn", "winner": "Illinois"},
-    "South_R64_7": {"team1": "Saint Mary's", "team2": "Texas A&M", "winner": "Texas A&M"},
-    "South_R64_8": {"team1": "Houston", "team2": "Idaho", "winner": "Houston"},
+# =========================
+# FUNCTIONS
+# =========================
+def win_prob(a, b, teams_dict, home=None):
+    eloA = teams_dict[a]["elo"]
+    eloB = teams_dict[b]["elo"]
+    if home == a:
+        eloA += 100
+    elif home == b:
+        eloB += 100
+    return 1 / (1 + 10 ** ((eloB - eloA) / 400))
 
-    "West_R64_1": {"team1": "Arizona", "team2": "Long Island", "winner": "Arizona"},
-    "West_R64_2": {"team1": "Villanova", "team2": "Utah State", "winner": "Utah State"},
-    "West_R64_3": {"team1": "Wisconsin", "team2": "High Point", "winner": "High Point"},
-    "West_R64_4": {"team1": "Arkansas", "team2": "Hawaii", "winner": "Arkansas"},
-    "West_R64_5": {"team1": "BYU", "team2": "Texas", "winner": "Texas"},
-    "West_R64_6": {"team1": "Gonzaga", "team2": "Kennesaw State", "winner": "Gonzaga"},
-    "West_R64_7": {"team1": "Miami (FL)", "team2": "Missouri", "winner": "Miami (FL)"},
-    "West_R64_8": {"team1": "Purdue", "team2": "Queens", "winner": "Purdue"},
+def simulate_game(a, b, teams_dict, home=None):
+    prob_a = win_prob(a, b, teams_dict, home)
+    winner = a if random.random() < prob_a else b
+    # Update Elo dynamically
+    k = 32
+    expected_a = prob_a
+    expected_b = 1 - expected_a
+    actual_a = 1 if winner == a else 0
+    actual_b = 1 - actual_a
+    teams_dict[a]["elo"] += k * (actual_a - expected_a)
+    teams_dict[b]["elo"] += k * (actual_b - expected_b)
+    return winner
 
-    "Midwest_R64_1": {"team1": "Michigan", "team2": "Howard", "winner": "Michigan"},
-    "Midwest_R64_2": {"team1": "Georgia", "team2": "Saint Louis", "winner": "Saint Louis"},
-    "Midwest_R64_3": {"team1": "Texas Tech", "team2": "Akron", "winner": "Texas Tech"},
-    "Midwest_R64_4": {"team1": "Alabama", "team2": "Hofstra", "winner": "Alabama"},
-    "Midwest_R64_5": {"team1": "Tennessee", "team2": "Miami (OH)", "winner": "Tennessee"},
-    "Midwest_R64_6": {"team1": "Virginia", "team2": "Wright State", "winner": "Virginia"},
-    "Midwest_R64_7": {"team1": "Kentucky", "team2": "Santa Clara", "winner": "Kentucky"},
-    "Midwest_R64_8": {"team1": "Iowa State", "team2": "Tennessee State", "winner": "Iowa State"},
-}
+def simulate_series(a, b, teams_dict, wa=0, wb=0, higher=None):
+    if higher is None:
+        higher = a
+    game_num = wa + wb
+    while wa < 4 and wb < 4:
+        game_num += 1
+        home = higher if game_num in [1, 2, 5, 7] else b
+        winner = simulate_game(a, b, teams_dict, home)
+        if winner == a:
+            wa += 1
+        else:
+            wb += 1
+    return a if wa == 4 else b
 
-# ====================== BRACKET BUILD ======================
-def build():
-    # EAST
-    games["East_R32_1"] = {"team1": "Duke", "team2": "TCU", "winner": "Duke"}
-    games["East_R32_2"] = {"team1": "St. John's", "team2": "Kansas", "winner": None}
-    games["East_R32_3"] = {"team1": "Louisville", "team2": "Michigan State", "winner": "Michigan State"}
-    games["East_R32_4"] = {"team1": "UCLA", "team2": "UConn", "winner": None}
+def simulate_round(series, teams_dict):
+    winners = []
+    for a, b, wa, wb in series:
+        higher = a  # assuming a is higher seed
+        winners.append(simulate_series(a, b, teams_dict, wa, wb, higher))
+    return winners
 
-    games["East_S16_1"] = {"team1": "East_R32_1", "team2": "East_R32_2", "winner": None}
-    games["East_S16_2"] = {"team1": "East_R32_3", "team2": "East_R32_4", "winner": None}
-    games["East_E8_1"] = {"team1": "East_S16_1", "team2": "East_S16_2", "winner": None}
+def next_round(ts):
+    # Reseed: 1vs8 winner vs 4vs5 winner, 2vs7 winner vs 3vs6 winner
+    return [[ts[0], ts[3], 0, 0], [ts[1], ts[2], 0, 0]]
 
-    # SOUTH
-    games["South_R32_1"] = {"team1": "Florida", "team2": "Iowa", "winner": None}
-    games["South_R32_2"] = {"team1": "Vanderbilt", "team2": "Nebraska", "winner": None}
-    games["South_R32_3"] = {"team1": "VCU", "team2": "Illinois", "winner": None}
-    games["South_R32_4"] = {"team1": "Texas A&M", "team2": "Houston", "winner": None}
+def simulate_playoffs():
+    teams_dict = copy.deepcopy(teams)
 
-    games["South_S16_1"] = {"team1": "South_R32_1", "team2": "South_R32_2", "winner": None}
-    games["South_S16_2"] = {"team1": "South_R32_3", "team2": "South_R32_4", "winner": None}
-    games["South_E8_1"] = {"team1": "South_S16_1", "team2": "South_S16_2", "winner": None}
+    # Conference semifinals
+    r2 = simulate_round(second_round, teams_dict)
 
-    # WEST
-    games["West_R32_1"] = {"team1": "Arizona", "team2": "Utah State", "winner": None}
-    games["West_R32_2"] = {"team1": "High Point", "team2": "Arkansas", "winner": None}
-    games["West_R32_3"] = {"team1": "Texas", "team2": "Gonzaga", "winner": None}
-    games["West_R32_4"] = {"team1": "Miami (FL)", "team2": "Purdue", "winner": None}
+    east = [t for t in r2 if teams_dict[t]["conf"] == "E"]
+    west = [t for t in r2 if teams_dict[t]["conf"] == "W"]
 
-    games["West_S16_1"] = {"team1": "West_R32_1", "team2": "West_R32_2", "winner": None}
-    games["West_S16_2"] = {"team1": "West_R32_3", "team2": "West_R32_4", "winner": None}
-    games["West_E8_1"] = {"team1": "West_S16_1", "team2": "West_S16_2", "winner": None}
+    # Conference finals
+    east_final = simulate_series(east[0], east[1], teams_dict)
+    west_final = simulate_series(west[0], west[1], teams_dict)
 
-    # MIDWEST
-    games["Midwest_R32_1"] = {"team1": "Michigan", "team2": "Saint Louis", "winner": None}
-    games["Midwest_R32_2"] = {"team1": "Texas Tech", "team2": "Alabama", "winner": None}
-    games["Midwest_R32_3"] = {"team1": "Tennessee", "team2": "Virginia", "winner": None}
-    games["Midwest_R32_4"] = {"team1": "Kentucky", "team2": "Iowa State", "winner": None}
+    # NBA Finals
+    champion = simulate_series(east_final, west_final, teams_dict)
 
-    games["Midwest_S16_1"] = {"team1": "Midwest_R32_1", "team2": "Midwest_R32_2", "winner": None}
-    games["Midwest_S16_2"] = {"team1": "Midwest_R32_3", "team2": "Midwest_R32_4", "winner": None}
-    games["Midwest_E8_1"] = {"team1": "Midwest_S16_1", "team2": "Midwest_S16_2", "winner": None}
+    return champion
+# =========================
+# MONTE CARLO SIMULATION
+# =========================
+N = 10000
+results = Counter()
 
-    # FINAL FOUR
-    games["FF_Semi1"] = {"team1": "East_E8_1", "team2": "West_E8_1", "winner": None}
-    games["FF_Semi2"] = {"team1": "South_E8_1", "team2": "Midwest_E8_1", "winner": None}
+for _ in tqdm(range(N)):
+    champ = simulate_playoffs()
+    results[champ] += 1
 
-    # TITLE
-    games["Champion"] = {"team1": "FF_Semi1", "team2": "FF_Semi2", "winner": None}
+# =========================
+# OUTPUT PROBABILITIES
+# =========================
+print("\n=== Championship Probabilities ===\n")
 
-# ====================== SIMULATION ======================
-def elo(team):
-    return teams_elo.get(team, DEFAULT_ELO)
+for team, count in results.most_common():
+    prob = (count / N) * 100
+    print(f"{team:15s}: {prob:6.2f}%")
 
-def prob(a, b):
-    return 1 / (1 + 10 ** (-(elo(a)-elo(b))/400))
-
-def resolve(k):
-    g = games[k]
-
-    if g["winner"] is not None:
-        return g["winner"]
-
-    a = resolve(g["team1"]) if g["team1"] in games else g["team1"]
-    b = resolve(g["team2"]) if g["team2"] in games else g["team2"]
-
-    g["winner"] = a if random.random() < prob(a,b) else b
-    return g["winner"]
-
-LOCKED = {k for k,v in games.items() if v["winner"] is not None}
-
-def reset():
-    for k in games:
-        if k not in LOCKED:
-            games[k]["winner"] = None
-
-def run(n=10000):
-    build()
-    count = defaultdict(int)
-
-    for _ in tqdm(range(n)):
-        reset()
-        champ = resolve("Champion")
-        count[champ] += 1
-
-    print("\nLIVE TITLE ODDS")
-    for t,c in sorted(count.items(), key=lambda x:x[1], reverse=True)[:]:
-        print(f"{t:<20} {c/n*100:.2f}%")
-
-run(10000)

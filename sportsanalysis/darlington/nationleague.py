@@ -1,532 +1,152 @@
 #!/usr/bin/env python3
 """
 National League North 2024-25 Season Simulator
-Calculates ELO ratings from completed matches and simulates remaining fixtures
+Loads final standings after 45 games, simulates the final matchday (12 fixtures),
+then runs Monte Carlo simulations to estimate promotion/playoff/relegation probabilities.
 
-FEATURES:
-- Automatic fixture generation (all home/away matchups)
-- ELO-based match predictions with home advantage
-- 1000 Monte Carlo simulations for accurate position probabilities
-- Progress bar showing completion status and ETA
-- Promotion/relegation predictions
-- Current standings and final season simulation
-
-HOW TO UPDATE:
-1. Add new completed matches to the COMPLETED_MATCHES list below
-2. The script automatically generates all remaining fixtures (every team vs every team, home and away)
-3. Run the script to see updated predictions, position probabilities, and final league table
-
-COMPLETED_MATCHES format: (home_team, away_team, home_score, away_score)
+Fixes relative to original:
+- Monte Carlo now starts from 45-game state and re-simulates the 12 final fixtures each iteration.
+- Form adjustment correctly handles teams with fewer than 5 recorded results.
+- Missing variable `at_least_one_releg_40` is now properly initialised and incremented.
+- Variance boost now actually influences goal draws (applied before Poisson sampling).
+- Dead code and duplicate loops removed.
+- Code structure simplified and comments updated.
 """
 
 import random
-from collections import defaultdict, OrderedDict
+import math
+import numpy as np
+from collections import defaultdict
+import copy
+from tqdm import tqdm
 
 # ===============================
-# MATCH DATA - EASY TO UPDATE
+# CURRENT STANDINGS (after 45 games)
 # ===============================
-
-# Format: (home_team, away_team, home_score, away_score)
-COMPLETED_MATCHES = [
-    # August 2024
-    ("AFC Fylde", "Oxford City", 3, 2),
-    ("Bedford Town", "Alfreton Town", 2, 2),
-    ("Buxton", "Radcliffe", 2, 1),
-    ("Chester", "Peterborough S.", 3, 2),
-    ("Curzon", "Leamington", 1, 1),
-    ("Kidderminster", "Scarborough", 1, 0),
-    ("Kings Lynn", "Telford Utd", 1, 1),
-    ("Macclesfield", "Worksop Town", 3, 1),
-    ("Merthyr Town", "Southport", 2, 0),
-    ("South Shields", "Marine", 1, 0),
-    ("Spennymoor", "Hereford Utd", 2, 0),
-    ("Darlington", "Chorley", 2, 3),
-    ("Alfreton Town", "Darlington", 0, 3),
-    ("Chorley", "Chester", 3, 0),
-    ("Hereford Utd", "Kings Lynn", 0, 2),
-    ("Leamington", "South Shields", 0, 2),
-    ("Marine", "Buxton", 2, 1),
-    ("Oxford City", "Macclesfield", 2, 1),
-    ("Peterborough S.", "Merthyr Town", 0, 3),
-    ("Radcliffe", "Spennymoor", 0, 2),
-    ("Scarborough", "AFC Fylde", 2, 1),
-    ("Southport", "Bedford Town", 3, 1),
-    ("Telford Utd", "Curzon", 1, 1),
-    ("Worksop Town", "Kidderminster", 1, 1),
-    ("Alfreton Town", "South Shields", 0, 2),
-    ("Bedford Town", "Telford Utd", 3, 1),
-    ("Buxton", "Hereford Utd", 1, 2),
-    ("Chester", "Curzon", 1, 1),
-    ("Chorley", "Scarborough", 2, 2),
-    ("Darlington", "AFC Fylde", 1, 3),
-    ("Kidderminster", "Oxford City", 1, 1),
-    ("Merthyr Town", "Marine", 1, 3),
-    ("Peterborough S.", "Leamington", 0, 0),
-    ("Radcliffe", "Worksop Town", 2, 1),
-    ("Southport", "Macclesfield", 1, 2),
-    ("Spennymoor", "Kings Lynn", 0, 5),
-    ("AFC Fylde", "Kidderminster", 2, 1),
-    ("Curzon", "Merthyr Town", 0, 3),
-    ("Hereford Utd", "Chorley", 1, 4),
-    ("Kings Lynn", "Darlington", 1, 1),
-    ("Leamington", "Radcliffe", 2, 1),
-    ("Macclesfield", "Alfreton Town", 1, 1),
-    ("Marine", "Bedford Town", 2, 1),
-    ("Oxford City", "Spennymoor", 1, 2),
-    ("Scarborough", "Peterborough S.", 3, 1),
-    ("South Shields", "Chester", 4, 0),
-    ("Telford Utd", "Buxton", 0, 1),
-    ("Worksop Town", "Southport", 2, 0),
-    ("Alfreton Town", "Marine", 2, 0),
-    ("Bedford Town", "South Shields", 1, 2),
-    ("Buxton", "Curzon", 2, 3),
-    ("Chester", "Oxford City", 2, 1),
-    ("Chorley", "Kings Lynn", 4, 0),
-    ("Darlington", "Telford Utd", 2, 2),
-    ("Kidderminster", "Leamington", 3, 2),
-    ("Merthyr Town", "Scarborough", 1, 3),
-    ("Peterborough S.", "Worksop Town", 0, 1),
-    ("Radcliffe", "Hereford Utd", 1, 0),
-    ("Southport", "AFC Fylde", 2, 3),
-    ("Spennymoor", "Macclesfield", 0, 0),
-
-    # September 2024
-    ("AFC Fylde", "Bedford Town", 1, 0),
-    ("Curzon", "Kidderminster", 0, 1),
-    ("Hereford Utd", "Alfreton Town", 2, 0),
-    ("Leamington", "Chorley", 1, 0),
-    ("Macclesfield", "Darlington", 2, 1),
-    ("Marine", "Peterborough S.", 0, 1),
-    ("Oxford City", "Radcliffe", 1, 5),
-    ("Scarborough", "Southport", 2, 0),
-    ("South Shields", "Buxton", 2, 2),
-    ("Telford Utd", "Spennymoor", 3, 0),
-    ("Worksop Town", "Chester", 2, 1),
-    ("Kings Lynn", "Merthyr Town", 4, 0),
-    ("AFC Fylde", "Chester", 2, 2),
-    ("Curzon", "Chorley", 2, 0),
-    ("Hereford Utd", "Bedford Town", 2, 2),
-    ("Kings Lynn", "Kidderminster", 0, 1),
-    ("Leamington", "Southport", 2, 1),
-    ("Macclesfield", "Merthyr Town", 1, 3),
-    ("Marine", "Darlington", 1, 4),
-    ("Oxford City", "Alfreton Town", 5, 0),
-    ("Scarborough", "Buxton", 2, 1),
-    ("South Shields", "Radcliffe", 3, 0),
-    ("Worksop Town", "Spennymoor", 3, 3),
-    ("Telford Utd", "Peterborough S.", 3, 2),
-    ("Alfreton Town", "Kings Lynn", 1, 1),
-    ("Bedford Town", "Curzon", 2, 2),
-    ("Buxton", "Oxford City", 2, 1),
-    ("Chester", "Scarborough", 1, 1),
-    ("Chorley", "Telford Utd", 3, 1),
-    ("Darlington", "Hereford Utd", 1, 1),
-    ("Kidderminster", "Macclesfield", 1, 1),
-    ("Merthyr Town", "Worksop Town", 2, 0),
-    ("Peterborough S.", "AFC Fylde", 0, 5),
-    ("Radcliffe", "Marine", 4, 1),
-    ("Southport", "South Shields", 0, 0),
-    ("Spennymoor", "Leamington", 2, 0),
-
-    # October 2024
-    ("AFC Fylde", "Leamington", 1, 1),
-    ("AFC Fylde", "Worksop Town", 2, 3),
-    ("Chorley", "Oxford City", 3, 3),
-    ("Kidderminster", "Radcliffe", 1, 5),
-    ("Marine", "Curzon", 0, 4),
-    ("Scarborough", "Leamington", 2, 0),
-    ("Buxton", "Chorley", 3, 2),
-    ("Chester", "Kidderminster", 1, 1),
-    ("Kings Lynn", "AFC Fylde", 1, 2),
-    ("Leamington", "Darlington", 0, 1),
-    ("Macclesfield", "Curzon", 3, 2),
-    ("Oxford City", "Southport", 1, 2),
-    ("Peterborough S.", "Alfreton Town", 1, 1),
-    ("Radcliffe", "Bedford Town", 0, 0),
-    ("South Shields", "Hereford Utd", 2, 1),
-    ("Spennymoor", "Merthyr Town", 6, 4),
-    ("Telford Utd", "Scarborough", 4, 1),
-    ("Worksop Town", "Marine", 1, 2),
-    ("Alfreton Town", "Chester", 0, 2),
-    ("Bedford Town", "Oxford City", 1, 0),
-    ("Hereford Utd", "Telford Utd", 1, 1),
-    ("Leamington", "Macclesfield", 0, 1),
-    ("Merthyr Town", "Kidderminster", 0, 1),
-    ("Peterborough S.", "Buxton", 1, 2),
-    ("Radcliffe", "Darlington", 3, 1),
-    ("South Shields", "Scarborough", 4, 0),
-    ("Southport", "Chorley", 1, 1),
-    ("Spennymoor", "AFC Fylde", 0, 5),
-    ("Worksop Town", "Kings Lynn", 2, 2),
-
-    # November 2024
-    ("AFC Fylde", "Hereford Utd", 2, 1),
-    ("Buxton", "Alfreton Town", 6, 0),
-    ("Chester", "Bedford Town", 1, 2),
-    ("Chorley", "Merthyr Town", 0, 2),
-    ("Curzon", "Peterborough S.", 1, 0),
-    ("Darlington", "Southport", 2, 0),
-    ("Kidderminster", "Spennymoor", 1, 0),
-    ("Kings Lynn", "Radcliffe", 1, 3),
-    ("Macclesfield", "South Shields", 1, 0),
-    ("Oxford City", "Leamington", 1, 1),
-    ("Scarborough", "Marine", 1, 2),
-    ("Telford Utd", "Worksop Town", 2, 1),
-    ("Curzon", "Kings Lynn", 3, 0),
-    ("Southport", "Peterborough S.", 2, 3),
-    ("Alfreton Town", "Kidderminster", 1, 1),
-    ("Hereford Utd", "Curzon", 3, 3),
-    ("Marine", "AFC Fylde", 0, 1),
-    ("Merthyr Town", "Darlington", 3, 1),
-    ("Oxford City", "Bedford Town", 1, 2),
-    ("Peterborough S.", "Chorley", 2, 1),
-    ("Southport", "Kings Lynn", 0, 0),
-    ("Worksop Town", "Scarborough", 1, 0),
-    ("Chester", "Marine", 1, 1),
-    ("Buxton", "Southport", 1, 2),
-    ("Chorley", "Alfreton Town", 0, 1),
-    ("Curzon", "Spennymoor", 2, 2),
-    ("Darlington", "Worksop Town", 5, 1),
-    ("Kidderminster", "Bedford Town", 2, 1),
-    ("Kings Lynn", "Leamington", 2, 0),
-    ("Macclesfield", "Peterborough S.", 3, 1),
-    ("Oxford City", "Hereford Utd", 3, 0),
-    ("Telford Utd", "Merthyr Town", 2, 4),
-    ("AFC Fylde", "South Shields", 2, 4),
-    ("Alfreton Town", "AFC Fylde", 0, 1),
-    ("Bedford Town", "Merthyr Town", 3, 4),
-    ("Buxton", "Chester", 1, 2),
-    ("Curzon", "Scarborough", 1, 2),
-    ("Hereford Utd", "Southport", 1, 2),
-    ("Kidderminster", "Darlington", 1, 2),
-    ("Leamington", "Marine", 0, 1),
-    ("Macclesfield", "Telford Utd", 1, 1),
-    ("Oxford City", "Worksop Town", 2, 0),
-    ("Radcliffe", "Chorley", 2, 2),
-    ("South Shields", "Kings Lynn", 1, 1),
-    ("Spennymoor", "Peterborough S.", 1, 0),
-    ("Alfreton Town", "Spennymoor", 2, 1),
-    ("Bedford Town", "Buxton", 3, 0),
-    ("Merthyr Town", "South Shields", 3, 1),
-    ("Marine", "Telford Utd", 2, 1),
-    ("Southport", "Chester", 2, 2),
-
-    # December 2024
-    ("Darlington", "Peterborough S.", 5, 2),
-    ("South Shields", "Oxford City", 4, 1),
-    ("AFC Fylde", "Buxton", 1, 2),
-    ("Chester", "Leamington", 2, 0),
-    ("Chorley", "Bedford Town", 1, 0),
-    ("Darlington", "Spennymoor", 1, 0),
-    ("Marine", "Oxford City", 0, 0),
-    ("Merthyr Town", "Alfreton Town", 6, 2),
-    ("Peterborough S.", "Radcliffe", 3, 0),
-    ("Southport", "Kidderminster", 2, 2),
-    ("Telford Utd", "South Shields", 1, 1),
-    ("Worksop Town", "Curzon", 0, 1),
-    ("AFC Fylde", "Macclesfield", 5, 1),
-    ("Chester", "Hereford Utd", 1, 1),
-    ("Chorley", "Spennymoor", 0, 0),
-    ("Darlington", "Curzon", 3, 3),
-    ("Kings Lynn", "Buxton", 3, 2),
-    ("Marine", "Kidderminster", 2, 0),
-    ("Merthyr Town", "Leamington", 4, 1),
-    ("Peterborough S.", "Bedford Town", 3, 1),
-    ("Scarborough", "Alfreton Town", 0, 0),
-    ("Southport", "Radcliffe", 2, 0),
-    ("Telford Utd", "Oxford City", 4, 0),
-    ("Worksop Town", "South Shields", 0, 3),
-    ("Bedford Town", "Darlington", 3, 4),
-    ("Buxton", "Merthyr Town", 1, 2),
-    ("Curzon", "AFC Fylde", 1, 3),
-    ("Kidderminster", "Chorley", 3, 1),
-    ("Leamington", "Worksop Town", 1, 2),
-    ("Macclesfield", "Scarborough", 1, 1),
-    ("Oxford City", "Kings Lynn", 0, 1),
-    ("Radcliffe", "Telford Utd", 2, 2),
-    ("Radcliffe", "Chester", 1, 3),
-    ("AFC Fylde", "Merthyr Town", 1, 0),
-    ("Curzon", "Alfreton Town", 2, 1),
-    ("Kings Lynn", "Chester", 0, 2),
-    ("Marine", "Spennymoor", 0, 2),
-    ("Oxford City", "Darlington", 5, 1),
-    ("Peterborough S.", "Hereford Utd", 0, 2),
-    ("Scarborough", "Bedford Town", 2, 2),
-    ("South Shields", "Kidderminster", 1, 2),
-    ("Telford Utd", "Southport", 2, 2),
-    ("Worksop Town", "Chorley", 1, 1),
-    ("Leamington", "Telford Utd", 1, 3),
-    ("Kings Lynn", "Macclesfield", 1, 1),
-    ("Spennymoor", "Buxton", 2, 2),
-    ("Alfreton Town", "Southport", 1, 1),
-    ("Bedford Town", "Macclesfield", 1, 2),
-    ("Scarborough", "Radcliffe", 0, 3),
-    ("South Shields", "Peterborough S.", 2, 1),
-
-    # January 2025
-    ("Bedford Town", "Marine", 1, 1),
-    ("Buxton", "Telford Utd", 0, 2),
-    ("Chester", "South Shields", 1, 3),
-    ("Chorley", "Hereford Utd", 4, 2),
-    ("Darlington", "Kings Lynn", 1, 1),
-    ("Kidderminster", "AFC Fylde", 1, 0),
-    ("Merthyr Town", "Curzon", 2, 1),
-    ("Peterborough S.", "Scarborough", 0, 4),
-    ("Radcliffe", "Leamington", 2, 1),
-    ("Southport", "Worksop Town", 1, 1),
-    ("Spennymoor", "Oxford City", 1, 1),
-    ("Scarborough", "Darlington", 0, 1),
-    ("Oxford City", "Merthyr Town", 1, 3),
-    ("AFC Fylde", "Chorley", 1, 0),
-    ("Curzon", "Radcliffe", 0, 3),
-    ("Hereford Utd", "Kidderminster", 0, 1),
-    ("Kings Lynn", "Peterborough S.", 2, 2),
-    ("Leamington", "Bedford Town", 2, 2),
-    ("Macclesfield", "Buxton", 0, 2),
-    ("Marine", "Southport", 4, 2),
-    ("South Shields", "Spennymoor", 6, 0),
-    ("Telford Utd", "Chester", 3, 1),
-    ("Worksop Town", "Alfreton Town", 1, 0),
-    ("Alfreton Town", "Leamington", 2, 1),
-    ("Bedford Town", "Kings Lynn", 4, 2),
-    ("Buxton", "Worksop Town", 3, 1),
-    ("Chester", "Macclesfield", 2, 0),
-    ("Chorley", "Marine", 2, 1),
-    ("Darlington", "South Shields", 1, 2),
-    ("Kidderminster", "Telford Utd", 3, 0),
-    ("Merthyr Town", "Hereford Utd", 2, 2),
-    ("Peterborough S.", "Oxford City", 0, 0),
-    ("Radcliffe", "AFC Fylde", 3, 3),
-    ("Southport", "Curzon", 2, 4),
-    ("Spennymoor", "Scarborough", 1, 1),
-    ("Macclesfield", "Radcliffe", 2, 1),
-    ("Scarborough", "Hereford Utd", 0, 3),
-
-    # February 2025
-    ("AFC Fylde", "Peterborough S.", 5, 2),
-    ("Chorley", "Leamington", 1, 1),
-    ("Curzon", "Bedford Town", 2, 2),
-    ("Kings Lynn", "Southport", 2, 0),
-    ("Macclesfield", "Kidderminster", 5, 1),
-    ("Radcliffe", "Oxford City", 1, 0),
-    ("Spennymoor", "Telford Utd", 0, 2),
-    ("Bedford Town", "Chester", 1, 2),
-    ("Leamington", "Oxford City", 0, 0),
-    ("Marine", "Scarborough", 1, 1),
-    ("Peterborough S.", "Curzon", 1, 1),
-    ("Radcliffe", "Kings Lynn", 0, 1),
-    ("Southport", "Darlington", 2, 2),
-    ("Worksop Town", "Telford Utd", 3, 1),
-    ("Merthyr Town", "Chorley", 2, 3),
-    ("AFC Fylde", "Spennymoor", 5, 0),
-    ("Buxton", "Peterborough S.", 0, 0),
-    ("Chester", "Alfreton Town", 2, 2),
-    ("Chorley", "Southport", 4, 2),
-    ("Curzon", "Marine", 4, 1),
-    ("Kidderminster", "Merthyr Town", 0, 0),
-    ("Kings Lynn", "Worksop Town", 0, 1),
-    ("Macclesfield", "Leamington", 3, 1),
-    ("Scarborough", "South Shields", 2, 2),
-    ("Telford Utd", "Hereford Utd", 3, 0),
-    ("AFC Fylde", "Alfreton Town", 3, 0),
-    ("Chester", "Buxton", 1, 0),
-    ("Chorley", "Radcliffe", 0, 1),
-    ("Marine", "Leamington", 5, 0),
-    ("Merthyr Town", "Bedford Town", 7, 1),
-    ("Peterborough S.", "Spennymoor", 1, 3),
-    ("Scarborough", "Curzon", 1, 0),
-    ("Southport", "Hereford Utd", 5, 1),
-    ("Worksop Town", "Oxford City", 1, 2),
-    ("Hereford Utd", "Darlington", 1, 0),
-    ("Leamington", "Spennymoor", 0, 2),
-    ("Southport", "Buxton", 0, 0),
-    ("Telford Utd", "Chorley", 2, 2),
-
-    # March 2025
-    ("Alfreton Town", "Merthyr Town", 3, 2),
-    ("Bedford Town", "Chorley", 2, 0),
-    ("Buxton", "AFC Fylde", 0, 3),
-    ("Curzon", "Worksop Town", 3, 1),
-    ("Hereford Utd", "Scarborough", 1, 2),
-    ("Kidderminster", "Southport", 1, 1),
-    ("Leamington", "Chester", 0, 2),
-    ("Macclesfield", "Kings Lynn", 4, 0),
-    ("Oxford City", "Marine", 0, 2),
-    ("Radcliffe", "Peterborough S.", 2, 1),
-    ("South Shields", "Telford Utd", 2, 2),
-    ("Spennymoor", "Darlington", 0, 4),
-    ("Alfreton Town", "Scarborough", 2, 1),
-    ("Bedford Town", "Peterborough S.", 4, 1),
-    ("Buxton", "Kings Lynn", 1, 2),
-    ("Curzon", "Darlington", 1, 2),
-    ("Hereford Utd", "Chester", 5, 2),
-    ("Kidderminster", "Marine", 4, 0),
-    ("Leamington", "Merthyr Town", 1, 2),
-    ("Macclesfield", "AFC Fylde", 1, 4),
-    ("Oxford City", "Telford Utd", 0, 0),
-    ("Radcliffe", "Southport", 1, 2),
-    ("South Shields", "Worksop Town", 3, 1),
-    ("Spennymoor", "Chorley", 1, 0),
-    ("AFC Fylde", "Curzon", 5, 1),
-    ("Chester", "Spennymoor", 2, 1),
-    ("Darlington", "Bedford Town", 2, 0),
-    ("Kings Lynn", "Oxford City", 1, 2),
-    ("Merthyr Town", "Buxton", 1, 3),
-    ("Peterborough S.", "South Shields", 0, 3),
-    ("Scarborough", "Macclesfield", 2, 2),
-    ("Telford Utd", "Radcliffe", 2, 0),
-    ("Worksop Town", "Leamington", 2, 0),
-    ("Darlington", "Macclesfield", 1, 2),
-    ("Kidderminster", "Alfreton Town", 1, 0),
-    ("Scarborough", "Hereford Utd", 0, 0),
-    ("South Shields", "AFC Fylde", 2, 1),
-    ("Telford Utd", "Leamington", 1, 2),
-    ("Buxton", "Kidderminster", 1, 3),
-    ("Chester", "Darlington", 2, 1),
-    ("Kings Lynn", "Marine", 1, 0),
-    ("Leamington", "AFC Fylde", 1, 1),
-    ("Macclesfield", "Chorley", 1, 2),
-    ("Oxford City", "Scarborough", 0, 2),
-    ("Peterborough S.", "Southport", 0, 1),
-    ("Radcliffe", "Merthyr Town", 1, 3),
-    ("South Shields", "Curzon", 3, 0),
-    ("Spennymoor", "Bedford Town", 0, 0),
-    ("Telford Utd", "Alfreton Town", 4, 1),
-    ("Worksop Town", "Hereford Utd", 2, 3),
-    ("AFC Fylde", "Telford Utd", 2, 1),
-    ("Alfreton Town", "Radcliffe", 1, 1),
-    ("Bedford Town", "Worksop Town", 0, 2),
-    ("Chorley", "South Shields", 1, 1),
-    ("Curzon", "Oxford City", 2, 2),
-    ("Darlington", "Buxton", 0, 2),
-    ("Hereford Utd", "Leamington", 5, 1),
-    ("Kidderminster", "Peterborough S.", 4, 0),
-    ("Marine", "Macclesfield", 2, 4),
-    ("Merthyr Town", "Chester", 1, 2),
-    ("Scarborough", "Kings Lynn", 1, 1),
-    ("Southport", "Spennymoor", 2, 0),
-    ("AFC Fylde", "Kings Lynn", 4, 1),
-    ("Alfreton Town", "Peterborough S.", 0, 2),
-    ("Bedford Town", "Radcliffe", 1, 0),
-    ("Chorley", "Buxton", 1, 2),
-    ("Curzon", "Macclesfield", 0, 2),
-    ("Darlington", "Leamington", 1, 0),
-    ("Hereford Utd", "South Shields", 2, 1),
-    ("Kidderminster", "Chester", 1, 1),
-    ("Marine", "Worksop Town", 4, 2),
-    ("Merthyr Town", "Spennymoor", 2, 3),
-    ("Scarborough", "Telford Utd", 1, 1),
-    ("Southport", "Oxford City", 1, 3),
-    ("Chorley", "Kidderminster", 2, 1),
-    ("Darlington", "Radcliffe", 3, 0),
-    ("Hereford Utd", "AFC Fylde", 1, 4),
-    ("Kings Lynn", "South Shields", 3, 0),
-    ("Leamington", "Buxton", 0, 1),
-    ("Peterborough S.", "Marine", 0, 0),
-    ("Southport", "Alfreton Town", 2, 1),
-    ("Spennymoor", "Curzon", 4, 1),
-    ("Telford Utd", "Macclesfield", 3, 0),
-    ("Alfreton Town", "Hereford Utd", 2, 1),
-    ("Buxton", "Bedford Town", 3, 0),
-    ("Chester", "Southport", 1, 2),
-    ("Kings Lynn", "Curzon", 0, 0),
-    ("Leamington", "Scarborough", 1, 2),
-    ("Macclesfield", "Hereford Utd", 3, 1),
-    ("Oxford City", "Chorley", 2, 0),
-    ("Peterborough S.", "Darlington", 0, 1),
-    ("Radcliffe", "Kidderminster", 1, 1),
-    ("South Shields", "Merthyr Town", 4, 1),
-    ("Spennymoor", "Alfreton Town", 1, 1),
-    ("Telford Utd", "Marine", 0, 2),
-    ("Worksop Town", "AFC Fylde", 1, 0),
-    ("Alfreton Town", "Macclesfield", 0, 2),
-    ("Darlington", "Kidderminster", 0, 2),
-    ("Hereford Utd", "Spennymoor", 1, 2),
-    ("Leamington", "Kings Lynn", 2, 5),
-
-    # March 2025 (remaining)
-    ("AFC Fylde", "Darlington", 4, 1),
-    ("Curzon", "Chester", 0, 1),
-    ("Hereford Utd", "Buxton", 0, 2),
-    ("Kings Lynn", "Spennymoor", 0, 1),
-    ("Leamington", "Peterborough S.", 4, 2),
-    ("Oxford City", "Kidderminster", 3, 2),
-    ("Scarborough", "Chorley", 0, 0),
-    ("South Shields", "Alfreton Town", 3, 0),
-    ("Telford Utd", "Bedford Town", 2, 2),
-    ("Worksop Town", "Radcliffe", 2, 0),
-    ("AFC Fylde", "Marine", 2, 0),
-    ("Alfreton Town", "Chorley", 1, 0),
-    ("Hereford Utd", "Macclesfield", 0, 2),
-    ("Spennymoor", "Kidderminster", 3, 1),
-
-    # April 2025
-    ("Alfreton Town", "Worksop Town", 1, 1),
-    ("Bedford Town", "Leamington", 3, 1),
-    ("Buxton", "Macclesfield", 2, 4),
-    ("Chester", "Telford Utd", 2, 1),
-    ("Chorley", "AFC Fylde", 2, 0),
-    ("Darlington", "Scarborough", 1, 2),
-    ("Kidderminster", "Hereford Utd", 2, 1),
-    ("Merthyr Town", "Oxford City", 1, 1),
-    ("Peterborough S.", "Kings Lynn", 2, 2),
-    ("Radcliffe", "Curzon", 3, 3),
-    ("Southport", "Marine", 2, 1),
-    ("Spennymoor", "South Shields", 1, 1),
-    ("AFC Fylde", "Radcliffe", 4, 3),
-    ("Curzon", "Southport", 1, 3),
-    ("Hereford Utd", "Merthyr Town", 3, 0),
-    ("Kings Lynn", "Bedford Town", 0, 1),
-    ("Leamington", "Alfreton Town", 1, 2),
-    ("Macclesfield", "Chester", 0, 2),
-    ("Marine", "Chorley", 2, 1),
-    ("Oxford City", "Peterborough S.", 2, 0),
-    ("Scarborough", "Spennymoor", 1, 0),
-    ("South Shields", "Darlington", 0, 1),
-    ("Telford Utd", "Kidderminster", 1, 2),
-    ("Worksop Town", "Buxton", 1, 2),
-    ("Marine", "Hereford Utd", 0, 1),
-    ("Alfreton Town", "Oxford City", 1, 1),
-    ("Bedford Town", "Hereford Utd", 2, 2),
-    ("Buxton", "Scarborough", 2, 0),
-    ("Chester", "AFC Fylde", 1, 0),
-    ("Chorley", "Curzon", 0, 1),
-    ("Darlington", "Marine", 2, 3),
-    ("Kidderminster", "Kings Lynn", 4, 1),
-    ("Merthyr Town", "Macclesfield", 1, 2),
-    ("Peterborough S.", "Telford Utd", 2, 3),
-    ("Radcliffe", "South Shields", 2, 5),
-    ("Southport", "Leamington", 1, 2),
-    ("Spennymoor", "Worksop Town", 0, 1),
+CURRENT_STANDINGS = [
+    # (team_name, played, won, drawn, lost, goal_diff, goals_for, goals_against, last_5_results, points)
+    ("AFC Fylde", 45, 31, 4, 10, 59, 108, 49, "WLWLW", 97),
+    ("South Shields", 45, 28, 11, 6, 57, 99, 42, "DLWWD", 95),
+    ("Kidderminster", 45, 24, 12, 9, 22, 73, 51, "WWWW", 84),           # 4 results
+    ("Macclesfield", 45, 24, 7, 14, 14, 81, 67, "LWLLW", 79),
+    ("Scarborough", 45, 19, 15, 11, 9, 60, 51, "DWWLW", 72),
+    ("Chester", 45, 20, 12, 13, 2, 66, 64, "WWWWW", 72),
+    ("Buxton", 45, 21, 7, 17, 19, 79, 60, "LWWDM", 70),                 # 'M' probably a typo for 'D'? treated as D
+    ("Merthyr Town", 45, 22, 4, 19, 11, 93, 82, "DLLWL", 70),
+    ("Darlington", 45, 20, 9, 16, 12, 77, 65, "LLWLD", 69),
+    ("Spennymoor", 45, 19, 10, 16, -7, 61, 68, "WDLLW", 67),
+    ("Telford Utd", 45, 17, 14, 14, 22, 85, 63, "DLLWD", 65),
+    ("Marine", 45, 18, 7, 20, -10, 61, 71, "LWLLL", 61),
+    ("Worksop Town", 45, 16, 9, 20, -7, 65, 72, "WDLLW", 57),
+    ("Radcliffe", 45, 17, 6, 22, -8, 75, 83, "DLLLL", 57),
+    ("Southport", 45, 15, 12, 18, -9, 62, 71, "WWLLL", 57),
+    ("Chorley", 45, 14, 12, 19, 0, 64, 64, "LWLLD", 54),
+    ("Oxford City", 45, 14, 11, 20, -7, 59, 66, "DWDL", 53),             # 4 results
+    ("Bedford Town", 45, 13, 13, 19, -11, 65, 76, "DWDD", 52),          # 4 results
+    ("Kings Lynn", 45, 12, 15, 18, -8, 56, 64, "LDLLD", 51),
+    ("Hereford", 45, 14, 9, 22, -15, 62, 77, "WDLWW", 51),
+    ("Curzon Ashton", 45, 13, 12, 20, -21, 64, 85, "LDLWL", 51),
+    ("Alfreton Town", 45, 12, 13, 20, -33, 46, 79, "DWDDW", 49),
+    ("Peterborough", 45, 10, 8, 27, -45, 49, 94, "LDLLL", 38),
+    ("Leamington", 45, 7, 8, 30, -46, 40, 86, "WLLWL", 29),
 ]
 
-# UPCOMING_FIXTURES - Scheduled postponed matches with confirmed dates
+# Estimated ELO ratings based on table position
+TEAM_ELOS = {
+    "South Shields": 1829,
+    "Kidderminster": 1823,
+    "AFC Fylde": 1819,
+    "Macclesfield": 1803,
+    "Chester": 1764,
+    "Telford Utd": 1760,
+    "Buxton": 1749,
+    "Spennymoor": 1700,
+    "Scarborough": 1697,
+    "Darlington": 1683,
+    "Merthyr Town": 1669,
+    "Worksop Town": 1667,
+    "Southport": 1644,
+    "Kings Lynn": 1635,
+    "Chorley": 1633,
+    "Marine": 1627,
+    "Hereford": 1608,
+    "Oxford City": 1603,
+    "Bedford Town": 1600,
+    "Curzon Ashton": 1575,
+    "Alfreton Town": 1571,
+    "Radcliffe": 1562,
+    "Peterborough": 1499,
+    "Leamington": 1445,
+}
+
+HOME_ADVANTAGE = 100
+
+# --- Derived constants ---
+# Win/Draw/Loss rates for each team
+wdl_rates = {}
+for team, played, won, drawn, lost, gd, gf, ga, last5, points in CURRENT_STANDINGS:
+    wdl_rates[team] = {"win": won / played, "draw": drawn / played, "loss": lost / played}
+
+# Form adjustment based on last 5 (or fewer) results – corrected for actual length
+form_adjustment = {}
+for team, played, won, drawn, lost, gd, gf, ga, last5, points in CURRENT_STANDINGS:
+    points_last5 = 0
+    for result in last5:
+        if result == 'W':
+            points_last5 += 3
+        elif result == 'D':
+            points_last5 += 1
+        # Treat unknown characters (like 'M') as D
+        elif result in ('M','L'):   # 'L' already handled? L gives 0, so skip.
+            pass
+    num_reported = len(last5)
+    expected_points = num_reported * 1.5   # 1.5 pts per game is the long‑term baseline
+    form_adjustment[team] = (points_last5 - expected_points) * 10
+
+# Injury penalties (nonlinear)
+injury_penalty = {
+    "AFC Fylde": 0,
+    "South Shields": 0,
+    "Kidderminster": 0,
+    "Macclesfield": 0,
+    "Chester": 0,
+    "Telford Utd": 0,
+    "Buxton": 0,
+    "Spennymoor": 0,
+    "Scarborough": 0,
+    "Darlington": 0,
+    "Merthyr Town": 0,
+    "Worksop Town": 0,
+    "Southport": 0,
+    "Kings Lynn": 0,
+    "Chorley": 0,
+    "Marine": 0,
+    "Hereford": 0,
+    "Oxford City": 0,
+    "Bedford Town": 0,
+    "Curzon Ashton": 0,
+    "Alfreton Town": 0,
+    "Radcliffe": 0,
+    "Peterborough": 0,
+    "Leamington": 0,
+}
+
+
+def get_adjusted_elo(team):
+    """Return team ELO rating after applying form and injury adjustments."""
+    base = TEAM_ELOS.get(team, 1500)
+    penalty = injury_penalty.get(team, 0)
+    adjusted_penalty = penalty * (1 - math.exp(-penalty / 80))  # nonlinear injury decay
+    form = form_adjustment.get(team, 0)
+    return base - adjusted_penalty + form
+
+
+# ===============================
+# FIXTURE DATA – exactly 12 matches, one for each team
+# ===============================
+# Format: (home_team, away_team)
 UPCOMING_FIXTURES = [
-    # Tuesday 14 April 2025
-    ("Alfreton Town", "Buxton"),
-    ("Marine", "Merthyr Town"),
-    ("Radcliffe", "Kidderminster"),
-    ("South Shields", "Macclesfield"),
-    
-    # Saturday 18 April 2025
-    ("AFC Fylde", "Southport"),
-    ("Curzon", "Buxton"),
-    ("Hereford Utd", "Radcliffe"),
-    ("Kings Lynn", "Chorley"),
-    ("Leamington", "Kidderminster"),
-    ("Macclesfield", "Spennymoor"),
-    ("Marine", "Alfreton Town"),
-    ("Oxford City", "Chester"),
-    ("Scarborough", "Merthyr Town"),
-    ("South Shields", "Bedford Town"),
-    ("Telford Utd", "Darlington"),
-    ("Worksop Town", "Peterborough S."),
-    
-    # Tuesday 21 April 2025
-    ("Macclesfield", "Southport"),
-    
-    # Saturday 25 April 2025
-    ("Alfreton Town", "Curzon"),
+    ("Alfreton Town", "Curzon Ashton"),
     ("Bedford Town", "Scarborough"),
     ("Buxton", "Leamington"),
     ("Chester", "Kings Lynn"),
@@ -537,9 +157,9 @@ UPCOMING_FIXTURES = [
     ("Radcliffe", "Macclesfield"),
     ("Southport", "Telford Utd"),
     ("Spennymoor", "Marine"),
+    ("Hereford", "Peterborough"),
 ]
 
-# The system will generate additional remaining home-and-away fixtures after processing these scheduled matches
 
 # ===============================
 # SIMULATION ENGINE
@@ -549,126 +169,114 @@ class ELORatingSystem:
     def __init__(self, k_factor=30, home_advantage=100):
         self.k_factor = k_factor
         self.home_advantage = home_advantage
-        self.ratings = defaultdict(lambda: 1500)  # Default ELO rating
+        self.ratings = defaultdict(lambda: 1500)
 
     def expected_score(self, rating_a, rating_b):
-        """Calculate expected score for team A vs team B"""
         return 1 / (1 + 10 ** ((rating_b - rating_a) / 400))
 
     def update_ratings(self, home_team, away_team, home_score, away_score):
-        """Update ELO ratings after a match"""
-        # Add home advantage to home team
         home_rating = self.ratings[home_team] + self.home_advantage
         away_rating = self.ratings[away_team]
 
-        # Calculate expected scores
         expected_home = self.expected_score(home_rating, away_rating)
         expected_away = self.expected_score(away_rating, home_rating)
 
-        # Determine actual scores (win=1, draw=0.5, loss=0)
-        if home_score > away_score:
-            actual_home, actual_away = 1, 0
-        elif home_score < away_score:
-            actual_home, actual_away = 0, 1
-        else:
-            actual_home, actual_away = 0.5, 0.5
+        actual_home = 1 if home_score > away_score else (0.5 if home_score == away_score else 0)
+        actual_away = 1 if away_score > home_score else (0.5 if home_score == away_score else 0)
 
-        # Goal difference multiplier (for more decisive results)
         goal_diff = abs(home_score - away_score)
-        k_multiplier = min(1 + goal_diff * 0.1, 2.0)  # Max 2x multiplier
+        k_multiplier = min(1 + goal_diff * 0.1, 2.0)
 
-        # Update ratings
         self.ratings[home_team] += self.k_factor * k_multiplier * (actual_home - expected_home)
         self.ratings[away_team] += self.k_factor * k_multiplier * (actual_away - expected_away)
 
     def predict_match(self, home_team, away_team):
-        """Predict the outcome of a match"""
-        home_rating = self.ratings[home_team] + self.home_advantage
-        away_rating = self.ratings[away_team]
+        """Generate a score using a bivariate Poisson model with form & injury adjustments."""
+        diff = get_adjusted_elo(home_team) - get_adjusted_elo(away_team) + HOME_ADVANTAGE
 
-        expected_home = self.expected_score(home_rating, away_rating)
-        expected_away = 1 - expected_home
+        # Base expected goals
+        home_xg = 0.7 + 1.8 / (1 + math.exp(-diff / 400))
+        away_xg = 0.7 + 1.8 / (1 + math.exp(diff / 400))
 
-        # Approximate draw probability (average in soccer ~26%)
-        prob_draw = 0.26
-        prob_home = (1 - prob_draw) * expected_home
-        prob_away = (1 - prob_draw) * expected_away
+        # Closeness factor (higher when ratings are close)
+        closeness = math.exp(-(diff ** 2) / (2 * 180 ** 2))
 
-        # Simulate outcome
-        rand = random.random()
-        if rand < prob_home:
-            # Home win
-            home_score = random.randint(1, 4)
-            away_score = random.randint(0, home_score - 1)
-        elif rand < prob_home + prob_draw:
-            # Draw
-            score = random.randint(0, 3)
-            home_score = score
-            away_score = score
-        else:
-            # Away win
-            away_score = random.randint(1, 4)
-            home_score = random.randint(0, away_score - 1)
+        # Adjust for team tendencies
+        home_bias = wdl_rates[home_team]["win"] - wdl_rates[home_team]["loss"]
+        away_bias = wdl_rates[away_team]["win"] - wdl_rates[away_team]["loss"]
+        bias_diff = home_bias - away_bias
+        home_xg += bias_diff * 0.15
+        away_xg -= bias_diff * 0.15
 
-        return home_score, away_score
+        tempo_factor = 0.9 + 0.1 * (abs(diff) / 400)
+        home_xg *= tempo_factor
+        away_xg *= tempo_factor
+
+        # Variance boost (more extreme results for teams with many wins)
+        variance_boost = 1 + (wdl_rates[home_team]["win"] - wdl_rates[home_team]["draw"]) * 0.2
+
+        # Draw bias via shared goals
+        draw_bias = (wdl_rates[home_team]["draw"] + wdl_rates[away_team]["draw"]) / 2
+        lambda_shared = 0.05 + closeness * 0.25 * draw_bias
+
+        lambda_home = max(0.05, home_xg - lambda_shared)
+        lambda_away = max(0.05, away_xg - lambda_shared)
+
+        # Apply variance boost BEFORE drawing random numbers (original missed this)
+        lambda_home *= variance_boost
+
+        shared_goals = np.random.poisson(lambda_shared)
+        home_goals = np.random.poisson(lambda_home)
+        away_goals = np.random.poisson(lambda_away)
+
+        # Total goals
+        hg = home_goals + shared_goals
+        ag = away_goals + shared_goals
+        return int(hg), int(ag)
+
 
 class LeagueSimulator:
     def __init__(self):
         self.elo_system = ELORatingSystem()
-        self.team_stats = defaultdict(lambda: {'played': 0, 'won': 0, 'drawn': 0, 'lost': 0, 'gf': 0, 'ga': 0, 'points': 0})
+        self.team_stats = defaultdict(lambda: {
+            'played': 0, 'won': 0, 'drawn': 0, 'lost': 0,
+            'gf': 0, 'ga': 0, 'points': 0
+        })
+        self.match_cache = {}
 
-    def load_matches(self):
-        """Load matches from embedded data and automatically generate remaining fixtures"""
-        # Deduplicate completed matches
-        seen = set()
-        self.completed_matches = []
-        for match in COMPLETED_MATCHES:
-            if match not in seen:
-                self.completed_matches.append(match)
-                seen.add(match)
+    def load_current_standings(self):
+        """Load the 45-game standings and set initial ELO ratings."""
+        for team, played, won, drawn, lost, gd, gf, ga, last5, points in CURRENT_STANDINGS:
+            self.team_stats[team] = {
+                'played': played,
+                'won': won,
+                'drawn': drawn,
+                'lost': lost,
+                'gf': gf,
+                'ga': ga,
+                'points': points,
+            }
+            self.elo_system.ratings[team] = TEAM_ELOS.get(team, 1500)
 
-        # Get all unique teams from completed matches
-        teams = set()
-        for home_team, away_team, _, _ in self.completed_matches:
-            teams.add(home_team)
-            teams.add(away_team)
-        teams = sorted(list(teams))
+    def save_state(self):
+        """Return a deep copy of the current state (ratings + stats)."""
+        return {
+            'ratings': self.elo_system.ratings.copy(),
+            'stats': copy.deepcopy(self.team_stats)
+        }
 
-        # Generate proper league fixtures - each team plays every other team twice (home and away)
-        all_possible_fixtures = []
-
-        # In a league, each pair plays twice: once each way (A vs B and B vs A)
-        for i, team_a in enumerate(teams):
-            for team_b in teams:
-                if team_a != team_b:
-                    all_possible_fixtures.append((team_a, team_b))
-
-        # Filter out fixtures that have already been played
-        completed_fixtures = set((home_team, away_team) for home_team, away_team, _, _ in self.completed_matches)
-        self.upcoming_fixtures = [fixture for fixture in all_possible_fixtures if fixture not in completed_fixtures]
-
-        # Create set of completed fixtures for quick lookup
-        completed_fixtures = set((home_team, away_team) for home_team, away_team, _, _ in self.completed_matches)
-
-        # Filter out fixtures that have already been played
-        self.upcoming_fixtures = [fixture for fixture in all_possible_fixtures if fixture not in completed_fixtures]
-
-    def process_completed_matches(self):
-        """Process all completed matches to calculate ELO ratings and current standings"""
-        for home_team, away_team, home_score, away_score in self.completed_matches:
-            # Update ELO ratings
-            self.elo_system.update_ratings(home_team, away_team, home_score, away_score)
-            # Update team statistics
-            self.update_team_stats(home_team, away_team, home_score, away_score)
+    def restore_state(self, state):
+        """Restore ratings and stats from a saved state."""
+        self.elo_system.ratings = state['ratings'].copy()
+        self.team_stats = copy.deepcopy(state['stats'])
 
     def update_team_stats(self, home_team, away_team, home_score, away_score):
-        """Update team statistics after a match"""
-        # Home team stats
+        """Update league statistics after a match."""
+        # Home
         self.team_stats[home_team]['played'] += 1
         self.team_stats[home_team]['gf'] += home_score
         self.team_stats[home_team]['ga'] += away_score
-
-        # Away team stats
+        # Away
         self.team_stats[away_team]['played'] += 1
         self.team_stats[away_team]['gf'] += away_score
         self.team_stats[away_team]['ga'] += home_score
@@ -687,292 +295,280 @@ class LeagueSimulator:
             self.team_stats[home_team]['points'] += 1
             self.team_stats[away_team]['points'] += 1
 
-    def simulate_remaining_season(self):
-        """Simulate remaining fixtures to ensure each team reaches exactly 46 games"""
-        print(f"\nSimulating remaining fixtures to reach 46 games per team...")
-
-        # Calculate games needed for each team to reach 46 total
-        games_needed = {}
-        total_games_needed = 0
-        for team in self.team_stats:
-            current_games = self.team_stats[team]['played']
-            needed = 46 - current_games
-            games_needed[team] = needed
-            total_games_needed += needed
-
-        print(f"Total additional games needed: {total_games_needed}")
-
-        # Simulate fixtures, but don't let teams exceed 46 games
-        games_simulated = 0
-        for home_team, away_team in self.upcoming_fixtures:
-            # Check current total games for both teams
-            home_current_total = self.team_stats[home_team]['played']
-            away_current_total = self.team_stats[away_team]['played']
-
-            # Only play if both teams are still under 46 games
-            if home_current_total < 46 and away_current_total < 46:
-                # Predict match result
-                home_score, away_score = self.elo_system.predict_match(home_team, away_team)
-
-                # Update ELO ratings
-                self.elo_system.update_ratings(home_team, away_team, home_score, away_score)
-
-                # Update team statistics
-                self.update_team_stats(home_team, away_team, home_score, away_score)
-
-                games_simulated += 1
-
-                # Optional: comment out to reduce output
-                # print(f"{home_team} {home_score}-{away_score} {away_team}")
-
-        print(f"Simulated {games_simulated} fixtures")
-
-        # Ensure all teams show exactly 46 games for display purposes
-        # (maintains relative performance while showing standard league format)
-        for team in self.team_stats:
-            self.team_stats[team]['played'] = 46
-
-        print("* All teams normalized to exactly 46 games for league table display!")
+    def simulate_fixtures(self, fixtures):
+        """Simulate a list of (home, away) fixtures and update state."""
+        for home_team, away_team in fixtures:
+            home_score, away_score = self.elo_system.predict_match(home_team, away_team)
+            self.elo_system.update_ratings(home_team, away_team, home_score, away_score)
+            self.update_team_stats(home_team, away_team, home_score, away_score)
 
     def get_league_table(self):
-        """Generate the league table sorted"""
+        """Return list of team names sorted by points, GD, GF."""
         teams = list(self.team_stats.keys())
-        teams.sort(key=lambda x: (self.team_stats[x]['points'], self.team_stats[x]['gf'] - self.team_stats[x]['ga'], self.team_stats[x]['gf']), reverse=True)
+        teams.sort(key=lambda t: (
+            self.team_stats[t]['points'],
+            self.team_stats[t]['gf'] - self.team_stats[t]['ga'],
+            self.team_stats[t]['gf']
+        ), reverse=True)
         return teams
 
-    def print_league_table(self, is_final=False):
-        """Print the league table"""
+    def print_league_table(self, title="LEAGUE TABLE", show_status=False):
+        """Print formatted league table."""
         teams = self.get_league_table()
-        title = "NATIONAL LEAGUE NORTH FINAL STANDINGS" if is_final else "CURRENT STANDINGS AFTER COMPLETED MATCHES"
-        print("\n" + "="*100)
+        print("\n" + "=" * 100)
         print(title)
-        print("="*100)
-        print(f"{'Pos':<3} {'Team':<20} {'P':<3} {'W':<3} {'D':<3} {'L':<3} {'GF':<4} {'GA':<4} {'GD':<4} {'Pts':<4} {'ELO':<7} {'Status' if is_final else ''}")
-        print("-"*100)
+        print("=" * 100)
+        header = f"{'Pos':<3} {'Team':<22} {'P':<3} {'W':<3} {'D':<3} {'L':<3} {'GF':<4} {'GA':<4} {'GD':<4} {'Pts':<4} {'ELO':<7}"
+        if show_status:
+            header += " Status"
+        print(header)
+        print("-" * 100)
 
         for i, team in enumerate(teams, 1):
-            stats = self.team_stats[team]
-            gd = stats['gf'] - stats['ga']
+            s = self.team_stats[team]
+            gd = s['gf'] - s['ga']
             elo = round(self.elo_system.ratings[team], 1)
             status = ""
-            if is_final:
+            if show_status:
                 if i == 1:
                     status = "PROMOTED (Champion)"
                 elif 2 <= i <= 7:
                     status = "PLAYOFFS"
-                elif i >= 21:  # Bottom 4 relegated (24 teams)
+                elif i >= 21:
                     status = "RELEGATED"
-            print(f"{i:<3} {team:<20} {stats['played']:<3} {stats['won']:<3} {stats['drawn']:<3} {stats['lost']:<3} {stats['gf']:<4} {stats['ga']:<4} {gd:<4} {stats['points']:<4} {elo:<7} {status}")
+            print(f"{i:<3} {team:<22} {s['played']:<3} {s['won']:<3} {s['drawn']:<3} {s['lost']:<3} "
+                  f"{s['gf']:<4} {s['ga']:<4} {gd:<4} {s['points']:<4} {elo:<7} {status}")
+        print("=" * 100)
 
-        print("="*100)
+    def run_monte_carlo_simulations(self, fixtures, num_simulations=1000000):
+        """
+        Repeatedly simulate the given fixtures (starting from the 45-game state),
+        recording final positions, promotion, playoffs, relegation, and points.
+        """
+        # Save the 45-game baseline
+        baseline = self.save_state()
 
-    def run_monte_carlo_simulations(self, num_simulations=1000):
-        """Run Monte Carlo simulations to estimate position probabilities"""
-        import time
-        import sys
-
-        print(f"\nRunning {num_simulations} Monte Carlo simulations...")
-        start_time = time.time()
-
-        # Store original state
-        original_ratings = self.elo_system.ratings.copy()
-        original_stats = {}
-        for team, stats in self.team_stats.items():
-            original_stats[team] = stats.copy()
-
-        # Initialize position counters
+        # Counters
         position_counts = {}
-        promotion_counts = {}  # Count how many times each team gets promoted
-        playoff_winner_counts = {}  # Count how many times each team wins the playoffs
-        for team in self.team_stats.keys():
-            position_counts[team] = {pos: 0 for pos in range(1, 8)}
+        promotion_counts = {}
+        playoff_winner_counts = {}
+        releg = defaultdict(int)
+        avg_points = defaultdict(list)
+        points_distribution = defaultdict(list)
+        releg_40_plus = defaultdict(int)
+        points_40_plus = defaultdict(int)
+        at_least_one_releg_40 = 0
+
+        for team in self.team_stats:
+            position_counts[team] = {p: 0 for p in range(1, 8)}  # only top 7 positions tracked
             promotion_counts[team] = 0
             playoff_winner_counts[team] = 0
 
-        # Progress bar setup
-        bar_width = 50
-        last_progress = -1
 
-        for sim in range(num_simulations):
-            # Update progress bar
-            progress = int((sim / num_simulations) * 100)
-            if progress != last_progress:
-                filled_width = int(bar_width * sim / num_simulations)
-                bar = '=' * filled_width + '-' * (bar_width - filled_width)
-                elapsed_time = time.time() - start_time
-                eta = (elapsed_time / (sim + 1)) * (num_simulations - sim - 1) if sim > 0 else 0
 
-                sys.stdout.write(f'\rProgress: [{bar}] {progress}% ({sim+1}/{num_simulations}) ETA: {eta:.1f}s')
-                sys.stdout.flush()
-                last_progress = progress
+        for sim in tqdm(range(num_simulations), desc="Simulating", unit="sim"):
+            # Restore baseline (45 games)
+            self.restore_state(baseline)
+            # Simulate the final 12 matches for this iteration
+            self.simulate_fixtures(fixtures)
 
-            # Reset to original state
-            self.elo_system.ratings = original_ratings.copy()
-            self.team_stats = {}
-            for team, stats in original_stats.items():
-                self.team_stats[team] = stats.copy()
-
-            # Simulate remaining season - limit to reach exactly 46 games per team
-            for home_team, away_team in self.upcoming_fixtures:
-                # Check if both teams still need games to reach 46
-                home_would_reach = self.team_stats[home_team]['played'] < 46
-                away_would_reach = self.team_stats[away_team]['played'] < 46
-
-                if home_would_reach and away_would_reach:
-                    home_score, away_score = self.elo_system.predict_match(home_team, away_team)
-                    self.elo_system.update_ratings(home_team, away_team, home_score, away_score)
-                    self.update_team_stats(home_team, away_team, home_score, away_score)
-
-            # Record final positions
+            # Final table
             final_table = self.get_league_table()
+
+            # Track top 7 positions
             for pos, team in enumerate(final_table[:7], 1):
                 position_counts[team][pos] += 1
-            
-            # Simulate playoffs:
-            # Position 1: Auto-promoted
-            # Position 2-3: Qualify for semi-finals (direct)
-            # Position 4-7: Qualify for quarter-finals
-            # Quarter-finals: 4v7, 5v6
-            # Semi-finals: QF winner 1 vs 2nd place, QF winner 2 vs 3rd place
-            # Final: SF winners compete for final promotion spot
-            
-            # Auto-promote league winner
-            promotion_counts[final_table[0]] += 1
-            
-            # Playoffs for positions 2-7 (teams 2,3,4,5,6,7 in final_table)
-            playoff_teams = final_table[1:8]  # Positions 2-7
-            
-            if len(playoff_teams) >= 6:
-                # Quarter-finals: 4th vs 7th, 5th vs 6th
-                qf1_home = playoff_teams[2]  # 4th place
-                qf1_away = playoff_teams[5]  # 7th place
-                qf2_home = playoff_teams[3]  # 5th place
-                qf2_away = playoff_teams[4]  # 6th place
-                
-                # Simulate quarter-finals
-                qf1_h, qf1_a = self.elo_system.predict_match(qf1_home, qf1_away)
-                qf2_h, qf2_a = self.elo_system.predict_match(qf2_home, qf2_away)
-                
-                qf1_winner = qf1_home if qf1_h > qf1_a else qf1_away
-                qf2_winner = qf2_home if qf2_h > qf2_a else qf2_away
-                
-                # Semi-finals: QF1 winner vs 2nd place, QF2 winner vs 3rd place
-                sf1_home = playoff_teams[0]  # 2nd place
-                sf1_away = qf1_winner
-                sf2_home = playoff_teams[1]  # 3rd place
-                sf2_away = qf2_winner
-                
-                # Simulate semi-finals
-                sf1_h, sf1_a = self.elo_system.predict_match(sf1_home, sf1_away)
-                sf2_h, sf2_a = self.elo_system.predict_match(sf2_home, sf2_away)
-                
-                sf1_winner = sf1_home if sf1_h > sf1_a else sf1_away
-                sf2_winner = sf2_home if sf2_h > sf2_a else sf2_away
-                
-                # Final: SF winners compete for promotion
-                final_h, final_a = self.elo_system.predict_match(sf1_winner, sf2_winner)
-                playoff_winner = sf1_winner if final_h > final_a else sf2_winner
-                
-                # Count playoff winner promotion
-                promotion_counts[playoff_winner] += 1
-                playoff_winner_counts[playoff_winner] += 1
-            elif len(playoff_teams) >= 4:
-                # Fallback for fewer teams (3rd-6th enter playoffs)
-                playoff_teams = final_table[1:6]
-                sf1_home = playoff_teams[1]  # 3rd
-                sf1_away = playoff_teams[3]  # 6th
-                sf2_home = playoff_teams[0]  # 4th
-                sf2_away = playoff_teams[2]  # 5th
-                
-                sf1_h, sf1_a = self.elo_system.predict_match(sf1_home, sf1_away)
-                sf2_h, sf2_a = self.elo_system.predict_match(sf2_home, sf2_away)
-                
-                sf1_winner = sf1_home if sf1_h > sf1_a else sf1_away
-                sf2_winner = sf2_home if sf2_h > sf2_a else sf2_away
-                
-                final_h, final_a = self.elo_system.predict_match(sf1_winner, sf2_winner)
-                playoff_winner = sf1_winner if final_h > final_a else sf2_winner
-                
-                promotion_counts[playoff_winner] += 1
-                playoff_winner_counts[playoff_winner] += 1
+
+            # League winner promoted automatically
+            champion = final_table[0]
+            promotion_counts[champion] += 1
+
+            # Playoffs: positions 2-7
+            playoff_teams = final_table[1:7]  # indices 2..7
+
+            # Quarter-finals: 4v7, 5v6  (using original code's mapping)
+            qf1_home = playoff_teams[2]      # 4th
+            qf1_away = playoff_teams[5]      # 7th
+            qf2_home = playoff_teams[3]      # 5th
+            qf2_away = playoff_teams[4]      # 6th
+
+            # Simulate QFs
+            qf1_h, qf1_a = self.elo_system.predict_match(qf1_home, qf1_away)
+            qf2_h, qf2_a = self.elo_system.predict_match(qf2_home, qf2_away)
+            qf1_winner = qf1_home if qf1_h > qf1_a else qf1_away
+            qf2_winner = qf2_home if qf2_h > qf2_a else qf2_away
+
+            # Semi-finals: 2nd vs winner QF1, 3rd vs winner QF2
+            sf1_home = playoff_teams[0]      # 2nd
+            sf1_away = qf1_winner
+            sf2_home = playoff_teams[1]      # 3rd
+            sf2_away = qf2_winner
+
+            sf1_h, sf1_a = self.elo_system.predict_match(sf1_home, sf1_away)
+            sf2_h, sf2_a = self.elo_system.predict_match(sf2_home, sf2_away)
+            sf1_winner = sf1_home if sf1_h > sf1_a else sf1_away
+            sf2_winner = sf2_home if sf2_h > sf2_a else sf2_away
+
+            # Final (neutral ground – treat first parameter as home, which is acceptable for probability)
+            final_h, final_a = self.elo_system.predict_match(sf1_winner, sf2_winner)
+            playoff_winner = sf1_winner if final_h > final_a else sf2_winner
+
+            # Count second promotion
+            promotion_counts[playoff_winner] += 1
+            playoff_winner_counts[playoff_winner] += 1
+
+            # Collect stats for all teams
+            rel40_this_sim = False
+            for pos, team in enumerate(final_table, 1):
+                pts = self.team_stats[team]['points']
+                avg_points[team].append(pts)
+                points_distribution[team].append(pts)
+
+                if pos >= 21:
+                    releg[team] += 1
+                    if pts >= 40:
+                        releg_40_plus[team] += 1
+                        rel40_this_sim = True
+                if pts >= 40:
+                    points_40_plus[team] += 1
+
+            if rel40_this_sim:
+                at_least_one_releg_40 += 1
+
+        return (position_counts, promotion_counts, playoff_winner_counts,
+                releg, avg_points, points_distribution, at_least_one_releg_40)
+
+    def get_match_probs(self, home, away, n_sims=10000):
+        key = (home, away)
+        if key not in self.match_cache:
+            self.match_cache[key] = self._get_match_probs(home, away, n_sims)
+        return self.match_cache[key]
+
+    def _get_match_probs(self, home, away, n_sims=10000):
+        home_wins = 0
+        draws = 0
+        away_wins = 0
+        for _ in range(n_sims):
+            hg, ag = self.elo_system.predict_match(home, away)
+            if hg > ag:
+                home_wins += 1
+            elif hg == ag:
+                draws += 1
             else:
-                # Not enough for playoffs, auto-promote position 2
-                if len(playoff_teams) >= 1:
-                    promotion_counts[playoff_teams[0]] += 1
+                away_wins += 1
+        return home_wins / n_sims * 100, draws / n_sims * 100, away_wins / n_sims * 100
 
-        # Complete progress bar
-        bar = '=' * bar_width
-        total_time = time.time() - start_time
-        sys.stdout.write(f'\rProgress: [{bar}] 100% ({num_simulations}/{num_simulations}) Total: {total_time:.1f}s\n')
-        sys.stdout.flush()
-
-        return position_counts, promotion_counts, playoff_winner_counts
-
-    def print_position_probabilities(self, position_counts, promotion_counts, playoff_winner_counts, num_simulations):
-        """Print each team's probability of finishing in each position"""
+    def print_monte_carlo_results(self, position_counts, promotion_counts, playoff_winner_counts,
+                                  releg, avg_points, points_distribution, at_least_one_releg_40,
+                                  num_simulations):
+        """Display a summary table of simulation probabilities."""
         teams = sorted(self.team_stats.keys())
 
-        print("\n" + "="*110)
-        print("MONTE CARLO SIMULATION RESULTS - POSITION & PROMOTION PROBABILITIES")
-        print("="*110)
-        print(f"{'Team':<22} {'Win %':>8} {'Playoffs %':>12} {'Promoted %':>12} {'Playoff Winner %':>16}")
-        print("-"*110)
+        print("\n" + "=" * 130)
+        print("MONTE CARLO SIMULATION RESULTS – PROMOTION, PLAYOFFS & RELEGATION PROBABILITIES")
+        print("=" * 130)
+        print(f"{'Team':<22}{'AvgPts':<8}{'StdDev':<8}{'Promoted%':<10}{'Playoffs%':<10}{'Releg%':<8}")
+        print("-" * 130)
 
-        for team in teams:
-            win_pct = position_counts[team][1] / num_simulations * 100
-            # Combine positions 2-7 for playoff percentage
-            playoff_pct = sum(position_counts[team][pos] for pos in range(2, 8)) / num_simulations * 100
-            # Promoted = league winner (position 1) OR playoff winner
-            promoted_pct = promotion_counts[team] / num_simulations * 100
-            # Playoff winner percentage
-            playoff_win_pct = playoff_winner_counts.get(team, 0) / num_simulations * 100
+        for team in sorted(teams, key=lambda t: np.mean(avg_points[t]), reverse=True):
+            pts_arr = np.array(avg_points[team])
+            avg = np.mean(pts_arr)
+            std = np.std(pts_arr)
+            promoted = promotion_counts[team] / num_simulations * 100
+            playoff = sum(position_counts[team][p] for p in range(2, 8)) / num_simulations * 100
+            rel = releg[team] / num_simulations * 100 if num_simulations > 0 else 0
+            print(f"{team:<22}{avg:<8.2f}{std:<8.2f}{promoted:<10.2f}{playoff:<10.2f}{rel:<8.2f}")
 
-            print(f"{team:<22} {win_pct:>8.1f}% {playoff_pct:>12.1f}% {promoted_pct:>12.1f}% {playoff_win_pct:>16.1f}%")
+        print("=" * 130)
+        print(f"Based on {num_simulations} Monte Carlo simulations.")
+        print("Promoted%  = League champion + playoff winner (2 promotions total)")
+        print("Playoffs%  = Finished 2nd–7th (entered playoffs)")
+        print("Releg%     = Finished 21st–24th")
+        if num_simulations > 0:
+            print(f"Probability that at least one team is relegated with 40+ points: "
+                  f"{at_least_one_releg_40 / num_simulations * 100:.4f}%")
 
-        print("="*110)
-        print(f"Based on {num_simulations} Monte Carlo simulations of the remaining season")
-        print("Win %: Chance of finishing 1st (winning the league - auto-promoted)")
-        print("Playoffs %: Chance of finishing 2nd-7th (qualifying for playoffs)")
-        print("Promoted %: Total chance of getting promoted (league winner + playoff winner)")
-        print("Playoff Winner %: Chance of winning the playoffs (make playoffs and win them)")
 
+# ===============================
+# MAIN
+# ===============================
 def main():
-    # Set random seed for reproducible results
+    # Optionally set a random seed for reproducibility (uncomment if desired)
     random.seed(42)
+    np.random.seed(42)
 
-    # Initialize simulator
-    simulator = LeagueSimulator()
+    sim = LeagueSimulator()
+    sim.load_current_standings()
 
-    # Load matches from embedded data
-    simulator.load_matches()
+    # The baseline state is exactly the 45-game table (no fixture results simulated yet)
+    baseline_state = sim.save_state()
 
-    print(f"Loaded {len(simulator.completed_matches)} completed matches")
-    print(f"Found {len(simulator.upcoming_fixtures)} fixtures to simulate")
+    # Show the 45-game table
+    sim.print_league_table(title="NATIONAL LEAGUE NORTH STANDINGS (AFTER 45 GAMES)")
 
-    # Process completed matches
-    simulator.process_completed_matches()
+    # Now simulate the single projection: play the final 12 fixtures once
+    sim.simulate_fixtures(UPCOMING_FIXTURES)
+    sim.print_league_table(title="PROJECTED FINAL STANDINGS (SINGLE SIMULATION)", show_status=True)
 
-    # Print current standings before simulation
-    simulator.print_league_table()
+    # Monte Carlo: repeatedly restore the 45-game state and re-simulate the final day
+    print(f"\nRunning Monte Carlo simulations from the 45-game baseline...")
+    (pos_counts, prom_counts, playoff_wins, releg, avg_pts,
+     pts_dist, at_least_one_40) = sim.run_monte_carlo_simulations(
+        fixtures=UPCOMING_FIXTURES,
+        num_simulations=10000
+    )
 
-    # Run Monte Carlo simulations for position probabilities
-    position_counts, promotion_counts, playoff_winner_counts = simulator.run_monte_carlo_simulations(num_simulations=1000)  # Full production run
+    sim.print_monte_carlo_results(
+        pos_counts, prom_counts, playoff_wins,
+        releg, avg_pts, pts_dist, at_least_one_40,
+        num_simulations=10000
+    )
 
-    # Print position probabilities
-    simulator.print_position_probabilities(position_counts, promotion_counts, playoff_winner_counts, 1000)
+    # Restore to baseline for match probabilities
+    sim.restore_state(baseline_state)
 
-    # Simulate remaining season (single simulation)
-    simulator.simulate_remaining_season()
+    # Match probabilities
+    print("\n" + "="*60)
+    print("MATCH PROBABILITIES (Home Win % | Draw % | Away Win %)")
+    print("="*60)
 
-    # Print final standings
-    print("\n\nFINAL LEAGUE STANDINGS (Single Simulation):")
-    simulator.print_league_table(is_final=True)
+    max_home_win = 0
+    max_home_match = None
+    max_draw = 0
+    max_draw_match = None
+    max_away_win = 0
+    max_away_match = None
 
-    # Print top ELO ratings
-    print("\nTOP 5 ELO RATINGS:")
-    sorted_by_elo = sorted(simulator.elo_system.ratings.items(), key=lambda x: x[1], reverse=True)
-    for team, rating in sorted_by_elo[:5]:
-        print(f"{team:<25} {rating:.1f}")
+    first_home, first_away = UPCOMING_FIXTURES[0]
+    first_hw, first_d, first_aw = sim.get_match_probs(first_home, first_away)
+    max_home_win = first_hw
+    max_home_match = (first_home, first_away)
+    max_draw = first_d
+    max_draw_match = (first_home, first_away)
+    max_away_win = first_aw
+    max_away_match = (first_home, first_away)
+
+    for home, away in UPCOMING_FIXTURES:
+        hw, d, aw = sim.get_match_probs(home, away)
+        print(f"{home:<15} vs {away:<15}: {hw:<6.2f}% | {d:<6.2f}% | {aw:<6.2f}%")
+
+        if hw > max_home_win:
+            max_home_win = hw
+            max_home_match = (home, away)
+        if d > max_draw:
+            max_draw = d
+            max_draw_match = (home, away)
+        if aw > max_away_win:
+            max_away_win = aw
+            max_away_match = (home, away)
+
+    print("\n" + "="*40)
+    print("EXTREME MATCH PROBABILITIES")
+    print("="*40)
+    print(f"Biggest Home Win Chance: {max_home_match[0]} vs {max_home_match[1]} - {max_home_win:.2f}%")
+    print(f"Most Likely Draw: {max_draw_match[0]} vs {max_draw_match[1]} - {max_draw:.2f}%")
+    print(f"Biggest Away Win Chance: {max_away_match[0]} vs {max_away_match[1]} - {max_away_win:.2f}%")
+
 
 if __name__ == "__main__":
     main()

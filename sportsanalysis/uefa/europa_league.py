@@ -2,17 +2,13 @@ import random
 import math
 from collections import Counter
 
-# Current Elo ratings from clubelo.com (as of April 8, 2026)
+# Current Elo ratings from clubelo.com (as of April 16, 2026)
 # Update these manually from https://clubelo.com/ if needed
 elos = {
-    "Aston Villa": 1886,
-    "Bologna": 1704,
-    "Braga": 1709,
-    "Celta": 1748,
-    "Freiburg": 1694,
-    "Nottingham Forest": 1785,
-    "Porto": 1809,
-    "Real Betis": 1750,
+    "Aston Villa": 1902,
+    "Freiburg": 1712,
+    "Nottingham Forest": 1801,
+    "Sporting Braga": 1725,
 }
 
 # Poisson random variable generator (pure Python)
@@ -97,35 +93,30 @@ def simulate_final(team_a, team_b, elos_dict):
     else:
         return simulate_penalties(team_a, team_b, elos_dict)
 
-# Quarter-finals (fixed as of April 8, 2026)
-qf_teams = list(elos.keys())
+# Quarter-finals COMPLETED (April 16, 2026 results):
+# Celta Vigo 1-3 Freiburg (agg 1-6) -> Freiburg advance
+# Aston Villa 4-0 Bologna (agg 7-1) -> Aston Villa advance
+# Nottingham Forest 1-0 Porto (agg 2-1) -> Nottingham Forest advance
+# Real Betis 2-4 Sporting Braga (agg 3-5) -> Sporting Braga advance
+
+# Semi-finals (fixed as of April 16, 2026)
+sf_teams = list(elos.keys())
 
 # Run Monte Carlo simulations
 NUM_SIMS = 50000
 champion_counts = Counter()
 
-print("Simulating Europa League (QF + SF + Final)...")
+print("Simulating Europa League (SF + Final)...")
 print(f"Running {NUM_SIMS} simulations using current Elo + Poisson goals...\n")
+print("Quarter-finals completed. Semi-finalists: Aston Villa, Nottingham Forest, Freiburg, Sporting Braga\n")
 
 for sim in range(NUM_SIMS):
-    # Quarter-finals (two-legged, first leg home advantage)
-    qf_winners = {}
-
-    # QF1: Aston Villa vs Bologna - Aston Villa home first
-    qf_winners["qf1"] = simulate_two_leg_tie("Aston Villa", "Bologna", True, elos)
-
-    # QF2: Porto vs Nottingham Forest - Porto home first
-    qf_winners["qf2"] = simulate_two_leg_tie("Porto", "Nottingham Forest", True, elos)
-
-    # QF3: Real Betis vs Braga - Real Betis home first
-    qf_winners["qf3"] = simulate_two_leg_tie("Real Betis", "Braga", True, elos)
-
-    # QF4: Celta vs Freiburg - Celta home first
-    qf_winners["qf4"] = simulate_two_leg_tie("Celta", "Freiburg", True, elos)
-
-    # Semi-finals
-    sf1 = simulate_two_leg_tie(qf_winners["qf1"], qf_winners["qf2"], True, elos)  # QF1 winner home first
-    sf2 = simulate_two_leg_tie(qf_winners["qf3"], qf_winners["qf4"], True, elos)  # QF3 winner home first
+    # Semi-finals (two-legged, first leg home advantage)
+    # SF1: Aston Villa vs Nottingham Forest - Aston Villa home first
+    sf1 = simulate_two_leg_tie("Aston Villa", "Nottingham Forest", True, elos)
+    
+    # SF2: Freiburg vs Sporting Braga - Freiburg home first
+    sf2 = simulate_two_leg_tie("Freiburg", "Sporting Braga", True, elos)
 
     # Final (neutral)
     champion = simulate_final(sf1, sf2, elos)

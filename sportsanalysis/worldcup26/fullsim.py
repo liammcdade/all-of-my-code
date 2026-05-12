@@ -448,7 +448,7 @@ teams_ratings = RatingsProxy()
 # -------------------------
 # Win probability and match simulation (all use ratings from get_rating)
 # -------------------------
-def get_win_probability(rating_a, rating_b, divisor=552):
+def get_win_probability(rating_a, rating_b, divisor=400):
     """
     Expected win probability for team A (higher is better).
     Uses standard Elo-based probability formula.
@@ -470,7 +470,7 @@ def calculate_three_outcome_probs(rating_a, rating_b, draw_base=0.243):
     where closer teams have higher draw probabilities.
     """
     # Base win probabilities from Elo difference
-    p_a_win_raw = get_win_probability(rating_a, rating_b, divisor=552)
+    p_a_win_raw = get_win_probability(rating_a, rating_b, divisor=400)
     p_b_win_raw = 1 - p_a_win_raw
     
     # Draw probability calibrated on rating difference (World Cup groups tend to have ~23-26% draws)
@@ -479,7 +479,7 @@ def calculate_three_outcome_probs(rating_a, rating_b, draw_base=0.243):
     
     # Calibrated draw probability: peaks at 0.26 when ratings are equal,
     # decreases as rating difference increases (diminishing returns)
-    draw_prob = 0.26 * np.exp(-rating_diff / 400) * (1 + np.tanh(rating_diff / 500) * 0.1)
+    draw_prob = draw_base * np.exp(-rating_diff / 400) * (1 + np.tanh(rating_diff / 500) * 0.1)
     
     # Ensure draw probability is within reasonable bounds
     draw_prob = max(0.10, min(0.30, draw_prob))
@@ -854,7 +854,7 @@ def simulate_group(group, num_sims, group_key=None):
 # =============================================================================
 # QUALIFIER SIMULATION HELPERS — module-level so both modes share them
 # =============================================================================
-QUALIFIER_SIMS = 10000
+QUALIFIER_SIMS = 1000
 
 
 def simulate_bracket_by_candidates(candidates, sims=QUALIFIER_SIMS):
@@ -1150,7 +1150,7 @@ knockout_results = defaultdict(_empty_knockout_record)
 for team in all_possible_teams:
     knockout_results[team]  # pre-populate known teams
 
-NUM_SIMULATIONS = 10000
+NUM_SIMULATIONS = 1000
 total_sims = NUM_SIMULATIONS
 print(f"Monte Carlo mode: {NUM_SIMULATIONS} simulations")
 print("Qualification outcomes sampled probabilistically per simulation")

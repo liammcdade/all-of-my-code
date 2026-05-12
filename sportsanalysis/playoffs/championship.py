@@ -36,54 +36,34 @@ elo = {
 
 # ====================== CURRENT TABLE ======================
 current = {
-    "Coventry": {"Pts":85,"GF":84,"GA":42},
-    "Ipswich": {"Pts":75,"GF":71,"GA":40},
-    "Millwall": {"Pts":73,"GF":56,"GA":47},
-    "Middlesbrough": {"Pts":72,"GF":62,"GA":42},
-    "Southampton": {"Pts":72,"GF":70,"GA":50},
-    "Hull City": {"Pts":68,"GF":64,"GA":60},
-    "Wrexham": {"Pts":64,"GF":63,"GA":60},
-    "Derby": {"Pts":63,"GF":61,"GA":53},
-    "Norwich": {"Pts":58,"GF":55,"GA":50},
-    "Bristol City": {"Pts":58,"GF":52,"GA":51},
-    "QPR": {"Pts":58,"GF":58,"GA":63},
-    "Watford": {"Pts":57,"GF":52,"GA":51},
-    "Preston": {"Pts":57,"GF":50,"GA":53},
-    "Swansea": {"Pts":57,"GF":50,"GA":54},
-    "Birmingham": {"Pts":56,"GF":51,"GA":52},
-    "Stoke": {"Pts":55,"GF":49,"GA":46},
-    "Sheff Utd": {"Pts":54,"GF":59,"GA":59},
-    "Charlton": {"Pts":49,"GF":39,"GA":51},
-    "Blackburn": {"Pts":48,"GF":38,"GA":50},
-    "West Brom": {"Pts":46,"GF":42,"GA":56},
-    "Portsmouth": {"Pts":48,"GF":41,"GA":57},
-    "Oxford": {"Pts":44,"GF":41,"GA":54},
-    "Leicester": {"Pts":41,"GF":54,"GA":64},
-    "Sheff Wed": {"Pts":-4,"GF":25,"GA":82},
+    "Coventry": {"Pts":89,"GF":90,"GA":44},
+    "Ipswich": {"Pts":76,"GF":73,"GA":44},
+    "Millwall": {"Pts":79,"GF":61,"GA":48},
+    "Middlesbrough": {"Pts":73,"GF":64,"GA":44},
+    "Southampton": {"Pts":76,"GF":77,"GA":53},
+    "Hull City": {"Pts":70,"GF":67,"GA":63},
+    "Wrexham": {"Pts":70,"GF":66,"GA":60},
+    "Derby": {"Pts":66,"GF":63,"GA":55},
+    "Norwich": {"Pts":64,"GF":61,"GA":53},
+    "Bristol City": {"Pts":59,"GF":56,"GA":57},
+    "QPR": {"Pts":58,"GF":59,"GA":67},
+    "Watford": {"Pts":57,"GF":52,"GA":56},
+    "Preston": {"Pts":57,"GF":50,"GA":55},
+    "Swansea": {"Pts":60,"GF":53,"GA":57},
+    "Birmingham": {"Pts":57,"GF":52,"GA":53},
+    "Stoke": {"Pts":55,"GF":50,"GA":51},
+    "Sheff Utd": {"Pts":57,"GF":61,"GA":59},
+    "Charlton": {"Pts":50,"GF":40,"GA":52},
+    "Blackburn": {"Pts":49,"GF":39,"GA":54},
+    "West Brom": {"Pts":52,"GF":47,"GA":56},
+    "Portsmouth": {"Pts":51,"GF":45,"GA":62},
+    "Oxford": {"Pts":44,"GF":41,"GA":56},
+    "Leicester": {"Pts":42,"GF":56,"GA":67},
+    "Sheff Wed": {"Pts":-3,"GF":26,"GA":83},
 }
 
 # ====================== REMAINING FIXTURES ======================
 fixtures = [
-    ("Blackburn", "Coventry"),
-    ("Derby", "Oxford"),
-    ("Millwall", "QPR"),
-    ("Portsmouth", "Leicester"),
-    ("Bristol City", "Norwich"),
-    ("Hull City", "Birmingham"),
-    ("Preston", "West Brom"),
-    ("Sheff Wed", "Charlton"),
-    ("Swansea", "Southampton"),
-    ("Watford", "Sheff Utd"),
-    ("Wrexham", "Stoke"),
-    ("Ipswich", "Middlesbrough"),
-    ("Coventry", "Portsmouth"),
-    ("Leicester", "Hull City"),
-    ("Norwich", "Derby"),
-    ("Oxford", "Wrexham"),
-    ("QPR", "Swansea"),
-    ("Southampton", "Bristol City"),
-    ("Stoke", "Millwall"),
-    ("West Brom", "Watford"),
     ("Birmingham", "Preston"),
     ("Charlton", "Ipswich"),
     ("Middlesbrough", "Sheff Wed"),
@@ -99,7 +79,6 @@ fixtures = [
     ("Sheff Utd", "Preston"),
     ("Stoke", "Portsmouth"),
     ("Coventry", "Wrexham"),
-    ("Southampton", "Ipswich"),
     ("Blackburn", "Leicester"),
     ("Bristol City", "Stoke"),
     ("Derby", "Sheff Utd"),
@@ -112,6 +91,7 @@ fixtures = [
     ("Swansea", "Charlton"),
     ("Watford", "Coventry"),
     ("Wrexham", "Middlesbrough"),
+    ("Southampton", "Ipswich"),
 ]
 
 # ====================== MODEL PARAMETERS ======================
@@ -237,7 +217,7 @@ for _ in tqdm(range(sims), desc="Simulating", unit="sim"):
         if pos <= 2:
             auto_promotion[team] += 1
             total_promotion[team] += 1
-        if pos <= 6:
+        if 3 <= pos <= 6:
             playoff_qualify[team] += 1
         if pos >= 22:
             releg[team] += 1
