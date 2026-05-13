@@ -1,16 +1,17 @@
-# Premier League 2025-26 Season Simulation
+# Premier League 2026-27 Season Simulation
 
-A comprehensive Monte Carlo simulation for predicting Premier League outcomes based on betting market odds.
+A comprehensive Monte Carlo simulation for predicting Premier League outcomes using ELO-based team ratings and Poisson goal modeling.
 
 ## Features
 
-- **Multiple Betting Markets**: Integrates winner, top 4/6/10, and relegation odds
-- **Realistic Match Simulation**: Uses Poisson goal modeling with home advantage
-- **European Qualification**: Proper cascading logic for FA Cup and Carabao Cup winners
-- **Configurable Parameters**: Command-line arguments for simulations and seeds
-- **Progress Tracking**: Real-time progress bars for long-running operations
-- **Rich Output**: Beautiful tables and formatting with the Rich library
-- **Comprehensive Logging**: Detailed logs for debugging and monitoring
+- **ELO-Based Ratings**: Team strength ratings with adjustments for form, injuries, and win/draw/loss tendencies
+- **Realistic Match Simulation**: Uses Poisson goal modeling with home advantage and match-specific parameters
+- **Championship Playoff Simulation**: Simulates Championship playoffs to determine promotion
+- **Monte Carlo Simulations**: Runs 10,000 simulations grouped by promoted team
+- **Pre-Season Match Probabilities**: Computes probabilities for all remaining fixtures
+- **Configurable Parameters**: Adjustable constants for model tuning
+- **Progress Tracking**: Real-time progress bars for simulations
+- **Comprehensive Statistics**: Team performance metrics, fixture difficulty, and extreme outcomes
 
 ## Installation
 
@@ -24,52 +25,43 @@ A comprehensive Monte Carlo simulation for predicting Premier League outcomes ba
 
 ### Basic Usage
 ```bash
-python sportsanalysis/premier-league/25-26-season.py
+python sportsanalysis/premier-league/26-27-season.py
 ```
 
-### Custom Parameters
-```bash
-# Run with 1000 simulations
-python sportsanalysis/premier-league/25-26-season.py --nsims 1000
-
-# Use custom random seed for reproducibility
-python sportsanalysis/premier-league/25-26-season.py --seed 42
-
-# Enable debug logging
-python sportsanalysis/premier-league/25-26-season.py --debug
-
-# Combine parameters
-python sportsanalysis/premier-league/25-26-season.py --nsims 10000 --seed 123 --debug
-```
+The script runs 10,000 simulations and outputs results to the console.
 
 ## Output
 
-The simulation generates:
-- **Console Output**: Formatted tables showing team probabilities
-- **HTML File**: `premier_league_simulation.html` with detailed results
-- **Log File**: `premier_league_simulation.log` with execution details
+The simulation generates console output including:
+- **Team Statistics**: Average points, standard deviation, probabilities for title, Champions League, Europa League, Conference League, European qualification, and relegation
+- **Match Probabilities**: Win/draw/loss percentages for all remaining fixtures
+- **Extreme Match Probabilities**: Most likely home wins, draws, and away wins
+- **Team Fixture Probabilities**: Probabilities of winning/losing/drawing all remaining games, and average win probability
+- **Points to Win League**: Minimum and maximum points required to win the title
+- **Additional Statistics**: Probability of relegation with 40+ points, average excitement score
 
 ## Algorithm Overview
 
 ### 1. Power Ratings
-Combines multiple betting markets using weighted arithmetic mean:
-- Winner odds (25% weight)
-- Top 4 odds (25% weight)
-- Top 6 odds (20% weight)
-- Top 10 odds (20% weight)
-- Relegation odds (10% weight)
+Uses ELO ratings adjusted for:
+- Form (based on current performance)
+- Injuries (penalty reduction)
+- Win/Draw/Loss rates (bias adjustments)
 
 ### 2. Match Simulation
 Uses Poisson distribution for goals with:
-- Home advantage factor (6.5%)
-- Team strength exponent (1.15)
-- Goal expectation constraints
+- Home advantage factor
+- Team ELO difference scaling
+- Match closeness and tempo effects
+- Shared goals for draws
+- Variance and bias adjustments
 
 ### 3. European Qualification
-Implements proper cascading logic:
-- Champions League: Top 5 teams (with extra UCL spot)
-- Europa League: 6th place + FA Cup winner (with cascading)
-- Conference League: Carabao Cup winner (with cascading)
+Simplified assignment based on league position:
+- Champions League: Top 4 teams
+- Europa League: 5th place
+- Conference League: 6th place
+- Relegation: Bottom 3 teams
 
 ### 4. Tiebreakers
 Uses simplified approach: Points -> Goal Difference -> Goals For
@@ -77,18 +69,18 @@ Uses simplified approach: Points -> Goal Difference -> Goals For
 
 ## Configuration
 
-Key parameters can be modified in the `CONFIG` dictionary:
-- Simulation parameters (number of sims, seeds)
-- Match model parameters (home advantage, goal expectations)
-- Power rating weights
-- European qualification settings
+Key parameters can be modified in the script constants:
+- ELO parameters (K-factor, scale)
+- Match model parameters (home advantage, XG calculations)
+- Simulation settings (number of sims)
+- Adjustment factors (form multiplier, injury scale)
 
 ## Dependencies
 
 - **numpy**: Numerical computations and random number generation
-- **pandas**: Data manipulation and analysis
+- **numba**: JIT compilation for performance optimization
 - **tqdm**: Progress bars
-- **rich**: Beautiful console output and tables
+- **collections, math, random**: Standard library modules
 
 ## License
 
