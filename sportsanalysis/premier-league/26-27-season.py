@@ -3,6 +3,7 @@ import math
 import numpy as np
 from collections import defaultdict, Counter
 from tqdm import tqdm
+import numba
 
 # ====================== CONSTANTS ======================
 HOME_ADVANTAGE = 33.8
@@ -23,26 +24,53 @@ MIN_LAMBDA = 0.05
 CLOSENESS_BOOST_FACTOR = 0.5
 FORM_MULTIPLIER = 5
 
+# ====================== MATCH PARAMETER CACHE ======================
+match_param_cache = {}
+
+@numba.jit(nopython=True)
+def calculate_match_params(adjusted_home, adjusted_away, home_advantage, base_xg, max_xg, xg_scale, closeness_scale):
+    diff = adjusted_home - adjusted_away + home_advantage
+    home_xg = base_xg + max_xg / (1 + math.exp(-diff / xg_scale))
+    away_xg = base_xg + max_xg / (1 + math.exp(diff / xg_scale))
+    closeness = math.exp(-(diff**2)/(2 * closeness_scale**2))
+    return home_xg, away_xg, closeness, diff
+
+def get_match_params(home, away, adjusted_home, adjusted_away):
+    key = (home, away,
+            round(adjusted_home),
+            round(adjusted_away))
+
+    if key in match_param_cache:
+        return match_param_cache[key]
+
+    home_xg, away_xg, closeness, diff = calculate_match_params(
+        adjusted_home, adjusted_away, HOME_ADVANTAGE, BASE_XG, MAX_XG, XG_SCALE, CLOSENESS_SCALE
+    )
+
+    match_param_cache[key] = (home_xg, away_xg, closeness, diff)
+
+    return match_param_cache[key]
+
 # ====================== ELO RATINGS ======================
 elo = {
-    "Arsenal": 1738,
-    "Man City": 1737,
-    "Liverpool": 1635,
-    "Aston Villa": 1537,
-    "Man United": 1569,
-    "Chelsea": 1525,
-    "Brighton": 1552,
-    "Brentford": 1511,
-    "Everton": 1506,
-    "Bournemouth": 1555,
-    "Coventry": 1738,
-    "Fulham": 1476,
-    "Ipswich": 1629,
-    "Sunderland": 1364,
-    "Crystal Palace": 1475,
-    "Leeds": 1403,
-    "Newcastle": 1517,
-    "Nottingham": 1509,
+    "Arsenal": 1895,
+    "Man City": 1885,
+    "Liverpool": 1845,
+    "Aston Villa": 1755,
+    "Man United": 1725,
+    "Chelsea": 1795,
+    "Brighton": 1705,
+    "Brentford": 1645,
+    "Everton": 1605,
+    "Bournemouth": 1665,
+    "Coventry": 1495,
+    "Fulham": 1620,
+    "Ipswich": 1515,
+    "Sunderland": 1490,
+    "Crystal Palace": 1640,
+    "Leeds": 1540,
+    "Newcastle": 1785,
+    "Nottingham": 1680,
 }
 
 # ====================== CURRENT TABLE ======================
@@ -106,13 +134,6 @@ def generate_round_robin_fixtures(teams):
 # Generate fixtures for all remaining matches
 teams = list(current.keys())
 fixtures = generate_round_robin_fixtures(teams)
-
-
-
-
-
-
-
 
 
 # ====================== FIXTURES ======================
@@ -213,14 +234,9 @@ def get_adjusted_elo(team, current_elo):
 
 # ====================== MATCH ENGINE ======================
 def simulate_match(home, away, current_elo):
-    diff = get_adjusted_elo(home, current_elo) - get_adjusted_elo(away, current_elo) + HOME_ADVANTAGE
-
-    # Base expected goals (logistic scaling for diminishing returns)
-    home_xg = BASE_XG + MAX_XG / (1 + math.exp(-diff / XG_SCALE))
-    away_xg = BASE_XG + MAX_XG / (1 + math.exp(diff / XG_SCALE))
-
-    # Closeness factor
-    closeness = math.exp(-(diff**2)/(2 * CLOSENESS_SCALE**2))
+    adjusted_home = get_adjusted_elo(home, current_elo)
+    adjusted_away = get_adjusted_elo(away, current_elo)
+    home_xg, away_xg, closeness, diff = get_match_params(home, away, adjusted_home, adjusted_away)
 
     # W/D/L bias adjustment for expected goals
     home_bias = wdl_rates[home]["win"] - wdl_rates[home]["loss"]
@@ -293,59 +309,22 @@ for team in championship_elo.keys():
 
 # ====================== SIMULATE PLAYOFFS ======================
 def simulate_playoffs():
-    # Semi-final 1: Hull City vs Millwall
-    # First leg: Hull City home, 2-0 (provided)
-    hg1_s1, ag1_s1 = 2, 0
-    # Second leg: Millwall home vs Hull City, 0-0 (to make Hull win aggregate 2-0)
-    hg2_s1, ag2_s1 = 0, 0
-
-    hull_gf = hg1_s1 + ag2_s1
-    hull_ga = ag1_s1 + hg2_s1
-    millwall_gf = ag1_s1 + hg2_s1
-    millwall_ga = hg1_s1 + ag2_s1
-
-    if millwall_gf > hull_gf or (millwall_gf == hull_gf and ag2_s1 > ag1_s1):
-        semi1_winner = "Millwall"
-    elif hull_gf > millwall_gf or (hull_gf == millwall_gf and ag1_s1 > ag2_s1):
-        semi1_winner = "Hull City"
-    else:
-        # Tie on aggregate and away goals, coin flip
-        semi1_winner = "Millwall" if random.random() < 0.5 else "Hull City"
-
-    # Semi-final 2: Middlesbrough vs Southampton
-    # First leg: Middlesbrough home
-    hg1_s2, ag1_s2 = 1, 0
-    # Second leg: Southampton home
-    hg2_s2, ag2_s2 = simulate_match("Southampton", "Middlesbrough", championship_elo)
-
-    middlesbrough_gf = hg1_s2 + ag2_s2
-    middlesbrough_ga = ag1_s2 + hg2_s2
-    southampton_gf = ag1_s2 + hg2_s2
-    southampton_ga = hg1_s2 + ag2_s2
-
-    if southampton_gf > middlesbrough_gf or (southampton_gf == middlesbrough_gf and ag2_s2 > ag1_s2):
-        semi2_winner = "Southampton"
-    elif middlesbrough_gf > southampton_gf or (middlesbrough_gf == southampton_gf and ag1_s2 > ag2_s2):
-        semi2_winner = "Middlesbrough"
-    else:
-        # Tie on aggregate and away goals, coin flip
-        semi2_winner = "Southampton" if random.random() < 0.5 else "Middlesbrough"
-
-    # Final: semi1_winner vs semi2_winner at Wembley (neutral)
-    diff = get_adjusted_elo(semi1_winner, championship_elo) - get_adjusted_elo(semi2_winner, championship_elo)  # no home advantage
+    # Final: Southampton vs Hull City at Wembley (neutral)
+    # Hull City treated as "home" for simulation purposes
+    diff = get_adjusted_elo("Hull City", championship_elo) - get_adjusted_elo("Southampton", championship_elo)  # no home advantage, but arbitrary order
     home_xg = BASE_XG + MAX_XG / (1 + math.exp(-diff / XG_SCALE))
     away_xg = BASE_XG + MAX_XG / (1 + math.exp(diff / XG_SCALE))
     closeness = math.exp(-(diff**2)/(2 * CLOSENESS_SCALE**2))
-    home_bias = wdl_rates[semi1_winner]["win"] - wdl_rates[semi1_winner]["loss"]
-    away_bias = wdl_rates[semi2_winner]["win"] - wdl_rates[semi2_winner]["loss"]
+    home_bias = wdl_rates["Hull City"]["win"] - wdl_rates["Hull City"]["loss"]
+    away_bias = wdl_rates["Southampton"]["win"] - wdl_rates["Southampton"]["loss"]
     bias_diff = home_bias - away_bias
     home_xg += bias_diff * BIAS_ADJUSTMENT
     away_xg -= bias_diff * BIAS_ADJUSTMENT
     tempo_factor = TEMPO_BASE + TEMPO_RANGE * (abs(diff) / ELO_SCALE)
     home_xg *= tempo_factor
     away_xg *= tempo_factor
-    variance_boost = 1 + (wdl_rates[semi1_winner]["win"] - wdl_rates[semi1_winner]["draw"]) * VARIANCE_BOOST_FACTOR
-    draw_bias = (wdl_rates[semi1_winner]["draw"] + wdl_rates[semi2_winner]["draw"]) / 2
+    variance_boost = 1 + (wdl_rates["Hull City"]["win"] - wdl_rates["Hull City"]["draw"]) * VARIANCE_BOOST_FACTOR
+    draw_bias = (wdl_rates["Hull City"]["draw"] + wdl_rates["Southampton"]["draw"]) / 2
     closeness_boost = closeness * draw_bias * CLOSENESS_BOOST_FACTOR
     lambda_shared = SHARED_GOAL_BASE + closeness * SHARED_GOAL_CLOSENESS * draw_bias
     lambda_home = max(MIN_LAMBDA, home_xg - lambda_shared)
@@ -358,17 +337,17 @@ def simulate_playoffs():
     ag_final = away_goals + shared_goals
 
     if hg_final > ag_final:
-        promoted_team = semi1_winner
+        promoted_team = "Hull City"
     elif ag_final > hg_final:
-        promoted_team = semi2_winner
+        promoted_team = "Southampton"
     else:
         # Draw, coin flip
-        promoted_team = semi1_winner if random.random() < 0.5 else semi2_winner
+        promoted_team = "Hull City" if random.random() < 0.5 else "Southampton"
 
     return promoted_team
 
-# Simulate playoffs 10000 times to determine promotion distribution
-promotion_counts = {team: 0 for team in championship_elo}
+# Simulate playoffs 10000 times to determine promotion distribution (final between Southampton and Hull City)
+promotion_counts = {team: 0 for team in ["Southampton", "Hull City"]}
 for _ in range(10000):
     promoted = simulate_playoffs()
     promotion_counts[promoted] += 1
@@ -413,7 +392,7 @@ points_distribution = defaultdict(list)
 
 
 # Now run simulations grouped by promoted team
-for promoted_team in sorted(championship_elo.keys(), key=lambda x: promotion_counts[x], reverse=True):
+for promoted_team in sorted(promotion_counts.keys(), key=lambda x: promotion_counts[x], reverse=True):
     if promotion_counts[promoted_team] == 0:
         continue
     print(f"\nRunning {promotion_counts[promoted_team]} simulations with {promoted_team} promoted...")
@@ -511,27 +490,31 @@ for team in points_distribution.keys():
     team_stats[team] = {'avg': avg, 'std': std, 'p25': p25, 'med': med, 'p75': p75}
 
 # ====================== MATCH PROBABILITIES ======================
-match_cache = {}
+match_prob_cache = {}
 
-def get_match_probs(home, away, n_sims=10000):
-    key = (home, away)
-    if key not in match_cache:
-        match_cache[key] = _get_match_probs(home, away, n_sims)
-    return match_cache[key]
-
-def _get_match_probs(home, away, n_sims=10000):
-    home_wins = 0
-    draws = 0
-    away_wins = 0
-    for _ in range(n_sims):
+# Precompute match probabilities for all fixtures
+print("Precomputing match probabilities...")
+for home, away in all_fixtures:
+    hw = 0
+    d = 0
+    aw = 0
+    for _ in range(2000):
         hg, ag = simulate_match(home, away, elo)
         if hg > ag:
-            home_wins += 1
+            hw += 1
         elif hg == ag:
-            draws += 1
+            d += 1
         else:
-            away_wins += 1
-    return home_wins / n_sims * 100, draws / n_sims * 100, away_wins / n_sims * 100
+            aw += 1
+    match_prob_cache[(home, away)] = (
+        hw / 2000 * 100,
+        d / 2000 * 100,
+        aw / 2000 * 100
+    )
+print("Match probabilities precomputed.")
+
+def get_match_probs(home, away, n_sims=None):
+    return match_prob_cache[(home, away)]
 
 # ====================== OUTPUT ======================
 print(f"{'Team':<15}{'AvgPts':<8}{'StdDev':<8}{'Title%':<8}{'CL%':<8}{'Europa%':<8}{'Conf%':<8}{'European%':<10}{'Releg%'}")
