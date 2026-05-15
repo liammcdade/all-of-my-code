@@ -4,14 +4,13 @@ A comprehensive Monte Carlo simulation for predicting Premier League outcomes us
 
 ## Features
 
-- **ELO-Based Ratings**: Team strength ratings with adjustments for form, injuries, and win/draw/loss tendencies
-- **Realistic Match Simulation**: Uses Poisson goal modeling with home advantage and match-specific parameters
-- **Championship Playoff Simulation**: Simulates Championship playoffs to determine promotion
-- **Monte Carlo Simulations**: Runs 10,000 simulations grouped by promoted team
-- **Pre-Season Match Probabilities**: Computes probabilities for all remaining fixtures
+- **ELO-Based Ratings**: Team strength ratings with home advantage factor
+- **Realistic Match Simulation**: Uses Poisson goal modeling with JIT-accelerated match-specific parameters
+- **Promoted Team Selection**: Simulates the impact of different promoted teams (Southampton or Hull City)
+- **Monte Carlo Simulations**: Runs 10,000 simulations to generate robust probability distributions
 - **Configurable Parameters**: Adjustable constants for model tuning
 - **Progress Tracking**: Real-time progress bars for simulations
-- **Comprehensive Statistics**: Team performance metrics, fixture difficulty, and extreme outcomes
+- **Comprehensive Statistics**: Team performance metrics and league outcomes
 
 ## Installation
 
@@ -33,28 +32,22 @@ The script runs 10,000 simulations and outputs results to the console.
 ## Output
 
 The simulation generates console output including:
-- **Team Statistics**: Average points, standard deviation, probabilities for title, Champions League, Europa League, Conference League, European qualification, and relegation
-- **Match Probabilities**: Win/draw/loss percentages for all remaining fixtures
-- **Extreme Match Probabilities**: Most likely home wins, draws, and away wins
-- **Team Fixture Probabilities**: Probabilities of winning/losing/drawing all remaining games, and average win probability
+- **Team Statistics**: Average points, standard deviation, probabilities for title, Champions League, Europa League, European qualification, and relegation
 - **Points to Win League**: Minimum and maximum points required to win the title
 - **Additional Statistics**: Probability of relegation with 40+ points, average excitement score
 
 ## Algorithm Overview
 
 ### 1. Power Ratings
-Uses ELO ratings adjusted for:
-- Form (based on current performance)
-- Injuries (penalty reduction)
-- Win/Draw/Loss rates (bias adjustments)
+Uses ELO ratings for all participating teams. The league consists of 20 teams: 19 fixed teams and one promoted team selected per simulation.
 
 ### 2. Match Simulation
-Uses Poisson distribution for goals with:
+Uses a JIT-compiled Poisson distribution model for goals with:
 - Home advantage factor
 - Team ELO difference scaling
-- Match closeness and tempo effects
+- Match closeness effects
 - Shared goals for draws
-- Variance and bias adjustments
+- Tempo-based XG adjustments
 
 ### 3. European Qualification
 Simplified assignment based on league position:
@@ -73,7 +66,6 @@ Key parameters can be modified in the script constants:
 - ELO parameters (K-factor, scale)
 - Match model parameters (home advantage, XG calculations)
 - Simulation settings (number of sims)
-- Adjustment factors (form multiplier, injury scale)
 
 ## Dependencies
 
