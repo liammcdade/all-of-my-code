@@ -22,22 +22,21 @@ VARIANCE_BOOST_FACTOR = 0.2
 SHARED_GOAL_BASE = 0.05
 SHARED_GOAL_CLOSENESS = 0.25
 MIN_LAMBDA = 0.05
-NUM_TEAMS = 18
 
 TEAM_NAMES = [
     "Arsenal", "Man City", "Liverpool", "Aston Villa",
     "Man United", "Chelsea", "Brighton", "Brentford",
-    "Everton", "Bournemouth", "Coventry", "Fulham",
-    "Ipswich", "Sunderland", "Crystal Palace", "Leeds",
-    "Newcastle", "Nottingham"
+    "Everton", "Bournemouth", "Fulham", "Ipswich",
+    "Crystal Palace", "Leeds", "Newcastle", "Nottingham",
+    "Tottenham", "West Ham", "Wolves"
 ]
 
 ELO_RATINGS = np.array([
     1895, 1885, 1845, 1755,
     1725, 1795, 1705, 1645,
-    1605, 1665, 1495, 1620,
-    1515, 1490, 1640, 1540,
-    1785, 1680
+    1605, 1665, 1620, 1515,
+    1640, 1540, 1785, 1680,
+    1740, 1650, 1620
 ], dtype=np.float64)
 
 CHAMPIONSHIP_ELO = {"Southampton": 1635, "Hull City": 1637}
@@ -48,7 +47,7 @@ class TeamRegistry:
         self.team_to_idx: Dict[str, int] = {}
         self.idx_to_team: List[str] = []
 
-    def add_team(self, name: str, elo: float, form: float = 0.0, injury: float = 0.0):
+    def add_team(self, name: str, elo: float):
         idx = len(self.idx_to_team)
         self.elos[name] = elo
         self.team_to_idx[name] = idx
@@ -172,17 +171,12 @@ def run_single_simulation_vectorized(registry: TeamRegistry, match_matrix: np.nd
     return table, ranking, ranking[0][1]["Pts"]
 
 def main():
-    registry = TeamRegistry()
-    for i, name in enumerate(TEAM_NAMES):
-        registry.add_team(name, ELO_RATINGS[i])
-    
-    n_teams = len(TEAM_NAMES)
-    match_matrix = generate_match_matrix(n_teams)
-    NUM_SIMS = 5000
+    NUM_SIMS = 10000
     
     title_counts: Dict[str, int] = defaultdict(int)
     top4_counts: Dict[str, int] = defaultdict(int)
     europa_counts: Dict[str, int] = defaultdict(int)
+    conf_counts: Dict[str, int] = defaultdict(int)
     releg_counts: Dict[str, int] = defaultdict(int)
     champion_points: List[int] = []
     avg_points: Dict[str, List[int]] = defaultdict(list)
@@ -191,13 +185,16 @@ def main():
     excitement_scores: List[int] = []
     
     for _ in tqdm(range(NUM_SIMS), desc="Running simulations", unit="sim"):
+        registry = TeamRegistry()
+        for i, name in enumerate(TEAM_NAMES):
+            registry.add_team(name, ELO_RATINGS[i])
+
         promoted = "Southampton" if random.random() < 0.5 else "Hull City"
         registry.add_team(promoted, CHAMPIONSHIP_ELO[promoted])
         
-        new_match_matrix = generate_match_matrix(len(registry.idx_to_team))
-        table, ranking, champ_pts = run_single_simulation_vectorized(registry, new_match_matrix)
+        match_matrix = generate_match_matrix(len(registry.idx_to_team))
+        table, ranking, champ_pts = run_single_simulation_vectorized(registry, match_matrix)
         
-        registry.remove_team(promoted)
         champion_points.append(champ_pts)
         
         for pos, (team, data) in enumerate(ranking, 1):
@@ -208,8 +205,11 @@ def main():
                 title_counts[team] += 1
             if pos <= 4:
                 top4_counts[team] += 1
-            if pos == 5:
+            elif pos == 5:
                 europa_counts[team] += 1
+            elif pos == 6:
+                conf_counts[team] += 1
+
             if pos > len(ranking) - 3:
                 releg_counts[team] += 1
         
@@ -225,6 +225,7 @@ def main():
         "title": dict(title_counts),
         "top4": dict(top4_counts),
         "europa": dict(europa_counts),
+        "conf": dict(conf_counts),
         "releg": dict(releg_counts),
         "champion_points": champion_points,
         "avg_points": dict(avg_points),
@@ -232,9 +233,6 @@ def main():
         "releg_40_count": releg_40_count,
         "excitement_scores": excitement_scores,
     }
-    
-    for team in CHAMPIONSHIP_ELO:
-        registry.add_team(team, CHAMPIONSHIP_ELO[team])
     
     print("\n" + "=" * 60)
     print("TEAM STATISTICS")
@@ -252,10 +250,12 @@ def main():
     print("=" * 40)
     print(f"Probability that at least one team is relegated with 40+ points: {releg_40_count / NUM_SIMS * 100:.4f}%")
     print(f"Average excitement score for the final day (out of 10): {sum(excitement_scores) / len(excitement_scores) / 10:.2f}")
-    print(f"Total European probability (Europa League, sum of all teams): {sum(europa_counts.values()) / NUM_SIMS * 100:.2f}%")
     print(f"Total European probability (Champions League, sum of all teams): {sum(top4_counts.values()) / NUM_SIMS * 100:.2f}%")
-    print(f"  - CL only (top 4): {sum(top4_counts.values()) / NUM_SIMS * 100:.2f}%")
-    print(f"  - Europa only (5th): {sum(europa_counts.values()) / NUM_SIMS * 100:.2f}%")
+    print(f"Total European probability (Europa League, sum of all teams): {sum(europa_counts.values()) / NUM_SIMS * 100:.2f}%")
+    print(f"Total European probability (Conference League, sum of all teams): {sum(conf_counts.values()) / NUM_SIMS * 100:.2f}%")
+    print(f"  - CL slots (top 4): {sum(top4_counts.values()) / NUM_SIMS * 100:.2f}%")
+    print(f"  - Europa slots (5th): {sum(europa_counts.values()) / NUM_SIMS * 100:.2f}%")
+    print(f"  - Conference slots (6th): {sum(conf_counts.values()) / NUM_SIMS * 100:.2f}%")
     
     pycache_path = os.path.join(os.path.dirname(__file__), "__pycache__")
     if os.path.exists(pycache_path):
@@ -274,14 +274,15 @@ def display_team_statistics(results: Dict, sims: int) -> None:
         p75 = sorted_pts[int(len(pts) * 0.75)]
         team_stats[team] = {"avg": avg, "std": std, "p25": p25, "med": med, "p75": p75}
     
-    print(f"{'Team':<15}{'AvgPts':<8}{'StdDev':<8}{'Title%':<8}{'CL%':<8}{'Europa%':<10}{'Europe%':<10}{'Releg%':<8}")
-    print("-" * 80)
+    print(f"{'Team':<15}{'AvgPts':<8}{'StdDev':<8}{'Title%':<8}{'CL%':<8}{'Europa%':<10}{'Conf%':<8}{'Europe%':<10}{'Releg%':<8}")
+    print("-" * 90)
     for team in sorted(results["points_distribution"].keys(), key=lambda x: sum(results["avg_points"][x]) / len(results["avg_points"][x]), reverse=True):
         times_played = len(results["points_distribution"][team])
         title_pct = results['title'].get(team, 0) / times_played * 100
         top4_pct = results['top4'].get(team, 0) / times_played * 100
         europa_pct = results['europa'].get(team, 0) / times_played * 100
-        combined_europe_pct = top4_pct + europa_pct
+        conf_pct = results['conf'].get(team, 0) / times_played * 100
+        combined_europe_pct = top4_pct + europa_pct + conf_pct
         avg_points = sum(results['avg_points'][team]) / times_played
         releg_pct = results['releg'].get(team, 0) / times_played * 100
         print(
@@ -291,6 +292,7 @@ def display_team_statistics(results: Dict, sims: int) -> None:
             f"{title_pct:<8.2f}"
             f"{top4_pct:<8.2f}"
             f"{europa_pct:<10.2f}"
+            f"{conf_pct:<8.2f}"
             f"{combined_europe_pct:<10.2f}"
             f"{releg_pct:.2f}"
         )
