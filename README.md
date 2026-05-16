@@ -1,21 +1,18 @@
 # Premier League 2026-27 Season Simulation
 
-A comprehensive Monte Carlo simulation for predicting Premier League outcomes using ELO-based team ratings and Poisson goal modeling.
+A high-performance Monte Carlo simulation for predicting Premier League outcomes using ELO-based team ratings and a modified Poisson goal model, accelerated with JIT compilation via Numba.
 
 ## Features
 
-- **ELO-Based Ratings**: Team strength ratings with adjustments for form, injuries, and win/draw/loss tendencies
-- **Realistic Match Simulation**: Uses Poisson goal modeling with home advantage and match-specific parameters
-- **Championship Playoff Simulation**: Simulates Championship playoffs to determine promotion
-- **Monte Carlo Simulations**: Runs 10,000 simulations grouped by promoted team
-- **Pre-Season Match Probabilities**: Computes probabilities for all remaining fixtures
-- **Configurable Parameters**: Adjustable constants for model tuning
-- **Progress Tracking**: Real-time progress bars for simulations
-- **Comprehensive Statistics**: Team performance metrics, fixture difficulty, and extreme outcomes
+- **ELO-Based Ratings**: Core team strength ratings used to derive match probabilities.
+- **JIT-Accelerated Match Simulation**: Optimized Numba-compiled match engine for high-speed iterations.
+- **Promoted Team Randomization**: Simulates the impact of different promoted teams (Southampton or Hull City) within a 20-team league structure.
+- **Monte Carlo Simulations**: Runs 5,000 iterations to generate robust outcome probabilities.
+- **Comprehensive Statistics**: Detailed team performance metrics including title, Champions League, and relegation probabilities.
 
 ## Installation
 
-1. Clone the repository
+1. Clone the repository.
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
@@ -28,70 +25,51 @@ A comprehensive Monte Carlo simulation for predicting Premier League outcomes us
 python sportsanalysis/premier-league/26-27-season.py
 ```
 
-The script runs 10,000 simulations and outputs results to the console.
+The script runs 5,000 simulations and outputs results to the console.
 
 ## Output
 
 The simulation generates console output including:
-- **Team Statistics**: Average points, standard deviation, probabilities for title, Champions League, Europa League, Conference League, European qualification, and relegation
-- **Match Probabilities**: Win/draw/loss percentages for all remaining fixtures
-- **Extreme Match Probabilities**: Most likely home wins, draws, and away wins
-- **Team Fixture Probabilities**: Probabilities of winning/losing/drawing all remaining games, and average win probability
-- **Points to Win League**: Minimum and maximum points required to win the title
-- **Additional Statistics**: Probability of relegation with 40+ points, average excitement score
+- **Team Statistics**: Average points, standard deviation, and probabilities for:
+  - Title Win
+  - Champions League Qualification (Top 4)
+  - Europa League Qualification (5th Place)
+  - Relegation (Bottom 3)
+- **League Statistics**: Maximum and minimum points to win the league.
+- **Special Scenarios**: Probability of relegation with 40+ points and season excitement scores.
 
 ## Algorithm Overview
 
 ### 1. Power Ratings
-Uses ELO ratings adjusted for:
-- Form (based on current performance)
-- Injuries (penalty reduction)
-- Win/Draw/Loss rates (bias adjustments)
+Uses fixed ELO ratings as the baseline for team strength. Ratings are updated dynamically after each simulated match using a K-factor of 25.
 
 ### 2. Match Simulation
-Uses Poisson distribution for goals with:
-- Home advantage factor
-- Team ELO difference scaling
-- Match closeness and tempo effects
-- Shared goals for draws
-- Variance and bias adjustments
+Uses a modified Poisson engine with:
+- **Home Advantage**: Static ELO boost applied to the home side.
+- **xG Conversion**: Logistic scaling of ELO differences to derive Expected Goals (xG).
+- **Correlation**: A shared goal component (correlated Poisson) to accurately model draw tendencies.
+- **Dynamics**: Match tempo and closeness adjustments based on ELO parity.
 
-### 3. European Qualification
-Simplified assignment based on league position:
-- Champions League: Top 4 teams
-- Europa League: 5th place
-- Conference League: 6th place
-- Relegation: Bottom 3 teams
+### 3. Qualification Logic
+- **Champions League**: Assigned to the top 4 teams.
+- **Europa League**: Assigned to the 5th place team.
+- **Relegation**: Assigned to the bottom 3 teams.
 
 ### 4. Tiebreakers
-Uses simplified approach: Points -> Goal Difference -> Goals For
-*(Note: Real Premier League uses head-to-head records)*
+Standard Premier League criteria: Points → Goal Difference → Goals For.
 
 ## Configuration
 
 Key parameters can be modified in the script constants:
-- ELO parameters (K-factor, scale)
-- Match model parameters (home advantage, XG calculations)
-- Simulation settings (number of sims)
-- Adjustment factors (form multiplier, injury scale)
+- `NUM_SIMS`: Number of simulation iterations.
+- `ELO_RATINGS`: Baseline team strengths.
+- `HOME_ADVANTAGE`: ELO boost for the home team.
 
 ## Dependencies
 
-- **numpy**: Numerical computations and random number generation
-- **numba**: JIT compilation for performance optimization
-- **tqdm**: Progress bars
-- **collections, math, random**: Standard library modules
-
-## License
-
-This project is for educational and research purposes.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Submit a pull request
+- **numpy**: Numerical computations.
+- **numba**: JIT compilation for performance optimization.
+- **tqdm**: Progress tracking.
 
 ## Disclaimer
 
