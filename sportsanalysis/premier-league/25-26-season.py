@@ -742,7 +742,7 @@ for sim in range(10000):
 
 conf_win_probs = {team: count / 10000 for team, count in conf_champion_counts.items()}
 
-fa_sims = 1000
+fa_sims = 2500000
 
 print(f"Running {sims:,} simulations...")
 
