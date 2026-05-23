@@ -6,18 +6,18 @@ This Python script simulates the remaining fixtures of the 2025-26 Premier Leagu
 The simulation runs 25,000 iterations for the Premier League and 10,000 for each European competition. Key assumptions include fixed Elo ratings, home advantage, form adjustments, injury penalties, and observed win/draw/loss rates.
 
 ## Data Inputs
-- **Elo Ratings**: Base Elo scores for Premier League teams (lines 8-28), plus rating deviations (RD) for uncertainty (lines 31-52), though RD is not actively used in match simulations.
-- **Current Table**: Mid-season statistics (matches played, wins/draws/losses, goals for/against, points, remaining games) for each team (lines 54-76).
-- **Fixtures**: List of remaining matches, grouped by round (lines 78-106).
-- **European Elos**: Elo ratings for teams in Europa League (lines 109-114), Champions League (lines 117-122), and Conference League (lines 125-130).
-- **Form Adjustments**: Elo bonuses/penalties based on last 10 games' points differential (lines 396-417).
-- **WDL Rates**: Observed win/draw/loss probabilities per team (lines 420-441).
-- **Injury Penalties**: Elo reductions for key player absences (lines 444-466).
-- **Model Parameters**: Home advantage (33.8 Elo points) (line 469).
+- **Elo Ratings**: Base Elo scores for Premier League teams (lines 62-81), plus rating deviations (RD) for uncertainty (lines 105-126), though RD is not actively used in match simulations.
+- **Current Table**: Mid-season statistics (matches played, wins/draws/losses, goals for/against, points, remaining games) for each team (lines 128-150).
+- **Fixtures**: List of remaining matches, grouped by round (lines 155-177).
+- **European Elos**: Elo ratings for teams in Europa League (lines 179-184), Champions League (lines 186-191), and Conference League (lines 193-198).
+- **Form Adjustments**: Elo bonuses/penalties based on last 10 games' points differential (lines 332-353).
+- **WDL Rates**: Observed win/draw/loss probabilities per team (lines 355-376).
+- **Injury Penalties**: Elo reductions for key player absences (lines 378-400).
+- **Model Parameters**: Randomized home advantage (50-70 Elo points) (line 488).
 
 ## Simulation Components
 
-### European Competitions (lines 187-651)
+### European Competitions (lines 208-480)
 Simulated once before the main loop to compute win probabilities.
 
 #### Europa League (lines 187-253, simulation at 596-616)
@@ -38,14 +38,15 @@ Simulated once before the main loop to compute win probabilities.
 - **Structure**: Semi-finals: Shakhtar Donetsk vs Crystal Palace, Strasbourg vs Rayo Vallecano. Final: One-leg.
 - **Output**: Win probabilities for each team.
 
-### Premier League Simulation (lines 472-754)
+### Premier League Simulation (lines 482-841)
 
 #### Helper Functions
-- **Adjusted Elo (lines 472-476)**: Base Elo minus nonlinear injury penalty plus form bonus.
+- **Adjusted Elo (lines 433-441)**: Base Elo minus nonlinear injury penalty plus form bonus.
 
-#### Match Engine (lines 478-523)
+#### Match Engine (lines 443-480)
 - **Elo Difference**: Adjusted home Elo - adjusted away Elo + home advantage.
-- **Expected Goals (XG)**: Logistic scaling (home_xg = 0.7 + 1.8 / (1 + exp(-diff/400)), away_xg analogous).
+- **Expected Goals (XG)**: Exponential scaling (home_lambda = base * exp(diff / 800), away_lambda analogous) (lines 244-250).
+- **Parameter Randomization**: To account for model uncertainty, key parameters (Min Lambda, Max Goals, Draw Rate, K-Factor) are randomized per simulation (lines 487-493).
 - **Adjustments**:
   - WDL bias: Boost XG based on team's win-loss differential.
   - Closeness factor: Increases draw probability for tight games.
@@ -63,7 +64,7 @@ Measures season tightness out of 10:
 - Top 4: Teams within 5 points of 4th.
 - Relegation: Teams within 3 points of 18th.
 
-#### Monte Carlo Loop (lines 579-754)
+#### Monte Carlo Loop (lines 751-841)
 - **Iterations**: 25,000 simulations.
 - **Per Simulation**:
   - Reset table to current state.
@@ -74,7 +75,7 @@ Measures season tightness out of 10:
   - Assign European spots: Top 5 → CL, 6th → EL, FA Cup winner → EL (if not top 5), 7th → Conf. Adjust for European winners qualifying extra spots.
   - Track: Titles, European qualifications, relegations (especially with 40+ points), points distributions.
 
-### Statistics and Output (lines 756-967)
+### Statistics and Output (lines 843-1046)
 - **Calculations**: Average points, standard deviation, relegation probabilities with 40+ points.
 - **Outputs**:
   - Team summary: Avg points, std dev, title/CL/EL/Conf/European/releg %.
