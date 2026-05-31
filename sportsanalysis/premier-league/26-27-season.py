@@ -178,7 +178,7 @@ def main():
     
     n_teams = len(TEAM_NAMES)
     match_matrix = generate_match_matrix(n_teams)
-    NUM_SIMS = 5000
+    NUM_SIMS = 10000
     
     title_counts: Dict[str, int] = defaultdict(int)
     top4_counts: Dict[str, int] = defaultdict(int)

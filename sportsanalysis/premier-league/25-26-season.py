@@ -441,9 +441,9 @@ def get_adjusted_ratings(idx, elo_att, elo_def, form_arr, injury_arr):
 
 @numba.jit(nopython=True)
 def simulate_match(h_idx, a_idx, elo_att, elo_def, form_arr, injury_arr, min_lambda, max_goals):
-    home_xg, away_xg = get_expected_goals(h_idx, a_idx, POISSON_LAMBDA_BASE_HOME, POISSON_LAMBDA_BASE_AWAY, min_lambda, max_goals)
     h_att, h_def = get_adjusted_ratings(h_idx, elo_att, elo_def, form_arr, injury_arr)
     a_att, a_def = get_adjusted_ratings(a_idx, elo_att, elo_def, form_arr, injury_arr)
+    home_xg, away_xg = get_expected_goals(h_att, a_def, POISSON_LAMBDA_BASE_HOME, POISSON_LAMBDA_BASE_AWAY, min_lambda, max_goals)
     diff_home = h_att - a_def + HOME_ADVANTAGE_ELO
     diff_away = a_att - h_def
     diff = diff_home - diff_away
