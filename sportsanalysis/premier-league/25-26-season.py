@@ -689,7 +689,7 @@ def assign_europe(current_table: Dict[str, Dict], ranking: List[Tuple[str, Dict]
     apply_special_rules(el_winner, fa_winner, conf_winner, current_table, ranking, european_assignments)
     return european_assignments
 
-sims = 25000
+sims = 10
 
 title = defaultdict(int)
 cl = defaultdict(int)
