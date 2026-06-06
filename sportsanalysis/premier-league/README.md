@@ -3,17 +3,17 @@
 ## Overview
 This Python script simulates the remaining fixtures of the 2025-26 Premier League season, including European competitions (Champions League, Europa League, Conference League). It uses Elo ratings, Poisson distributions for goal modeling, and Monte Carlo methods to generate probabilities for titles, European qualification, relegation, match outcomes, and season excitement.
 
-The simulation runs 25,000 iterations for the Premier League and 10,000 for each European competition. Key assumptions include fixed Elo ratings, home advantage, form adjustments, injury penalties, and observed win/draw/loss rates.
+The simulation runs 25,000 iterations for the Premier League and 10,000 for each European competition. Key assumptions include dynamic Elo ratings, variable home advantage, form adjustments, and injury penalties.
 
 ## Data Inputs
-- **Elo Ratings**: Base Elo scores for Premier League teams (lines 8-28), plus rating deviations (RD) for uncertainty (lines 31-52), though RD is not actively used in match simulations.
+- **Elo Ratings**: Base Elo scores for Premier League teams (lines 8-28), plus rating deviations (RD) for uncertainty (lines 31-52). RD is used to calculate the K-factor for post-match updates.
 - **Current Table**: Mid-season statistics (matches played, wins/draws/losses, goals for/against, points, remaining games) for each team (lines 54-76).
 - **Fixtures**: List of remaining matches, grouped by round (lines 78-106).
 - **European Elos**: Elo ratings for teams in Europa League (lines 109-114), Champions League (lines 117-122), and Conference League (lines 125-130).
 - **Form Adjustments**: Elo bonuses/penalties based on last 10 games' points differential (lines 396-417).
-- **WDL Rates**: Observed win/draw/loss probabilities per team (lines 420-441).
+- **WDL Rates**: Observed win/draw/loss probabilities per team (lines 420-441), currently used for external lookup statistics rather than match engine bias.
 - **Injury Penalties**: Elo reductions for key player absences (lines 444-466).
-- **Model Parameters**: Home advantage (33.8 Elo points) (line 469).
+- **Model Parameters**: Variable home advantage (randomized between 50-70 Elo points per run).
 
 ## Simulation Components
 
@@ -45,9 +45,8 @@ Simulated once before the main loop to compute win probabilities.
 
 #### Match Engine (lines 478-523)
 - **Elo Difference**: Adjusted home Elo - adjusted away Elo + home advantage.
-- **Expected Goals (XG)**: Logistic scaling (home_xg = 0.7 + 1.8 / (1 + exp(-diff/400)), away_xg analogous).
+- **Expected Goals (XG)**: Exponential model (home_xg = base * exp(diff/800)).
 - **Adjustments**:
-  - WDL bias: Boost XG based on team's win-loss differential.
   - Closeness factor: Increases draw probability for tight games.
   - Tempo reduction: Less effect for large Elo gaps.
   - Variance boost: From win rate.
@@ -80,7 +79,7 @@ Measures season tightness out of 10:
   - Team summary: Avg points, std dev, title/CL/EL/Conf/European/releg %.
   - Premier League UEFA win %.
   - European competition win probabilities.
-  - Probabilities for relegation with 40+ points, 8+ European teams, average excitement.
+  - Probabilities for relegation with 40+ points, 9+ European teams, average excitement.
   - Match probabilities for remaining fixtures (10,000 sims per match).
   - Extreme match probabilities (highest home/away win chances, most likely draw).
   - Team fixture probabilities (win/lose/draw all remaining games, average win %).
