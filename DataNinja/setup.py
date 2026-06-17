@@ -17,7 +17,7 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "dataninja = DataNinja.cli:main",
+            "dataninja = DataNinja.cli:app",
         ],
     },
     classifiers=[
