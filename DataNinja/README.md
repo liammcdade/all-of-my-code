@@ -18,63 +18,59 @@ It allows fast, scriptable interaction with datasets across formats (CSV, JSON, 
 
 ```bash
 pip install -r requirements.txt
+# For SQL support:
+pip install pandasql
 ```
 
 ## Usage
 
-### Load a file and start a session
+DataNinja maintains a "session" by storing your current dataset in a temporary file between commands. This allows you to chain operations.
 
-```bash
-dataninja load data.csv
-```
+1. **Load data**: `dataninja load data.csv`
+2. **Transform**: `dataninja filter "age > 25"`
+3. **Clean**: `dataninja trim name`
+4. **Inspect**: `dataninja summary`
+5. **Save**: `dataninja save cleaned_data.json`
 
-### Show the first 10 rows
+### Output Options
+Most inspection commands (`head`, `tail`, `describe`) support an `--output` option:
+- `table` (Default): Pretty-printed table for terminal viewing.
+- `csv` / `json`: Raw data for piping to other tools.
 
-```bash
-dataninja head
-```
+## Supported Commands
 
-### Show info about the data
+### Data Inspection
+- `load <file>`: Load a dataset (CSV, JSON, Excel, SQLite, YAML).
+- `head [--n 10]`, `tail [--n 10]`: View first/last rows.
+- `info`, `describe`, `schema`, `summary`: Statistical and structural summaries.
 
-```bash
-dataninja info
-```
+### Cleaning & Transformation
+- `dropna [--axis rows|columns] [--subset col1,col2] [--how any|all]`: Remove missing values.
+- `fillna [--value val] [--columns col1,col2]`: Fill missing values.
+- `dedup [--subset col1,col2] [--keep first|last|none]`: Remove duplicates.
+- `filter <condition>`: Filter rows using pandas query syntax (e.g., `"age > 30"`).
+- `select <columns>`, `rename <mapping>`, `cast <mapping>`: Manage columns.
+  - Mapping format: `old:new,old2:new2` or `col:type`.
+- `recode <column> <mapping>`: Map values (e.g., `"M:Male,F:Female"`).
+- `trim <columns>`, `lowercase <columns>`, `normalize <columns>`.
+- `groupby <by_cols> <agg_fn>`, `aggregate <agg_fn>`, `pivot <index> <cols> <vals>`.
+- `sort <by_cols> [--ascending|--no-ascending]`.
+- `map <column> <expression>`: Apply Python logic (e.g., `"x * 1.1"`).
 
-### Save the current data to another format
+### Visualization
+- `plot <kind> <columns>`: Terminal ASCII plots.
+  - Kinds: `histogram`, `bar`, `line`, `scatter`.
+  - Options: `--bins`, `--width`, `--height`, `--save <file>`.
 
-```bash
-dataninja save output.xlsx
-```
-
-### Convert between formats
-
-```bash
-dataninja convert data.csv data.json
-```
-
-### (Planned) Data cleaning, transformation, plotting, SQL, ML, geo, and more
-
-See `dataninja --help` for all available commands.
-
-## Supported Commands (Current & Planned)
-
-- load <file>
-- head, tail, info, describe
-- dropna, fillna, dedup, filter, select, rename, cast
-- groupby, aggregate, pivot, splitcol, mergecols, sort, map, sample, split
-- plot (histogram, bar, line, scatter)
-- save <output>
-- convert <input> <output>
-- sql, ml, geo (plugins)
-- calc (plugin for scientific calculations and unit conversions)
-  - `dataninja calc sin <value>`
-  - `dataninja calc cos <value>`
-  - `dataninja calc tan <value>`
-  - `dataninja calc log <value> [--base <base>]`
-  - `dataninja calc sqrt <value>`
-  - `dataninja calc convert <value> <from_unit> <to_unit> <category>`
-    - Categories: `length`, `weight`, `temperature`
-    - Example: `dataninja calc convert 100 C F temperature`
+### Plugins
+- **SQL**: `dataninja sql <query>`: Run SQL on the current data (use `data` as the table name).
+- **ML**: `dataninja ml <train|predict> --target <col> [--model <path>]`.
+  - Supports Logistic Regression and Random Forest (use `.rf.pkl` extension for RF).
+- **Geo**: `dataninja geo <action>`.
+  - `geocode --address "..."`
+  - `distance --lat1 ... --lon1 ... --lat2 ... --lon2 ...`
+- **Calculator (`calc`)**: Scientific math and unit conversions.
+  - `sin`, `cos`, `tan`, `log`, `sqrt`, `convert`.
 
 ## Output Rendering
 

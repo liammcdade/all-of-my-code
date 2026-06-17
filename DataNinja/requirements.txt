@@ -1,5 +1,6 @@
 # Core dependencies
 pandas
+pandasql
 rich
 typer[all]
 plotext
