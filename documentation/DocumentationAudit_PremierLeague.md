@@ -1,0 +1,53 @@
+# Documentation Audit Report: Premier League Simulations
+
+**Auditor:** Senior Technical Writer & Software Documentation Auditor
+**Date:** July 2024
+**Scope:** Review of `sportsanalysis/premier-league/` simulation scripts and associated documentation (`README.md` and root `README.md`).
+
+---
+
+## 1. Premier League 2025-26 Season Simulation
+**Files:** `sportsanalysis/premier-league/25-26-season.py` vs. `sportsanalysis/premier-league/README.md`
+
+### Mismatches
+*   **Inaccurate Line References**: The README contains numerous outdated line number references:
+    *   Elo ratings cited at lines 8-28; actually at lines 80-100.
+    *   Current table cited at lines 54-76; actually at lines 128-153.
+    *   Fixtures cited at lines 78-106; actually at lines 155-174.
+    *   European competition simulation cited at lines 187-651; actually at lines 715-740.
+*   **Rating Deviation (RD) Usage**: README claims RD is "not actively used in match simulations." However, the `update_elo` function (line 560) explicitly incorporates `rd_arr` into the `g_val` (G-value) and K-factor calculations.
+*   **Unused Data (WDL Rates)**: The README lists `wdl_rates` as a data input used for WDL bias adjustments. While the `wdl_rates` dictionary is defined in the code (line 355), it is never referenced by `simulate_match` or any part of the simulation engine.
+*   **XG Model Discrepancy**: README describes a "Logistic scaling" model for Expected Goals (XG). The implementation in `get_expected_goals` (line 244) uses an exponential model: `home_lambda = home_base * math.exp(diff / 800)`.
+*   **Oversimplified Tournament Logic**:
+    *   **FA Cup**: README describes a "simple Elo-based knockout." The code `simulate_full_fa_cup_tournament` (line 240) only simulates a single match between hardcoded teams (Chelsea vs. Man City) rather than a tournament bracket.
+    *   **European Competitions**: README describes semi-final and two-leg tie simulations. The Monte Carlo loop actually only simulates single-match finals between hardcoded teams (lines 715-740).
+
+### Suggested Clarifications
+*   **Rating Deviation**: Clarify that RD is used during the ELO update phase to scale the impact of match results on team ratings.
+*   **XG Model**: Update the mathematical description to reflect the exponential scaling used in the code.
+*   **Stale References**: Remove specific line number references from the README to prevent documentation rot as the code evolves.
+
+### Proposed Documentation Updates
+*   **Match Engine Section**: "Uses exponential scaling for Expected Goals (home_xg = base * exp(diff/800)) to model scoring rates based on ELO superiority."
+*   **Tournament Sections**: "Simulates a representative final match for FA Cup and European competitions between high-probability contenders to estimate trophy outcomes."
+
+---
+
+## 2. Premier League 2026-27 Season Simulation
+**Files:** `sportsanalysis/premier-league/26-27-season.py` vs. Root `README.md`
+
+### Mismatches
+*   **Simulation Count**: README states the script runs 10,000 simulations. The code defines `NUM_SIMS = 5000` (line 181).
+*   **Unimplemented Adjustments**: README claims ELO ratings are adjusted for "form, injuries, and win/draw/loss tendencies." While `TeamRegistry.add_team` (line 51) accepts form and injury arguments, these values are ignored by the vectorized simulation engine (`run_simulation_vectorized`, line 107).
+*   **Simplified Promotion Logic**: README describes a "Championship Playoff Simulation." The code implements a simple 50/50 `random.random()` coin flip to decide promotion between Southampton and Hull City (line 194).
+*   **Excitement Score Mismatch**: README describes a complex contender-based metric. The implementation calculates the score as the simple points difference between 1st and 2nd place, divided by 10 (lines 222, 254).
+*   **Missing Output Features**: README lists "Match Probabilities", "Extreme Match Probabilities", and "Team Fixture Probabilities" as generated outputs. These features are absent from the 2026-27 script (though they exist in the 2025-26 version).
+*   **European Qualification**: README mentions assignment for Champions League, Europa League, and Conference League. The code only calculates probabilities for CL (Top 4) and Europa League (5th place), omitting Conference League (lines 212-217).
+
+### Suggested Clarifications
+*   **Feature Parity**: Explicitly state that the 2026-27 script is a "high-performance vectorized engine" focused on speed over the granular modeling (injuries/form) found in the 2025-26 version.
+*   **Promotion Heuristic**: Acknowledge that the promotion logic is a placeholder heuristic rather than a full simulation.
+
+### Proposed Documentation Updates
+*   **Algorithm Section**: Remove mentions of form, injuries, and WDL bias for the 2026-27 season until they are integrated into the Numba-accelerated engine.
+*   **Output Section**: Align the listed output statistics with the actual console tables generated by `display_team_statistics`.
