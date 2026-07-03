@@ -1,0 +1,161 @@
+ELO Rankings:
+1 Arsenal	1862
+2 Man City	1858
+3 Man United	1718
+4 Liverpool	1709
+5 Bournemouth	1651
+6 Brighton	1644
+7 Aston Villa	1629
+8 Chelsea	1618
+9 Brentford	1597
+10 Everton	1549
+11 Newcastle	1542
+12 Fulham	1514
+13 Forest	1506
+14 Leeds	1498
+15 Crystal Palace	1477
+16 Tottenham	1469
+17 Sunderland	1451
+18 West Ham	1418
+19 Burnley	1312
+20 Wolves	1256
+
+Running 25,000 simulations...
+Simulating:   0%|          | 0/25000 [00:00<?, ?sim/s]Simulating:   0%|          | 1/25000 [00:01<9:54:57,  1.43s/sim]Simulating:   2%|▏         | 430/25000 [00:01<01:02, 390.73sim/s]Simulating:   3%|▎         | 851/25000 [00:01<00:29, 829.77sim/s]Simulating:   5%|▌         | 1278/25000 [00:01<00:18, 1314.86sim/s]Simulating:   7%|▋         | 1708/25000 [00:01<00:12, 1814.89sim/s]Simulating:   9%|▊         | 2138/25000 [00:01<00:09, 2294.51sim/s]Simulating:  10%|█         | 2573/25000 [00:02<00:08, 2738.49sim/s]Simulating:  12%|█▏        | 3004/25000 [00:02<00:07, 3108.64sim/s]Simulating:  14%|█▍        | 3446/25000 [00:02<00:06, 3438.29sim/s]Simulating:  16%|█▌        | 3885/25000 [00:02<00:05, 3690.02sim/s]Simulating:  17%|█▋        | 4322/25000 [00:02<00:05, 3875.78sim/s]Simulating:  19%|█▉        | 4763/25000 [00:02<00:05, 4024.29sim/s]Simulating:  21%|██        | 5210/25000 [00:02<00:04, 4148.65sim/s]Simulating:  23%|██▎       | 5648/25000 [00:02<00:04, 4211.58sim/s]Simulating:  24%|██▍       | 6086/25000 [00:02<00:04, 4257.90sim/s]Simulating:  26%|██▌       | 6533/25000 [00:02<00:04, 4320.37sim/s]Simulating:  28%|██▊       | 6977/25000 [00:03<00:04, 4354.38sim/s]Simulating:  30%|██▉       | 7423/25000 [00:03<00:04, 4385.22sim/s]Simulating:  31%|███▏      | 7869/25000 [00:03<00:03, 4404.64sim/s]Simulating:  33%|███▎      | 8313/25000 [00:03<00:03, 4405.50sim/s]Simulating:  35%|███▌      | 8756/25000 [00:03<00:03, 4397.44sim/s]Simulating:  37%|███▋      | 9200/25000 [00:03<00:03, 4407.39sim/s]Simulating:  39%|███▊      | 9642/25000 [00:03<00:03, 4392.96sim/s]Simulating:  40%|████      | 10083/25000 [00:03<00:03, 4396.67sim/s]Simulating:  42%|████▏     | 10529/25000 [00:03<00:03, 4412.78sim/s]Simulating:  44%|████▍     | 10971/25000 [00:03<00:03, 4413.43sim/s]Simulating:  46%|████▌     | 11417/25000 [00:04<00:03, 4426.43sim/s]Simulating:  47%|████▋     | 11863/25000 [00:04<00:02, 4434.44sim/s]Simulating:  49%|████▉     | 12307/25000 [00:04<00:02, 4424.44sim/s]Simulating:  51%|█████     | 12751/25000 [00:04<00:02, 4426.69sim/s]Simulating:  53%|█████▎    | 13194/25000 [00:04<00:02, 4378.01sim/s]Simulating:  55%|█████▍    | 13632/25000 [00:04<00:02, 4318.65sim/s]Simulating:  56%|█████▋    | 14065/25000 [00:04<00:02, 4314.55sim/s]Simulating:  58%|█████▊    | 14497/25000 [00:04<00:02, 4302.61sim/s]Simulating:  60%|█████▉    | 14928/25000 [00:04<00:02, 4283.85sim/s]Simulating:  61%|██████▏   | 15357/25000 [00:04<00:02, 4265.92sim/s]Simulating:  63%|██████▎   | 15784/25000 [00:05<00:02, 4229.36sim/s]Simulating:  65%|██████▍   | 16209/25000 [00:05<00:02, 4234.52sim/s]Simulating:  67%|██████▋   | 16645/25000 [00:05<00:01, 4270.31sim/s]Simulating:  68%|██████▊   | 17077/25000 [00:05<00:01, 4283.94sim/s]Simulating:  70%|███████   | 17506/25000 [00:05<00:01, 3956.95sim/s]Simulating:  72%|███████▏  | 17940/25000 [00:05<00:01, 4063.96sim/s]Simulating:  73%|███████▎  | 18374/25000 [00:05<00:01, 4142.32sim/s]Simulating:  75%|███████▌  | 18800/25000 [00:05<00:01, 4174.96sim/s]Simulating:  77%|███████▋  | 19225/25000 [00:05<00:01, 4195.11sim/s]Simulating:  79%|███████▊  | 19655/25000 [00:05<00:01, 4225.14sim/s]Simulating:  80%|████████  | 20090/25000 [00:06<00:01, 4261.95sim/s]Simulating:  82%|████████▏ | 20529/25000 [00:06<00:01, 4299.19sim/s]Simulating:  84%|████████▍ | 20960/25000 [00:06<00:00, 4264.10sim/s]Simulating:  86%|████████▌ | 21391/25000 [00:06<00:00, 4277.11sim/s]Simulating:  87%|████████▋ | 21820/25000 [00:06<00:00, 4270.86sim/s]Simulating:  89%|████████▉ | 22254/25000 [00:06<00:00, 4289.85sim/s]Simulating:  91%|█████████ | 22697/25000 [00:06<00:00, 4329.86sim/s]Simulating:  93%|█████████▎| 23131/25000 [00:06<00:00, 4308.24sim/s]Simulating:  94%|█████████▍| 23562/25000 [00:06<00:00, 4272.47sim/s]Simulating:  96%|█████████▌| 23990/25000 [00:06<00:00, 4260.69sim/s]Simulating:  98%|█████████▊| 24417/25000 [00:07<00:00, 4249.94sim/s]Simulating:  99%|█████████▉| 24847/25000 [00:07<00:00, 4262.43sim/s]Simulating: 100%|██████████| 25000/25000 [00:07<00:00, 3459.24sim/s]
+Team           AvgPts  StdDev  Title%  CL%     EL%     Conf%   European% Releg%
+----------------------------------------------------------------------------------------------------------
+Arsenal        82.17   1.73    87.22   100.00  0.00    0.00    100.00    0.00
+Man City       78.22   1.99    12.78   100.00  0.00    0.00    100.00    0.00
+Man United     67.70   1.67    0.00    100.00  0.00    0.00    100.00    0.00
+Liverpool      62.68   1.34    0.00    97.36   2.57    0.07    100.00    0.00
+Aston Villa    60.50   1.05    0.00    97.35   2.58    0.07    100.00    0.00
+Bournemouth    57.78   1.41    0.00    32.58   36.97   25.90   95.46     0.00
+Brighton       55.64   1.26    0.00    11.01   15.66   53.16   79.84     0.00
+Brentford      53.93   1.10    0.00    1.01    2.75    13.00   16.76     0.00
+Chelsea        52.68   0.95    0.00    0.13    37.60   4.80    42.53     0.00
+Everton        51.66   0.86    0.00    0.08    0.07    2.18    2.33      0.00
+Fulham         50.69   0.86    0.00    0.00    0.00    0.37    0.37      0.00
+Sunderland     49.72   0.76    0.00    0.00    0.00    0.22    0.22      0.00
+Newcastle      48.70   0.94    0.00    0.00    0.00    0.00    0.00      0.00
+Crystal Palace 47.55   1.09    0.00    0.00    59.42   0.00    59.42     0.00
+Forest         46.27   1.15    0.00    0.00    0.00    0.00    0.00      0.00
+Leeds          44.79   1.12    0.00    0.00    0.00    0.00    0.00      0.00
+Tottenham      40.72   1.52    0.00    0.00    0.00    0.00    0.00      15.97
+West Ham       38.26   1.38    0.00    0.00    0.00    0.00    0.00      84.03
+Burnley        23.69   1.60    0.00    0.00    0.00    0.00    0.00      100.00
+Wolves         20.24   1.41    0.00    0.00    0.00    0.00    0.00      100.00
+FA Cup Win Probabilities:
+Chelsea: 37.90%
+Man City: 62.10%
+Probability of at least one Premier League team wins one UEFA competition: 93.33%
+Max points to win the league: 85
+Min points to win the league: 79
+Average points to win the league: 82.17
+
+========================================
+UEFA COMPETITION WIN PROBABILITIES
+========================================
+CL Win Probabilities:
+Arsenal: 56.95%
+Paris Saint-Germain: 43.05%
+EL Win Probabilities:
+Aston Villa: 62.98%
+Freiburg: 37.02%
+Conf Win Probabilities:
+Crystal Palace: 60.08%
+Rayo Vallecano: 39.92%
+Probability that at least one team is relegated with 40+ points: 19.932%
+Probability that at least 9 teams qualify for European competitions: 22.320%
+Average excitement score for the final day (out of 10): 0.78
+Probability that all remaining games are draws: 0.000%
+Probability that 6th place qualifies for Champions League: 39.308%
+
+============================================================
+MATCH PROBABILITIES (Home Win % | Draw % | Away Win %)
+============================================================
+Man City        vs Crystal Palace : 40.58 % | 30.19 % | 29.23 %
+Aston Villa     vs Liverpool      : 27.71 % | 45.41 % | 26.88 %
+Man United      vs Forest         : 34.56 % | 39.55 % | 25.89 %
+Brentford       vs Crystal Palace : 32.15 % | 40.44 % | 27.41 %
+Everton         vs Sunderland     : 32.58 % | 40.82 % | 26.60 %
+Leeds           vs Brighton       : 27.38 % | 41.97 % | 30.65 %
+Wolves          vs Fulham         : 26.99 % | 39.40 % | 33.61 %
+Newcastle       vs West Ham       : 32.40 % | 41.56 % | 26.04 %
+Arsenal         vs Burnley        : 44.03 % | 24.81 % | 31.16 %
+Bournemouth     vs Man City       : 28.21 % | 39.47 % | 32.32 %
+Chelsea         vs Tottenham      : 32.89 % | 39.91 % | 27.20 %
+Brighton        vs Man United     : 27.36 % | 43.91 % | 28.73 %
+Burnley         vs Wolves         : 29.75 % | 43.70 % | 26.55 %
+Crystal Palace  vs Arsenal        : 25.26 % | 39.13 % | 35.61 %
+Fulham          vs Newcastle      : 27.73 % | 45.25 % | 27.02 %
+Liverpool       vs Brentford      : 31.83 % | 40.95 % | 27.22 %
+Man City        vs Aston Villa    : 35.34 % | 38.63 % | 26.03 %
+Forest          vs Bournemouth    : 27.50 % | 41.21 % | 31.29 %
+Sunderland      vs Chelsea        : 27.71 % | 42.07 % | 30.22 %
+Tottenham       vs Everton        : 28.17 % | 42.30 % | 29.53 %
+West Ham        vs Leeds          : 27.93 % | 43.91 % | 28.16 %
+
+========================================
+EXTREME MATCH PROBABILITIES
+========================================
+Biggest Home Win Chance: Arsenal vs Burnley - 44.03%
+Most Likely Draw: Aston Villa vs Liverpool - 45.41%
+Biggest Away Win Chance: Crystal Palace vs Arsenal - 35.61%
+
+============================================================
+TEAM REMAINING FIXTURE PROBABILITIES
+============================================================
+Team           Win All %   Lose All %  Draw All %  Avg Win %
+-----------------------------------------------------------------
+1  Arsenal        15.6791     7.8710      9.7082      39.82%
+2  Man City       4.6350      2.1464      4.6031      36.08%
+3  Man United     9.9291      7.0835      17.3664     31.64%
+4  Chelsea        9.9394      7.5371      16.7901     31.55%
+5  Everton        9.6209      7.4932      17.2669     31.05%
+6  Fulham         9.3201      7.2927      17.8285     30.67%
+7  Burnley        9.2701      11.6900     10.8420     30.45%
+8  Bournemouth    8.8269      8.8880      16.2656     29.75%
+9  Newcastle      8.7545      7.2209      18.8059     29.71%
+10 Brentford      8.7512      8.7246      16.5602     29.68%
+11 Liverpool      8.5559      7.5427      18.5954     29.35%
+12 Brighton       8.3858      7.8663      18.4290     29.01%
+13 Leeds          7.7102      8.5605      18.4290     27.77%
+14 Tottenham      7.6622      9.7124      16.8819     27.69%
+15 Crystal Palace 2.0238      4.6458      4.7773      27.30%
+16 Sunderland     7.3709      9.8457      17.1730     27.16%
+17 West Ham       7.2730      9.1238      18.2490     26.99%
+18 Aston Villa    7.2129      9.4994      17.5419     26.87%
+19 Wolves         7.1658      9.9990      17.2178     26.77%
+20 Forest         7.1198      10.8138     16.2986     26.70%
+
+========================================
+MOST LIKELY TEAMS
+========================================
+Most likely to win all remaining games: Arsenal (15.6791%)
+Most likely to lose all remaining games: Burnley (11.6900%)
+Most likely to draw all remaining games: Newcastle (18.8059%)
+Easiest remaining fixtures (highest avg win %): Arsenal (39.82%)
+
+========================================
+RELEGATION OCCURRENCES OUT OF SIMULATIONS
+========================================
+Burnley: 25000 out of 25000
+Wolves: 25000 out of 25000
+West Ham: 21007 out of 25000
+Tottenham: 3993 out of 25000
+Arsenal: 0 out of 25000
+Man City: 0 out of 25000
+Man United: 0 out of 25000
+Liverpool: 0 out of 25000
+Aston Villa: 0 out of 25000
+Bournemouth: 0 out of 25000
+Brighton: 0 out of 25000
+Brentford: 0 out of 25000
+Chelsea: 0 out of 25000
+Everton: 0 out of 25000
+Fulham: 0 out of 25000
+Sunderland: 0 out of 25000
+Newcastle: 0 out of 25000
+Crystal Palace: 0 out of 25000
+Forest: 0 out of 25000
+Leeds: 0 out of 25000
