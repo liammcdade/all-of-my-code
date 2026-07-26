@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import tkinter as tk
 from tkinter import ttk
 import csv
@@ -7,8 +9,8 @@ import os
 from collections import defaultdict
 from tempfile import gettempdir
 
-CSV_PATH = r"C:\Users\liam\Documents\GitHub\all-of-my-code\sportsanalysis\premier-league\premier league data - player data.csv"
-CACHE_PATH = os.path.join(gettempdir(), "premier_league_ratings_cache.json")
+CSV_PATH = Path(__file__).parent / "premier league data - player data.csv"
+CACHE_PATH = Path(gettempdir()) / "premier_league_ratings_cache.json"
 
 STAT_GROUPS = {
     "General": ["Rk", "Player", "Nation", "Pos", "Squad", "Age", "Born"],
