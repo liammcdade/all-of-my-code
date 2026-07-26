@@ -1,479 +1,433 @@
-# NFL Playoff Simulation - Starting from Wild Card Round
-# Regular season complete, simulating playoffs only
+import random
+from collections import defaultdict
+from tqdm import tqdm
 
-import numpy as np
-import pandas as pd
-from collections import defaultdict, Counter
-import requests
+# =========================
+# CONFIG
+# =========================
+N_SIMS = 10000
+HOME_ADV = 65
+ELO_SCALE = 400
+K = 25
+PARITY_RESET_FACTOR = 0.33
+LEAGUE_AVERAGE_ELO = 1500
 
-# -----------------------------
-# 0. Configuration
-# -----------------------------
-n_sims = 10000
-HFA = 100  # home field advantage in ELO points
+# =========================
+# INITIAL ELO
+# =========================
+ELO = {
+    # AFC East
+    "Buffalo Bills": 1810,
+    "Miami Dolphins": 1620,
+    "New England Patriots": 1540,
+    "New York Jets": 1500,
 
-results = defaultdict(lambda: {
-    "total_wins": 0,
-    "playoffs": 0,
-    "conference_win": 0,
-    "superbowl": 0,
-})
+    # AFC North
+    "Baltimore Ravens": 1860,
+    "Cincinnati Bengals": 1780,
+    "Cleveland Browns": 1510,
+    "Pittsburgh Steelers": 1660,
 
-afc_champs = []
-nfc_champs = []
-super_bowl_matchups = []
-# 1. ELO ratings and Divisions for all 32 teams (Projected for Feb 2026)
-divisions = {
-    "AFC East": ["Bills", "Dolphins", "Patriots", "Jets"],
-    "AFC North": ["Ravens", "Bengals", "Browns", "Steelers"],
-    "AFC South": ["Texans", "Colts", "Jaguars", "Titans"],
-    "AFC West": ["Chiefs", "Chargers", "Broncos", "Raiders"],
-    "NFC East": ["Eagles", "Cowboys", "Giants", "Commanders"],
-    "NFC North": ["Lions", "Packers", "Bears", "Vikings"],
-    "NFC South": ["Falcons", "Bucs", "Saints", "Panthers"],
-    "NFC West": ["Seahawks", "Rams", "49ers", "Cardinals"]
+    # AFC South
+    "Houston Texans": 1710,
+    "Indianapolis Colts": 1580,
+    "Jacksonville Jaguars": 1600,
+    "Tennessee Titans": 1480,
+
+    # AFC West
+    "Denver Broncos": 1640,
+    "Kansas City Chiefs": 1920,
+    "Las Vegas Raiders": 1490,
+    "Los Angeles Chargers": 1730,
+
+    # NFC East
+    "Dallas Cowboys": 1710,
+    "New York Giants": 1450,
+    "Philadelphia Eagles": 1880,
+    "Washington Commanders": 1670,
+
+    # NFC North
+    "Chicago Bears": 1570,
+    "Detroit Lions": 1810,
+    "Green Bay Packers": 1760,
+    "Minnesota Vikings": 1700,
+
+    # NFC South
+    "Atlanta Falcons": 1630,
+    "Carolina Panthers": 1460,
+    "New Orleans Saints": 1500,
+    "Tampa Bay Buccaneers": 1680,
+
+    # NFC West
+    "Arizona Cardinals": 1560,
+    "Los Angeles Rams": 1740,
+    "San Francisco 49ers": 1830,
+    "Seattle Seahawks": 1610,
 }
 
-elo = {
-    # High tier (Contenders)
-    "Seahawks": 1731, "Rams": 1687, "Bills": 1613, "Texans": 1623, 
-    "Broncos": 1608, "Patriots": 1581, "Steelers": 1520, "Chiefs": 1650,
-    "Ravens": 1640, "Lions": 1630, "Packers": 1590, "Eagles": 1600,
-    "49ers": 1533, "Bears": 1532, "Bucs": 1540, "Falcons": 1520,
-    
-    # Mid tier
-    "Bengals": 1510, "Colts": 1500, "Chargers": 1515, "Cowboys": 1510,
-    "Dolphins": 1490, "Browns": 1480, "Vikings": 1485, "Jets": 1470,
-    
-    # Low tier
-    "Jaguars": 1450, "Titans": 1430, "Raiders": 1440, "Saints": 1420,
-    "Giants": 1410, "Commanders": 1435, "Cardinals": 1445, "Panthers": 1380
+# =========================
+# DIVISIONS & CONFERENCES
+# =========================
+DIVISIONS = {
+    "AFC East": ["Buffalo Bills", "Miami Dolphins", "New York Jets", "New England Patriots"],
+    "AFC North": ["Baltimore Ravens", "Pittsburgh Steelers", "Cincinnati Bengals", "Cleveland Browns"],
+    "AFC South": ["Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Tennessee Titans"],
+    "AFC West": ["Kansas City Chiefs", "Los Angeles Chargers", "Las Vegas Raiders", "Denver Broncos"],
+    "NFC East": ["Dallas Cowboys", "Philadelphia Eagles", "Washington Commanders", "New York Giants"],
+    "NFC North": ["Detroit Lions", "Green Bay Packers", "Minnesota Vikings", "Chicago Bears"],
+    "NFC South": ["Tampa Bay Buccaneers", "New Orleans Saints", "Atlanta Falcons", "Carolina Panthers"],
+    "NFC West": ["San Francisco 49ers", "Los Angeles Rams", "Seattle Seahawks", "Arizona Cardinals"]
 }
 
-# Mapping teams to conferences
-afc_teams = [team for div in divisions if div.startswith("AFC") for team in divisions[div]]
-nfc_teams = [team for div in divisions if div.startswith("NFC") for team in divisions[div]]
-all_teams = afc_teams + nfc_teams
+CONFERENCES = {
+    "AFC": ["Buffalo Bills", "Miami Dolphins", "New York Jets", "New England Patriots",
+            "Baltimore Ravens", "Pittsburgh Steelers", "Cincinnati Bengals", "Cleveland Browns",
+            "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Tennessee Titans",
+            "Kansas City Chiefs", "Los Angeles Chargers", "Las Vegas Raiders", "Denver Broncos"],
+    "NFC": ["Dallas Cowboys", "Philadelphia Eagles", "Washington Commanders", "New York Giants",
+            "Detroit Lions", "Green Bay Packers", "Minnesota Vikings", "Chicago Bears",
+            "Tampa Bay Buccaneers", "New Orleans Saints", "Atlanta Falcons", "Carolina Panthers",
+            "San Francisco 49ers", "Los Angeles Rams", "Seattle Seahawks", "Arizona Cardinals"]
+}
 
-
-# -----------------------------
-# 3. Functions
-# -----------------------------
-HFA = 100  # home field advantage in ELO points
-
-def win_prob(away_team, home_team, hfa=HFA):
-    """Calculate probability of away team winning"""
-    elo_away = elo[away_team]
-    elo_home = elo[home_team] + hfa
-    return 1 / (1 + 10 ** ((elo_home - elo_away) / 400))
-
-
-def generate_schedule(divisions):
-    """
-    Generate the official 2026 NFL schedule based on provided home opponents.
-    Each entry is (Home Team: [Away Opponents])
-    """
-    home_opponents = {
-        "Bills": ["Patriots", "Dolphins", "Jets", "Chiefs", "Chargers", "Ravens", "Bears", "Lions"],
-        "Dolphins": ["Bills", "Patriots", "Jets", "Chiefs", "Chargers", "Bengals", "Bears", "Lions"],
-        "Patriots": ["Bills", "Dolphins", "Jets", "Broncos", "Raiders", "Steelers", "Vikings", "Packers"],
-        "Jets": ["Patriots", "Dolphins", "Bills", "Broncos", "Raiders", "Browns", "Vikings", "Packers"],
-        "Ravens": ["Bengals", "Browns", "Steelers", "Jaguars", "Titans", "Chargers", "Saints", "Bucs"],
-        "Bengals": ["Ravens", "Browns", "Steelers", "Jaguars", "Titans", "Chiefs", "Saints", "Bucs"],
-        "Browns": ["Steelers", "Bengals", "Ravens", "Texans", "Colts", "Raiders", "Falcons", "Panthers"],
-        "Steelers": ["Ravens", "Bengals", "Browns", "Texans", "Colts", "Broncos", "Falcons", "Panthers"],
-        "Texans": ["Colts", "Jaguars", "Titans", "Ravens", "Bengals", "Bills", "Cowboys", "Giants"],
-        "Colts": ["Texans", "Jaguars", "Titans", "Ravens", "Bengals", "Dolphins", "Cowboys", "Giants"],
-        "Jaguars": ["Texans", "Colts", "Titans", "Browns", "Steelers", "Patriots", "Commanders", "Eagles"],
-        "Titans": ["Texans", "Colts", "Jaguars", "Browns", "Steelers", "Jets", "Commanders", "Eagles"],
-        "Broncos": ["Chiefs", "Chargers", "Raiders", "Bills", "Dolphins", "Jaguars", "Seahawks", "Rams"],
-        "Chiefs": ["Broncos", "Chargers", "Raiders", "Patriots", "Jets", "Colts", "49ers", "Cardinals"],
-        "Raiders": ["Chiefs", "Chargers", "Broncos", "Bills", "Dolphins", "Titans", "Rams", "Seahawks"],
-        "Chargers": ["Broncos", "Chiefs", "Raiders", "Bills", "Dolphins", "Ravens", "Rams", "Seahawks"],
-        "Cowboys": ["Giants", "Eagles", "Commanders", "Cardinals", "49ers", "Bucs", "Jaguars", "Titans", "Ravens"],
-        "Giants": ["Commanders", "Cowboys", "Eagles", "Cardinals", "49ers", "Saints", "Jaguars", "Titans", "Browns"],
-        "Eagles": ["Giants", "Cowboys", "Commanders", "Rams", "Seahawks", "Panthers", "Texans", "Colts", "Steelers"],
-        "Commanders": ["Cowboys", "Eagles", "Giants", "Rams", "Seahawks", "Falcons", "Texans", "Colts", "Bengals"],
-        "Bears": ["Lions", "Packers", "Vikings", "Saints", "Bucs", "Eagles", "Patriots", "Jets", "Jaguars"],
-        "Lions": ["Bears", "Packers", "Vikings", "Saints", "Bucs", "Giants", "Patriots", "Jets", "Titans"],
-        "Packers": ["Bears", "Lions", "Vikings", "Falcons", "Panthers", "Cowboys", "Bills", "Dolphins", "Texans"],
-        "Vikings": ["Bears", "Lions", "Packers", "Falcons", "Panthers", "Commanders", "Bills", "Dolphins", "Colts"],
-        "Falcons": ["Panthers", "Saints", "Bucs", "Bears", "Lions", "49ers", "Ravens", "Bengals", "Chiefs"],
-        "Panthers": ["Falcons", "Saints", "Bucs", "Bears", "Lions", "Seahawks", "Ravens", "Bengals", "Broncos"],
-        "Saints": ["Falcons", "Bucs", "Panthers", "Packers", "Vikings", "Cardinals", "Browns", "Steelers", "Raiders"],
-        "Bucs": ["Falcons", "Panthers", "Saints", "Packers", "Vikings", "Rams", "Browns", "Steelers", "Chargers"],
-        "Cardinals": ["49ers", "Rams", "Seahawks", "Eagles", "Commanders", "Lions", "Broncos", "Raiders", "Jets"],
-        "Rams": ["49ers", "Cardinals", "Seahawks", "Cowboys", "Giants", "Packers", "Chiefs", "Chargers", "Bills"],
-        "49ers": ["Cardinals", "Rams", "Seahawks", "Eagles", "Commanders", "Vikings", "Broncos", "Raiders", "Dolphins"],
-        "Seahawks": ["Rams", "Cardinals", "49ers", "Cowboys", "Giants", "Bears", "Chiefs", "Chargers", "Patriots"],
-    }
-    
-    schedule = []
-    for home_team, aways in home_opponents.items():
-        for away_team in aways:
-            schedule.append((away_team, home_team))
-            
-    return schedule
-
-def calculate_standings(games_results, divisions):
-    """
-    Calculate detailed stats for all teams for tiebreakers.
-    standings[team] = {
-        "W": wins, "L": losses, "T": ties,
-        "div_W": divisional wins, "div_L": divisional losses,
-        "conf_W": conference wins, "conf_L": conference losses,
-        "h2h": {opponent: wins},
-        "wins_against": [list of teams beaten],
-        "opponents": [list of all opponents]
-    }
-    """
-    standings = {team: {
-        "W": 0, "L": 0, "T": 0,
-        "div_W": 0, "div_L": 0,
-        "conf_W": 0, "conf_L": 0,
-        "h2h": defaultdict(int),
-        "wins_against": [],
-        "opponents": []
-    } for team in all_teams}
-
-    # Map teams to their division and conference once
-    team_to_div = {}
-    team_to_conf = {}
-    for div, teams in divisions.items():
-        conf = "AFC" if div.startswith("AFC") else "NFC"
-        for t in teams:
-            team_to_div[t] = div
-            team_to_conf[t] = conf
-
-    for winner, loser in games_results:
-        # Standard Record
-        standings[winner]["W"] += 1
-        standings[winner]["wins_against"].append(loser)
-        standings[loser]["L"] += 1
-        
-        # Track opponents for SOS
-        standings[winner]["opponents"].append(loser)
-        standings[loser]["opponents"].append(winner)
-        
-        # Head-to-Head
-        standings[winner]["h2h"][loser] += 1
-        
-        # Divisional Record
-        if team_to_div[winner] == team_to_div[loser]:
-            standings[winner]["div_W"] += 1
-            standings[loser]["div_L"] += 1
-            
-        # Conference Record
-        if team_to_conf[winner] == team_to_conf[loser]:
-            standings[winner]["conf_W"] += 1
-            standings[loser]["conf_L"] += 1
-            
-    return standings
-
-def get_sov(team, standings):
-    """Strength of Victory: Average win % of teams beaten"""
-    winners = standings[team]["wins_against"]
-    if not winners: return 0
-    total_w = sum(standings[t]["W"] for t in winners)
-    total_g = sum(standings[t]["W"] + standings[t]["L"] for t in winners)
-    return total_w / total_g if total_g > 0 else 0
-
-def get_sos(team, standings):
-    """Strength of Schedule: Average win % of all opponents"""
-    opps = standings[team]["opponents"]
-    if not opps: return 0
-    total_w = sum(standings[t]["W"] for t in opps)
-    total_g = sum(standings[t]["W"] + standings[t]["L"] for t in opps)
-    return total_w / total_g if total_g > 0 else 0
-
-def get_common_games_pct(teams, standings):
-    """Calculate win % in games against common opponents for a group of teams"""
-    if len(teams) < 2: return {t: 1.0 for t in teams}
-    
-    # Find common opponents
-    common_opps = set(standings[teams[0]]["opponents"])
-    for t in teams[1:]:
-        common_opps &= set(standings[t]["opponents"])
-    
-    results = {}
-    for t in teams:
-        w = 0
-        g = 0
-        # This is a bit complex since we don't store individual game results in standings
-        # But we can reconstruct it from wins_against and h2h
-        # Actually, let's simplify: if we don't have the full game log, we'll skip for now
-        # OR we can pass the game log. Let's stick to Conference/Div record for now as they are higher priority.
-        results[t] = 0.5
-    return results
-
-def resolve_tie(tied_teams, standings, is_division=True):
-    """
-    Generic iterative tiebreaker. 
-    Following NFL rule: if one drops out, restart.
-    """
-    if len(tied_teams) <= 1:
-        return tied_teams
-
-    # Current criteria to apply sequentially
-    def h2h_pct(team, group):
-        wins = 0
-        games = 0
-        for opp in group:
-            if opp == team: continue
-            w = standings[team]["h2h"].get(opp, 0)
-            l = standings[opp]["h2h"].get(team, 0)
-            wins += w
-            games += (w + l)
-        return wins / games if games > 0 else 0.5
-
-    criteria = [
-        lambda t, g: h2h_pct(t, g),
-        lambda t, g: standings[t]["div_W"] if is_division else 0, # Div record only for div ties
-        lambda t, g: standings[t]["conf_W"],
-        lambda t, g: get_sov(t, standings),
-        lambda t, g: get_sos(t, standings)
+# ==============================================================================
+# REAL CHRONOLOGICAL SCHEDULE (Cleaned and Mapped explicitly to Home vs Away)
+# ==============================================================================
+WEEKLY_SCHEDULE = {
+    1: [
+        ("Houston Texans", "Buffalo Bills"), ("Las Vegas Raiders", "Miami Dolphins"),
+        ("Seattle Seahawks", "New England Patriots"), ("Tennessee Titans", "New York Jets"),
+        ("Indianapolis Colts", "Baltimore Ravens"), ("Cincinnati Bengals", "Tampa Bay Buccaneers"),
+        ("Jacksonville Jaguars", "Cleveland Browns"), ("Pittsburgh Steelers", "Atlanta Falcons"),
+        ("Kansas City Chiefs", "Denver Broncos"), ("Los Angeles Chargers", "Arizona Cardinals"),
+        ("New York Giants", "Dallas Cowboys"), ("Philadelphia Eagles", "Washington Commanders"),
+        ("Carolina Panthers", "Chicago Bears"), ("Detroit Lions", "New Orleans Saints"),
+        ("Minnesota Vikings", "Green Bay Packers"), ("Los Angeles Rams", "San Francisco 49ers") # Melbourne
+    ],
+    2: [
+        ("Buffalo Bills", "Detroit Lions"), ("San Francisco 49ers", "Miami Dolphins"),
+        ("New England Patriots", "Pittsburgh Steelers"), ("New York Jets", "Green Bay Packers"),
+        ("New Orleans Saints", "Baltimore Ravens"), ("Houston Texans", "Cincinnati Bengals"),
+        ("Tampa Bay Buccaneers", "Cleveland Browns"), ("Denver Broncos", "Jacksonville Jaguars"),
+        ("Los Angeles Chargers", "Las Vegas Raiders"), ("Washington Commanders", "Dallas Cowboys"),
+        ("Chicago Bears", "Minnesota Vikings"), ("Atlanta Falcons", "Carolina Panthers"),
+        ("Seattle Seahawks", "Arizona Cardinals"), ("New York Giants", "Los Angeles Rams")
+    ],
+    3: [
+        ("Buffalo Bills", "Los Angeles Chargers"), ("Miami Dolphins", "Kansas City Chiefs"),
+        ("Jacksonville Jaguars", "New England Patriots"), ("Detroit Lions", "New York Jets"),
+        ("Dallas Cowboys", "Baltimore Ravens"), # Rio de Janeiro
+        ("Pittsburgh Steelers", "Cincinnati Bengals"),
+        ("Cleveland Browns", "Carolina Panthers"), ("Indianapolis Colts", "Houston Texans"),
+        ("New Orleans Saints", "Las Vegas Raiders"), ("Chicago Bears", "Philadelphia Eagles"),
+        ("Washington Commanders", "Seattle Seahawks"), ("Green Bay Packers", "Atlanta Falcons"),
+        ("Tampa Bay Buccaneers", "Minnesota Vikings"), ("San Francisco 49ers", "Arizona Cardinals"),
+        ("Denver Broncos", "Los Angeles Rams")
+    ],
+    4: [
+        ("Buffalo Bills", "New England Patriots"), ("Minnesota Vikings", "Miami Dolphins"),
+        ("Chicago Bears", "New York Jets"), ("Baltimore Ravens", "Tennessee Titans"),
+        ("Cincinnati Bengals", "Jacksonville Jaguars"), ("Cleveland Browns", "Pittsburgh Steelers"),
+        ("Dallas Cowboys", "Houston Texans"), ("Washington Commanders", "Indianapolis Colts"), # London
+        ("Las Vegas Raiders", "Kansas City Chiefs"), ("Seattle Seahawks", "Los Angeles Chargers"),
+        ("Philadelphia Eagles", "Los Angeles Rams"), ("New York Giants", "Arizona Cardinals"),
+        ("Carolina Panthers", "Detroit Lions"), ("Tampa Bay Buccaneers", "Green Bay Packers"),
+        ("New Orleans Saints", "Atlanta Falcons"), ("San Francisco 49ers", "Denver Broncos")
+    ],
+    5: [
+        ("Los Angeles Rams", "Buffalo Bills"), ("Miami Dolphins", "Cincinnati Bengals"),
+        ("New England Patriots", "Las Vegas Raiders"), ("New York Jets", "Cleveland Browns"),
+        ("Atlanta Falcons", "Baltimore Ravens"), ("Tennessee Titans", "Houston Texans"),
+        ("Pittsburgh Steelers", "Indianapolis Colts"), ("Los Angeles Chargers", "Denver Broncos"),
+        ("Dallas Cowboys", "Tampa Bay Buccaneers"), ("Washington Commanders", "New York Giants"),
+        ("Philadelphia Eagles", "Jacksonville Jaguars"), # London
+        ("Green Bay Packers", "Chicago Bears"),
+        ("Arizona Cardinals", "Detroit Lions"), ("New Orleans Saints", "Minnesota Vikings"),
+        ("Seattle Seahawks", "San Francisco 49ers")
+    ],
+    6: [
+        ("Las Vegas Raiders", "Buffalo Bills"), ("Cleveland Browns", "Baltimore Ravens"),
+        ("New England Patriots", "New York Jets"), ("Jacksonville Jaguars", "Houston Texans"), # London
+        ("Indianapolis Colts", "Tennessee Titans"), ("Tampa Bay Buccaneers", "Pittsburgh Steelers"),
+        ("Kansas City Chiefs", "Los Angeles Chargers"), ("Green Bay Packers", "Dallas Cowboys"),
+        ("New York Giants", "New Orleans Saints"), ("San Francisco 49ers", "Washington Commanders"),
+        ("Atlanta Falcons", "Chicago Bears"), ("Arizona Cardinals", "Los Angeles Rams"),
+        ("Denver Broncos", "Seattle Seahawks")
+    ],
+    7: [
+        ("New York Jets", "Miami Dolphins"), ("New England Patriots", "Chicago Bears"),
+        ("Baltimore Ravens", "Cincinnati Bengals"), ("Tennessee Titans", "Cleveland Browns"),
+        ("New Orleans Saints", "Pittsburgh Steelers"), # Paris
+        ("Houston Texans", "New York Giants"),
+        ("Minnesota Vikings", "Indianapolis Colts"), ("Arizona Cardinals", "Denver Broncos"),
+        ("Seattle Seahawks", "Kansas City Chiefs"), ("Las Vegas Raiders", "Los Angeles Rams"),
+        ("Philadelphia Eagles", "Dallas Cowboys"), ("Detroit Lions", "Green Bay Packers"),
+        ("Atlanta Falcons", "San Francisco 49ers"), ("Carolina Panthers", "Tampa Bay Buccaneers")
+    ],
+    8: [
+        ("Buffalo Bills", "Baltimore Ravens"), ("Miami Dolphins", "New England Patriots"),
+        ("New York Jets", "Las Vegas Raiders"), ("Pittsburgh Steelers", "Cleveland Browns"),
+        ("Jacksonville Jaguars", "Indianapolis Colts"), ("Cincinnati Bengals", "Tennessee Titans"),
+        ("Denver Broncos", "Kansas City Chiefs"), ("Los Angeles Rams", "Los Angeles Chargers"),
+        ("Dallas Cowboys", "Arizona Cardinals"), ("Washington Commanders", "Philadelphia Eagles"),
+        ("Seattle Seahawks", "Chicago Bears"), ("Detroit Lions", "Minnesota Vikings"),
+        ("Tampa Bay Buccaneers", "Atlanta Falcons"), ("Green Bay Packers", "Carolina Panthers")
+    ],
+    9: [
+        ("Minnesota Vikings", "Buffalo Bills"), ("Miami Dolphins", "Detroit Lions"),
+        ("New England Patriots", "Green Bay Packers"), ("Kansas City Chiefs", "New York Jets"),
+        ("Baltimore Ravens", "Jacksonville Jaguars"), ("Atlanta Falcons", "Cincinnati Bengals"), # Madrid
+        ("New Orleans Saints", "Cleveland Browns"), ("Los Angeles Chargers", "Houston Texans"),
+        ("Indianapolis Colts", "Dallas Cowboys"), ("Philadelphia Eagles", "New York Giants"),
+        ("Washington Commanders", "Los Angeles Rams"), ("Chicago Bears", "Tampa Bay Buccaneers"),
+        ("Denver Broncos", "Carolina Panthers"), ("San Francisco 49ers", "Las Vegas Raiders"),
+        ("Arizona Cardinals", "Seattle Seahawks")
+    ],
+    10: [
+        ("New York Jets", "Buffalo Bills"), ("Indianapolis Colts", "Miami Dolphins"),
+        ("New England Patriots", "Detroit Lions"), # Munich
+        ("Baltimore Ravens", "Los Angeles Chargers"),
+        ("Cincinnati Bengals", "Pittsburgh Steelers"), ("Cleveland Browns", "Houston Texans"),
+        ("Tennessee Titans", "Jacksonville Jaguars"), ("Atlanta Falcons", "Kansas City Chiefs"),
+        ("Las Vegas Raiders", "Seattle Seahawks"), ("Dallas Cowboys", "San Francisco 49ers"),
+        ("New York Giants", "Washington Commanders"), ("Green Bay Packers", "Minnesota Vikings"),
+        ("New Orleans Saints", "Carolina Panthers"), ("Arizona Cardinals", "Los Angeles Rams")
+    ],
+    11: [
+        ("Buffalo Bills", "Miami Dolphins"), ("Los Angeles Chargers", "New York Jets"),
+        ("Carolina Panthers", "Baltimore Ravens"), ("Washington Commanders", "Cincinnati Bengals"),
+        ("Dallas Cowboys", "Tennessee Titans"), ("Houston Texans", "Indianapolis Colts"),
+        ("New York Giants", "Jacksonville Jaguars"), ("Denver Broncos", "Las Vegas Raiders"),
+        ("Arizona Cardinals", "Kansas City Chiefs"), ("Philadelphia Eagles", "Pittsburgh Steelers"),
+        ("Chicago Bears", "New Orleans Saints"), ("Detroit Lions", "Tampa Bay Buccaneers"),
+        ("Minnesota Vikings", "San Francisco 49ers"), # Mexico City
+        ("Los Angeles Rams", "Arizona Cardinals")
+    ],
+    12: [
+        ("Buffalo Bills", "Kansas City Chiefs"), ("Miami Dolphins", "New York Jets"),
+        ("Los Angeles Chargers", "New New England Patriots"), ("Houston Texans", "Baltimore Ravens"),
+        ("Cincinnati Bengals", "New Orleans Saints"), ("Cleveland Browns", "Las Vegas Raiders"),
+        ("Jacksonville Jaguars", "Tennessee Titans"), ("Indianapolis Colts", "New York Giants"),
+        ("Pittsburgh Steelers", "Denver Broncos"), ("Dallas Cowboys", "Philadelphia Eagles"),
+        ("Arizona Cardinals", "Washington Commanders"), ("Detroit Lions", "Chicago Bears"),
+        ("Los Angeles Rams", "Green Bay Packers"), ("Minnesota Vikings", "Atlanta Falcons"),
+        ("Tampa Bay Buccaneers", "Carolina Panthers"), ("San Francisco 49ers", "Seattle Seahawks")
+    ],
+    13: [
+        ("New England Patriots", "Buffalo Bills"), ("Denver Broncos", "Miami Dolphins"),
+        ("Cleveland Browns", "Cincinnati Bengals"), ("Pittsburgh Steelers", "Houston Texans"),
+        ("Tennessee Titans", "Washington Commanders"), ("Los Angeles Rams", "Kansas City Chiefs"),
+        ("Seattle Seahawks", "Dallas Cowboys"), ("New York Giants", "San Francisco 49ers"),
+        ("Arizona Cardinals", "Philadelphia Eagles"), ("New Orleans Saints", "Green Bay Packers"),
+        ("Atlanta Falcons", "Detroit Lions"), ("Minnesota Vikings", "Carolina Panthers"),
+        ("Tampa Bay Buccaneers", "Los Angeles Chargers")
+    ],
+    14: [
+        ("Green Bay Packers", "Buffalo Bills"), ("Chicago Bears", "Miami Dolphins"),
+        ("New England Patriots", "Minnesota Vikings"), ("New York Jets", "Denver Broncos"),
+        ("Baltimore Ravens", "Tampa Bay Buccaneers"), ("Cincinnati Bengals", "Kansas City Chiefs"),
+        ("Cleveland Browns", "Atlanta Falcons"), ("Jacksonville Jaguars", "Pittsburgh Steelers"),
+        ("Houston Texans", "Washington Commanders"), ("Philadelphia Eagles", "Indianapolis Colts"),
+        ("Las Vegas Raiders", "Los Angeles Chargers"), ("Seattle Seahawks", "New York Giants"),
+        ("Carolina Panthers", "New Orleans Saints"), ("San Francisco 49ers", "Los Angeles Rams")
+    ],
+    15: [
+        ("Buffalo Bills", "Chicago Bears"), ("Green Bay Packers", "Miami Dolphins"),
+        ("Kansas City Chiefs", "New New England Patriots"), ("Arizona Cardinals", "New York Jets"),
+        ("Pittsburgh Steelers", "Baltimore Ravens"), ("Carolina Panthers", "Cincinnati Bengals"),
+        ("New York Giants", "Cleveland Browns"), ("Houston Texans", "Jacksonville Jaguars"),
+        ("Tennessee Titans", "Indianapolis Colts"), ("Las Vegas Raiders", "Denver Broncos"),
+        ("Los Angeles Chargers", "San Francisco 49ers"), ("Los Angeles Rams", "Dallas Cowboys"),
+        ("Philadelphia Eagles", "Seattle Seahawks"), ("Minnesota Vikings", "Detroit Lions"),
+        ("Washington Commanders", "Atlanta Falcons"), ("Tampa Bay Buccaneers", "New Orleans Saints")
+    ],
+    16: [
+        ("Denver Broncos", "Buffalo Bills"), ("Miami Dolphins", "Los Angeles Chargers"),
+        ("New York Jets", "New England Patriots"), ("Baltimore Ravens", "Cleveland Browns"),
+        ("Indianapolis Colts", "Cincinnati Bengals"), ("Pittsburgh Steelers", "Carolina Panthers"),
+        ("Dallas Cowboys", "Jacksonville Jaguars"), ("Las Vegas Raiders", "Tennessee Titans"),
+        ("Kansas City Chiefs", "San Francisco 49ers"), ("Detroit Lions", "New York Giants"),
+        ("Philadelphia Eagles", "Houston Texans"), ("Washington Commanders", "Minnesota Vikings"),
+        ("Chicago Bears", "Green Bay Packers"), ("Tampa Bay Buccaneers", "Atlanta Falcons"),
+        ("New Orleans Saints", "Arizona Cardinals"), ("Seattle Seahawks", "Los Angeles Rams")
+    ],
+    17: [
+        ("Miami Dolphins", "Buffalo Bills"), ("New England Patriots", "Denver Broncos"),
+        ("New York Jets", "Minnesota Vikings"), ("Cincinnati Bengals", "Baltimore Ravens"),
+        ("Cleveland Browns", "Indianapolis Colts"), ("Tennessee Titans", "Pittsburgh Steelers"),
+        ("Los Angeles Chargers", "Kansas City Chiefs"), ("Dallas Cowboys", "New York Giants"),
+        ("San Francisco 49ers", "Philadelphia Eagles"), ("Jacksonville Jaguars", "Washington Commanders"),
+        ("Chicago Bears", "Detroit Lions"), ("Green Bay Packers", "Houston Texans"),
+        ("Atlanta Falcons", "New Orleans Saints"), ("Carolina Panthers", "Seattle Seahawks"),
+        ("Tampa Bay Buccaneers", "Los Angeles Rams"), ("Arizona Cardinals", "Las Vegas Raiders")
+    ],
+    18: [
+        ("Buffalo Bills", "New York Jets"), ("New England Patriots", "Miami Dolphins"),
+        ("Baltimore Ravens", "Pittsburgh Steelers"), ("Cincinnati Bengals", "Cleveland Browns"),
+        ("Houston Texans", "Tennessee Titans"), ("Indianapolis Colts", "Jacksonville Jaguars"),
+        ("Kansas City Chiefs", "Las Vegas Raiders"), ("Denver Broncos", "Los Angeles Chargers"),
+        ("Washington Commanders", "Dallas Cowboys"), ("New York Giants", "Philadelphia Eagles"),
+        ("Minnesota Vikings", "Chicago Bears"), ("Green Bay Packers", "Detroit Lions"),
+        ("Carolina Panthers", "Atlanta Falcons"), ("New Orleans Saints", "Tampa Bay Buccaneers"),
+        ("San Francisco 49ers", "Arizona Cardinals"), ("Los Angeles Rams", "Seattle Seahawks")
     ]
+}
 
-    for criterion in criteria:
-        # Get values for this criterion
-        values = {t: criterion(t, tied_teams) for t in tied_teams}
-        max_val = max(values.values())
-        min_val = min(values.values())
-        
-        if max_val == min_val:
-            continue # All tied on this one, move to next
-            
-        # Someone is better. Keep the top performers.
-        winners = [t for t, v in values.items() if v == max_val]
-        
-        if len(winners) < len(tied_teams):
-            # We made progress! Restart from step 1 with the smaller group
-            return resolve_tie(winners, standings, is_division)
-            
-    # If still tied after all criteria, use ELO or random
-    return sorted(tied_teams, key=lambda t: elo[t] + np.random.random(), reverse=True)
+# ==============================================================================
+# IDENTIFY NEUTRAL SITE / INTERNATIONAL MATCHUPS
+# ==============================================================================
+# Keyed by (Week, Home_Listed, Away_Listed) based on the text documentation notes
+NEUTRAL_GAMES = {
+    (1, "Los Angeles Rams", "San Francisco 49ers"),   # Melbourne, Australia
+    (3, "Dallas Cowboys", "Baltimore Ravens"),         # Rio de Janeiro, Brazil
+    (4, "Washington Commanders", "Indianapolis Colts"),# London, UK
+    (5, "Philadelphia Eagles", "Jacksonville Jaguars"),# London, UK
+    (6, "Jacksonville Jaguars", "Houston Texans"),     # London, UK
+    (7, "New Orleans Saints", "Pittsburgh Steelers"),   # Paris, France
+    (9, "Atlanta Falcons", "Cincinnati Bengals"),      # Madrid, Spain
+    (10, "New New England Patriots", "Detroit Lions"),  # Munich, Germany (Handled clean)
+    (10, "New England Patriots", "Detroit Lions"),      # Munich, Germany
+    (11, "Minnesota Vikings", "San Francisco 49ers")    # Mexico City, Mexico
+}
 
-def get_playoff_seeds(standings, divisions):
-    """Determine top 7 teams per conference using official tiebreakers"""
-    def get_conf_seeds(conf_name):
-        conf_divs = [d for d in divisions if d.startswith(conf_name)]
+CLEANED_SCHEDULE = {}
+VALID_TEAMS = set(ELO.keys())
+
+for wk, games in WEEKLY_SCHEDULE.items():
+    cleaned_games = []
+    for h, a in games:
+        h_clean = next((t for t in VALID_TEAMS if t in h), h)
+        a_clean = next((t for t in VALID_TEAMS if t in a), a)
+        if h_clean in VALID_TEAMS and a_clean in VALID_TEAMS:
+            cleaned_games.append((h_clean, a_clean))
+    CLEANED_SCHEDULE[wk] = cleaned_games
+
+# ==============================================================================
+# ENGINE CORE
+# ==============================================================================
+def win_prob(ra, rb, is_neutral=False):
+    # If is_neutral is true, diff excludes HOME_ADV completely
+    diff = (ra + (0 if is_neutral else HOME_ADV)) - rb
+    return 1 / (1 + 10 ** (-diff / ELO_SCALE))
+
+def simulate_game(home, away, elo_dict, is_neutral=False):
+    pa = win_prob(elo_dict[home], elo_dict[away], is_neutral)
+    winner = home if random.random() < pa else away
+    loser = away if winner == home else home
+    return winner, loser
+
+def update_elo(home, away, winner, loser, elo_dict, is_neutral=False):
+    if is_neutral:
+        expected_winner = 1 / (1 + 10 ** ((elo_dict[loser] - elo_dict[winner]) / ELO_SCALE))
+    else:
+        if winner == home:
+            expected_winner = win_prob(elo_dict[home], elo_dict[away], is_neutral=False)
+        else:
+            expected_winner = 1 - win_prob(elo_dict[home], elo_dict[away], is_neutral=False)
+
+    elo_dict[winner] += K * (1 - expected_winner)
+    elo_dict[loser] += K * (0 - (1 - expected_winner))
+
+def apply_parity_reset(elo_dict):
+    return {
+        team: (elo * (1 - PARITY_RESET_FACTOR)) + (LEAGUE_AVERAGE_ELO * PARITY_RESET_FACTOR)
+        for team, elo in elo_dict.items()
+    }
+
+def display_pre_season_elo(elo_dict):
+    print("\n" + "="*50)
+    print("PRE-SEASON ELO RATINGS (After Parity Reset)")
+    print("="*50)
+    sorted_elo = sorted(elo_dict.items(), key=lambda x: x[1], reverse=True)
+    for team, rating in sorted_elo:
+        print(f"{team:<25} | {rating:.0f}")
+
+def simulate_season(elo_dict):
+    wins = defaultdict(int)
+    elo = elo_dict
+    
+    for week in range(1, 19):
+        for home, away in CLEANED_SCHEDULE[week]:
+            is_intl = (week, home, away) in NEUTRAL_GAMES
+            
+            winner, loser = simulate_game(home, away, elo, is_neutral=is_intl)
+            wins[winner] += 1
+            update_elo(home, away, winner, loser, elo, is_neutral=is_intl)
+    return wins, elo
+
+# ==============================================================================
+# SEEDING PROPELLOR ENGINE
+# ==============================================================================
+def process_playoff_seeding(wins):
+    seeds = {"AFC": [], "NFC": []}
+    for conf, conf_teams in CONFERENCES.items():
         div_winners = []
-        for d in conf_divs:
-            d_teams = divisions[d]
-            # 1. Resolve tie within division
-            # Sort all teams in division by wins first
-            top_wins = max(standings[t]["W"] for t in d_teams)
-            tied_for_first = [t for t in d_teams if standings[t]["W"] == top_wins]
-            
-            if len(tied_for_first) > 1:
-                winner = resolve_tie(tied_for_first, standings, is_division=True)[0]
-            else:
-                winner = tied_for_first[0]
-            div_winners.append(winner)
+        for div_name, div_teams in DIVISIONS.items():
+            if div_name.startswith(conf):
+                winner = max(div_teams, key=lambda t: (wins[t], random.random()))
+                div_winners.append(winner)
+                
+        div_winners_sorted = sorted(div_winners, key=lambda t: (wins[t], random.random()), reverse=True)
+        wildcards = [t for t in conf_teams if t not in div_winners]
+        wildcards_sorted = sorted(wildcards, key=lambda t: (wins[t], random.random()), reverse=True)[:3]
+        seeds[conf] = div_winners_sorted + wildcards_sorted
         
-        # 2. Seed Division Winners (1-4)
-        # Ties among division winners use conference tiebreakers
-        div_winners_seeds = []
-        remaining_winners = div_winners.copy()
-        while remaining_winners:
-            top_wins = max(standings[t]["W"] for t in remaining_winners)
-            tied = [t for t in remaining_winners if standings[t]["W"] == top_wins]
-            if len(tied) > 1:
-                best = resolve_tie(tied, standings, is_division=False)[0]
-            else:
-                best = tied[0]
-            div_winners_seeds.append(best)
-            remaining_winners.remove(best)
-            
-        # 3. Wildcards (5-7)
-        all_conf_teams = afc_teams if conf_name == "AFC" else nfc_teams
-        remaining = [t for t in all_conf_teams if t not in div_winners]
+    return seeds["AFC"], seeds["NFC"]
+
+# ==============================================================================
+# RE-SEEDING BRACKET SIMULATION
+# ==============================================================================
+def run_conference_playoffs(seeds, elo_dict):
+    # Wild Card Round (Seed 1 Bye)
+    wc_winners = [seeds[0]] 
+    for h_idx, a_idx in [(1, 6), (2, 5), (3, 4)]:
+        winner, _ = simulate_game(seeds[h_idx], seeds[a_idx], elo_dict, is_neutral=False)
+        wc_winners.append(winner)
         
-        wildcards = []
-        while len(wildcards) < 3 and remaining:
-            top_wins = max(standings[t]["W"] for t in remaining)
-            tied = [t for t in remaining if standings[t]["W"] == top_wins]
-            if len(tied) > 1:
-                best = resolve_tie(tied, standings, is_division=False)[0]
-            else:
-                best = tied[0]
-            wildcards.append(best)
-            remaining.remove(best)
-            
-        return div_winners_seeds + wildcards
-
-    return get_conf_seeds("AFC"), get_conf_seeds("NFC")
-
-def simulate_game(team1, team2, home=None):
-    """Simulate a game between two teams. If home is specified, that team has home field."""
-    if home is None:  # neutral site (Super Bowl)
-        prob = 1 / (1 + 10 ** ((elo[team2] - elo[team1]) / 400))
-        return team1 if np.random.random() < prob else team2
-
-    elif home == team1:
-        prob = win_prob(team2, team1)  # prob of team2 (away) winning
-        return team2 if np.random.random() < prob else team1
-    else:  # home == team2
-        prob = win_prob(team1, team2)  # prob of team1 (away) winning
-        return team1 if np.random.random() < prob else team2
-
-def simulate_conference_playoffs(seeded_teams):
-    """
-    Simulate complete conference playoffs from Wild Card to Championship.
-    
-    Args:
-        seeded_teams: List of teams in seed order [1, 2, 3, 4, 5, 6, 7]
-    
-    Returns:
-        Conference champion
-    """
-    # Seed #1 gets bye
-    seed1 = seeded_teams[0]
-    
-    # Wild Card Round
-    # #2 vs #7, #3 vs #6, #4 vs #5
-    wc_matches = [(seeded_teams[6], seeded_teams[1]), (seeded_teams[5], seeded_teams[2]), (seeded_teams[4], seeded_teams[3])]
-    wc_winners = []
-    for away, home in wc_matches:
-        wc_winners.append(simulate_game(away, home, home=home))
-    
-    # Divisional Round
-    # #1 plays lowest remaining seed
-    # Other two winners play each other
-    remaining = [seed1] + wc_winners
-    seed_map = {team: i+1 for i, team in enumerate(seeded_teams)}
-    remaining_sorted = sorted(remaining, key=lambda t: seed_map[t])
-    
-    # #1 vs lowest seed (highest number)
-    lowest_seed = remaining_sorted[-1]
-    div1_winner = simulate_game(lowest_seed, seed1, home=seed1)
-    
-    # Other two
-    other_two = remaining_sorted[1:3]
-    higher_seed = other_two[0]
-    lower_seed = other_two[1]
-    div2_winner = simulate_game(lower_seed, higher_seed, home=higher_seed)
+    # Divisional Round (Re-seeded)
+    remaining_sorted_by_seed = sorted(wc_winners, key=lambda t: seeds.index(t))
+    div_w1, _ = simulate_game(remaining_sorted_by_seed[0], remaining_sorted_by_seed[3], elo_dict, is_neutral=False)
+    div_w2, _ = simulate_game(remaining_sorted_by_seed[1], remaining_sorted_by_seed[2], elo_dict, is_neutral=False)
     
     # Conference Championship
-    # Higher seed home
-    finalists = sorted([div1_winner, div2_winner], key=lambda t: seed_map[t])
-    conf_champ = simulate_game(finalists[1], finalists[0], home=finalists[0])
+    cc_teams = sorted([div_w1, div_w2], key=lambda t: seeds.index(t))
+    conference_champion, _ = simulate_game(cc_teams[0], cc_teams[1], elo_dict, is_neutral=False)
     
-    return conf_champ
+    return conference_champion
 
-# -----------------------------
-# 4. Monte Carlo Simulation
-# -----------------------------
-# Pre-generate schedule
-full_schedule = generate_schedule(divisions)
-
-for sim in range(n_sims):
-    # Progress Bar
-    if (sim + 1) % (n_sims // 50) == 0:
-        pct = (sim + 1) / n_sims * 100
-        bar = "#" * int(pct // 2) + "-" * (50 - int(pct // 2))
-        print(f"\rSimulating: |{bar}| {pct:.1f}%", end="")
-
-    # 1. Regular Season
-    season_results = []
-    for away, home in full_schedule:
-        winner = simulate_game(away, home, home=home)
-        loser = home if winner == away else away
-        season_results.append((winner, loser))
+# ==============================================================================
+# MAIN SIMULATION RUNNER
+# ==============================================================================
+def run_sim():
+    pre_season_elo = apply_parity_reset(ELO)
+    display_pre_season_elo(pre_season_elo)
     
-    standings = calculate_standings(season_results, divisions)
+    sb_wins = defaultdict(int)
+    conf_wins = defaultdict(int)
+
+    print(f"Running {N_SIMS} NFL simulations with international neutral locations applied...")
     
-    # Track season wins for results table later
-    for team in all_teams:
-        results[team]["total_wins"] += standings[team]["W"]
-    
-    # 2. Seeding
-    afc_seeds, nfc_seeds = get_playoff_seeds(standings, divisions)
-    
-    for t in afc_seeds + nfc_seeds:
-        results[t]["playoffs"] += 1
+    for _ in tqdm(range(N_SIMS), desc="Running simulations", unit="sim"):
+        wins, final_elo = simulate_season(pre_season_elo.copy())
+        afc_seeds, nfc_seeds = process_playoff_seeding(wins)
+        
+        afc_champ = run_conference_playoffs(afc_seeds, final_elo)
+        nfc_champ = run_conference_playoffs(nfc_seeds, final_elo)
+        
+        conf_wins[afc_champ] += 1
+        conf_wins[nfc_champ] += 1
+        
+        # Super Bowl (Always Neutral)
+        sb_winner, _ = simulate_game(afc_champ, nfc_champ, final_elo, is_neutral=True)
+        sb_wins[sb_winner] += 1
 
-    # 3. Playoffs
-    afc_champ = simulate_conference_playoffs(afc_seeds)
-    nfc_champ = simulate_conference_playoffs(nfc_seeds)
-    
-    results[afc_champ]["conference_win"] += 1
-    results[nfc_champ]["conference_win"] += 1
-    
-    # Super Bowl
-    sb_winner = simulate_game(afc_champ, nfc_champ, home=None)
-    results[sb_winner]["superbowl"] += 1
-    super_bowl_matchups.append((afc_champ, nfc_champ))
-
-
-# -----------------------------
-# 5. Output Results
-# -----------------------------
-print("=" * 100)
-print(f"2025-2026 NFL FULL SEASON SIMULATION (Monte Carlo)")
-print("=" * 100)
-print(f"Simulations: {n_sims:,}")
-print(f"Home Field Advantage: {HFA} ELO points (Neutral Site for Super Bowl)")
-print("-" * 100)
-
-data = []
-for team in all_teams:
-    conf = "AFC" if team in afc_teams else "NFC"
-    div = next(d for d in divisions if team in divisions[d])
-    
-    avg_wins = results[team]["total_wins"] / n_sims
-    playoff_pct = results[team]["playoffs"] / n_sims * 100
-    conf_pct = results[team]["conference_win"] / n_sims * 100
-    sb_pct = results[team]["superbowl"] / n_sims * 100
-    
-    data.append({
-        "Team": team,
-        "Conf": conf,
-        "Div": div,
-        "ELO": elo[team],
-        "Avg Wins": round(avg_wins, 1),
-        "Playoff %": round(playoff_pct, 1),
-        "Conf Champ %": round(conf_pct, 1),
-        "Super Bowl %": round(sb_pct, 1)
-    })
-
-df = pd.DataFrame(data)
-df = df.sort_values("Avg Wins", ascending=False)
-
-print("\nTOP 32 TEAMS BY PROJECTED WINS")
-print("-" * 100)
-print(df.head(32).to_string(index=False))
-
-print("\n" + "=" * 100)
-print("SUPER BOWL FAVORITES (Top 32)")
-print("-" * 100)
-print(df.sort_values("Super Bowl %", ascending=False).head(32)[["Team", "Conf", "Avg Wins", "Playoff %", "Super Bowl %"]].to_string(index=False))
-
-# Conference breakdowns
-for conf in ["AFC", "NFC"]:
-    print("\n" + "=" * 100)
-    print(f"{conf} STANDINGS PROJECTIONS")
-    print("-" * 100)
-    conf_df = df[df["Conf"] == conf].sort_values("Avg Wins", ascending=False)
-    print(conf_df[["Team", "Div", "Avg Wins", "Playoff %", "Super Bowl %"]].to_string(index=False))
-
-# Super Bowl matchup
-sb_matchup_counts = Counter(super_bowl_matchups)
-if sb_matchup_counts:
-    most_common_sb = sb_matchup_counts.most_common(10)
-    print("\n" + "=" * 100)
-    print(f"Top 10 Most Likely Super Bowl Matchups:")
-    print("-" * 100)
-    for i, ((afc_team, nfc_team), count) in enumerate(most_common_sb, 1):
-        pct = count / n_sims * 100
-        print(f"{i:2}. {afc_team} vs {nfc_team}: {pct:.1f}%")
-
-print("\n" + "=" * 100)
-print("Simulation Complete")
-print("=" * 100)
+    print("\n" + "="*55)
+    print(f"{"TEAM":<25} | {"CONF TITLES":<12} | {"SUPER BOWL WIN ODDS"}")
+    print("="*55)
+    sorted_results = sorted(VALID_TEAMS, key=lambda x: sb_wins[x], reverse=True)
+    for team in sorted_results:
+        if conf_wins[team] > 0 or sb_wins[team] > 0:
+            print(f"{team:<25} | {conf_wins[team] / N_SIMS :<12.2%} | {sb_wins[team] / N_SIMS:.2%}")
 
 if __name__ == "__main__":
-    # The simulation runs automatically when the file is executed
-    pass
-
-print("\n" + "=" * 100)
+    run_sim()

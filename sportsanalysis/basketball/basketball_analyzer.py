@@ -28,15 +28,8 @@ teams = {
 # =========================
 # CURRENT SERIES
 # =========================
-second_round = [
-    # East
-    ["Pistons", "Cavaliers", 0, 0],
-    ["Knicks", "76ers", 0, 0],
-    
-    # West
-    ["Thunder", "Lakers", 0, 0],
-    ["Timberwolves", "Spurs", 0, 0],
-]
+# Western Conference Finals - Thunder lead 3-2, Game 6 tonight
+west_conf_final = ["Thunder", "Spurs", 3, 2]
 
 
 # =========================
@@ -92,20 +85,17 @@ def next_round(ts):
 def simulate_playoffs():
     teams_dict = copy.deepcopy(teams)
 
-    # Conference semifinals
-    r2 = simulate_round(second_round, teams_dict)
+    # Western Conference Finals - Thunder lead 3-2
+    west_final = simulate_series(west_conf_final[0], west_conf_final[1], teams_dict, 
+                                west_conf_final[2], west_conf_final[3])
 
-    east = [t for t in r2 if teams_dict[t]["conf"] == "E"]
-    west = [t for t in r2 if teams_dict[t]["conf"] == "W"]
-
-    # Conference finals
-    east_final = simulate_series(east[0], east[1], teams_dict)
-    west_final = simulate_series(west[0], west[1], teams_dict)
-
+    # Knicks already in Finals as Eastern Conference champions
     # NBA Finals
-    champion = simulate_series(east_final, west_final, teams_dict)
+    champion = simulate_series("Knicks", west_final, teams_dict)
 
     return champion
+
+
 # =========================
 # MONTE CARLO SIMULATION
 # =========================

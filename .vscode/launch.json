@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "PowerShell: Windows PowerShell",
+            "type": "PowerShell",
+            "request": "launch",
+            "sessionName": "Windows PowerShell (x64)"
+        },
+
+        {
+            "name": "PowerShell: PowerShell Core",
+            "type": "PowerShell",
+            "request": "launch",
+            "sessionName": "PowerShell Core (x64)"
+        },
+        
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Main Entry",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}

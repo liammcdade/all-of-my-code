@@ -15,5 +15,6 @@
         "mcp": "allow"
       }
     }
-  }
+  },
+  "snapshot": false
 }

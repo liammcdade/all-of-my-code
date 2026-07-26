@@ -2,133 +2,94 @@ import random
 import math
 from collections import defaultdict
 
-# =========================
-# CONFIGURATION - EASILY EDITABLE
-# =========================
+try:
+    from tqdm import tqdm
+except ImportError:
+    def tqdm(iterable, *args, **kwargs):
+        return iterable
 
-# Teams to track for the summary table
-TRACKED_TEAMS = []
+# === CONFIGURATION ===
+NUM_SIMULATIONS = 100000
+GAMWEEKS_PLAYED = 6
+GAMWEEKS_REMAINING = 1
+ABSOLUTE_MIN_SCORE = 0
+SCORE_SD_MULTIPLIER = 2.5
 
-# UEFA path finals (March 31)
-UEFA_FINALS = [
-    ("Italy", "Bosnia and Herzegovina"),        # Path A - Group B
-    ("Sweden", "Poland"),                        # Path B - Group F
-    ("Kosovo", "Turkey"),                        # Path C - Group D
-    ("Czech Republic", "Denmark"),               # Path D - Group A
-]
+# === PLAYER DATA ===
+random.seed(42)
+streamy_scores = [80, 101, 84, 118, 63, 71, 55]
+crumpet_scores = [41, 56, 48, 101, 65, 95, 40]
+sir_good_scores = [75, 53, 80, 57, 69, 41, 35]
 
-# Intercontinental path finals (March 31)
-INTERCONTINENTAL_FINALS = [
-    ("DR Congo", "Jamaica"),    # Path 1
-    ("Iraq", "Bolivia"),        # Path 2
-]
-
-# Number of simulations
-NUM_SIMULATIONS = 5000
-
-# =========================
-# ELO RATINGS (adjust if wanted)
-# =========================
-elo = {
-    # UEFA finalists
-    "Italy": 1817.76,
-    "Bosnia and Herzegovina": 1605.79,
-
-    "Ukraine": 1766.95,
-    "Sweden": 1699.42,
-    "Poland": 1738.70,
-    "Albania": 1660.52,
-
-    "Turkey": 1803.71,
-    "Kosovo": 1685.16,
-
-    "Denmark": 1822.66,
-    "Czech Republic": 1721.53,
-
-    # Intercontinental finalists
-    "DR Congo": 1682.99,
-    "Jamaica": 1614.12,
-
-    "Iraq": 1646.65,
-    "Bolivia": 1658.75,
+players = {
+    "Streamy": streamy_scores,
+    "Crumpet1453": crumpet_scores,
+    "Sir_Good_Fort_Trooper": sir_good_scores
 }
 
-# Average goals per match (international football baseline)
-AVG_GOALS_PER_MATCH = 2.55
+def calculate_standard_deviation(scores: list) -> float:
+    if len(scores) < 2:
+        return 0.0
+    mean = sum(scores) / len(scores)
+    variance = sum((x - mean) ** 2 for x in scores) / len(scores)
+    return math.sqrt(variance)
 
-# =========================
-# ELO PROBABILITY & EXPECTED GOALS
-# =========================
-def win_probability(team1, team2, home_adv=85):
-    """Return probability team1 wins (with home advantage)."""
-    e1 = elo[team1] + home_adv
-    e2 = elo[team2]
-    return 1 / (1 + 10 ** ((e2 - e1) / 400))
+def normal_random(mean: float, std_dev: float, min_val: int) -> int:
+    while True:
+        value = random.gauss(mean, std_dev * SCORE_SD_MULTIPLIER)
+        int_value = max(min_val, int(round(value)))
+        if int_value >= min_val:
+            return int_value
 
-def expected_goals(team1, team2, home_adv=85):
-    """Return (xG_team1, xG_team2) derived from ELO ratings."""
-    p1 = win_probability(team1, team2, home_adv)
-    p2 = 1 - p1
-    # Split average goals by strength ratio
-    total = AVG_GOALS_PER_MATCH
-    xg1 = total * (p1 / (p1 + p2))
-    xg2 = total * (p2 / (p1 + p2))
-    return xg1, xg2
+def simulate_season():
+    totals = {}
+    
+    for player, scores in players.items():
+        current_total = sum(scores)
+        avg = sum(scores) / len(scores)
+        std_dev = calculate_standard_deviation(scores)
+        remaining_scores = [normal_random(avg, std_dev, ABSOLUTE_MIN_SCORE) 
+                          for _ in range(GAMWEEKS_REMAINING)]
+        final_total = current_total + sum(remaining_scores)
+        totals[player] = final_total
+    
+    max_score = max(totals.values())
+    winners = [player for player, score in totals.items() if score == max_score]
+    
+    return random.choice(winners)
 
-def match(team1, team2, home_adv=85):
-    p1 = win_probability(team1, team2, home_adv)
-    r = random.random()
-    if r < p1:
-        return team1
-    else:
-        return team2
+# Run simulations
+win_counts = defaultdict(int)
 
-# =========================
-# SIMULATIONS
-# =========================
-results = defaultdict(int)
+print(f"Running {NUM_SIMULATIONS:,} simulations...")
+print(f"Gameweeks played: {GAMWEEKS_PLAYED}")
+print(f"Gameweeks remaining: {GAMWEEKS_REMAINING}")
+print("\nPlayer statistics (based on historical data):")
+for player, scores in players.items():
+    avg = sum(scores) / len(scores)
+    std_dev = calculate_standard_deviation(scores)
+    print(f"  {player}: avg={avg:.1f}, std_dev={std_dev:.1f} pts (GW scores: {scores})")
+print("\nCurrent standings:")
+for player, scores in players.items():
+    print(f"  {player}: {sum(scores)} points")
 
-for _ in range(NUM_SIMULATIONS):
+for _ in tqdm(range(NUM_SIMULATIONS)):
+    winner = simulate_season()
+    win_counts[winner] += 1
 
-    qualifiers = []
+# === RESULTS ===
+print("\n" + "="*50)
+print("WIN PROBABILITY RESULTS")
+print("="*50)
 
-    # UEFA finals
-    for home, away in UEFA_FINALS:
-        winner = match(home, away)
-        qualifiers.append(winner)
+for player in players.keys():
+    wins = win_counts[player]
+    probability = (wins / NUM_SIMULATIONS) * 100
+    print(f"{player:25s}: {probability:6.2f}% ({wins:,} wins)")
 
-    # Intercontinental finals
-    for home, away in INTERCONTINENTAL_FINALS:
-        winner = match(home, away)
-        qualifiers.append(winner)
+print("="*50)
 
-    # Count results
-    for team in qualifiers:
-        results[team] += 1
-
-# =========================
-# OUTPUT
-# =========================
-
-all_games = [(h, a, "UEFA Final") for h, a in UEFA_FINALS] + \
-            [(h, a, "Intercontinental") for h, a in INTERCONTINENTAL_FINALS]
-
-print(f"{'='*65}")
-print(f"  GAME-BY-GAME BREAKDOWN ({NUM_SIMULATIONS} sims)")
-print(f"{'='*65}")
-
-for home, away, label in all_games:
-    p_home = win_probability(home, away)
-    p_away = 1 - p_home
-    xg_home, xg_away = expected_goals(home, away)
-    print(f"\n  [{label}] {home} vs {away}")
-    print(f"    {home:<30s}  Win: {p_home*100:5.1f}%   xG: {xg_home:.2f}")
-    print(f"    {away:<30s}  Win: {p_away*100:5.1f}%   xG: {xg_away:.2f}")
-
-print(f"\n{'='*65}")
-print(f"  QUALIFICATION PROBABILITIES ({NUM_SIMULATIONS} sims)")
-print(f"{'='*65}\n")
-
-sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)
-for team, count in sorted_results:
-    print(f"  {team:<30s}  {count/NUM_SIMULATIONS*100:5.1f}%")
+# Show current leader
+current_totals = {player: sum(scores) for player, scores in players.items()}
+leader = max(current_totals, key=current_totals.get)
+print(f"\nCurrent leader: {leader} with {current_totals[leader]} points")
