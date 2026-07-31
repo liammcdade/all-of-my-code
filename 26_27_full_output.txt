@@ -1,0 +1,43 @@
+Running simulations:   0%|          | 0/5000 [00:00<?, ?sim/s]Running simulations:   0%|          | 1/5000 [00:00<24:30,  3.40sim/s]Running simulations:   7%|▋         | 330/5000 [00:00<00:04, 1076.89sim/s]Running simulations:  13%|█▎        | 661/5000 [00:00<00:02, 1787.01sim/s]Running simulations:  20%|█▉        | 997/5000 [00:00<00:01, 2277.77sim/s]Running simulations:  27%|██▋       | 1332/5000 [00:00<00:01, 2608.19sim/s]Running simulations:  33%|███▎      | 1669/5000 [00:00<00:01, 2841.01sim/s]Running simulations:  40%|████      | 2005/5000 [00:00<00:00, 2998.41sim/s]Running simulations:  47%|████▋     | 2343/5000 [00:00<00:00, 3111.67sim/s]Running simulations:  54%|█████▎    | 2681/5000 [00:01<00:00, 3191.79sim/s]Running simulations:  60%|██████    | 3019/5000 [00:01<00:00, 3245.90sim/s]Running simulations:  67%|██████▋   | 3353/5000 [00:01<00:00, 3271.62sim/s]Running simulations:  74%|███████▍  | 3689/5000 [00:01<00:00, 3297.80sim/s]Running simulations:  81%|████████  | 4027/5000 [00:01<00:00, 3320.59sim/s]Running simulations:  87%|████████▋ | 4364/5000 [00:01<00:00, 3332.91sim/s]Running simulations:  94%|█████████▍| 4700/5000 [00:01<00:00, 3332.97sim/s]Running simulations: 100%|██████████| 5000/5000 [00:01<00:00, 2799.86sim/s]
+
+============================================================
+TEAM STATISTICS
+============================================================
+Team           AvgPts  StdDev  Title%  CL%     Europa%   Europe%   Releg%
+--------------------------------------------------------------------------------
+Arsenal        62.83   9.39    24.94   64.86   7.92      72.78     0.52
+Man City       61.93   9.40    21.56   61.10   8.78      69.88     0.70
+Liverpool      59.38   9.50    14.92   51.02   8.52      59.54     1.22
+Chelsea        56.12   9.61    8.56    36.82   9.10      45.92     2.66
+Newcastle      55.02   9.75    6.98    33.62   8.18      41.80     4.04
+Aston Villa    54.49   9.65    6.26    30.42   7.80      38.22     4.00
+Man United     52.66   9.64    4.40    23.96   7.50      31.46     5.42
+Brighton       51.09   9.49    2.76    18.62   6.84      25.46     8.12
+Nottingham     48.99   9.49    1.88    13.90   4.74      18.64     11.40
+Bournemouth    48.33   9.37    1.62    11.88   5.36      17.24     11.68
+Brentford      47.51   9.56    1.58    11.02   4.70      15.72     14.88
+Crystal Palace 47.13   9.45    1.28    10.08   4.22      14.30     15.10
+Hull City      46.31   9.32    0.90    8.79    3.80      12.60     17.06
+Southampton    46.04   9.37    1.17    7.95    3.76      11.70     17.81
+Fulham         45.86   9.40    0.94    7.86    3.60      11.46     18.98
+Everton        45.53   9.36    0.68    7.46    3.58      11.04     19.30
+Leeds          41.29   9.27    0.22    3.06    1.70      4.76      35.08
+Ipswich        40.20   9.19    0.20    2.16    1.48      3.64      39.62
+Coventry       39.26   9.14    0.06    2.14    1.12      3.26      43.78
+Sunderland     38.84   9.11    0.12    1.66    1.08      2.74      46.06
+
+============================================================
+POINTS TO WIN THE LEAGUE
+============================================================
+Max points to win the league: 97
+Min points to win the league: 58
+
+========================================
+ADDITIONAL STATISTICS
+========================================
+Probability that at least one team is relegated with 40+ points: 12.2000%
+Average excitement score for the final day (out of 10): 0.54
+Total European probability (Europa League, sum of all teams): 100.00%
+Total European probability (Champions League, sum of all teams): 400.00%
+  - CL only (top 4): 400.00%
+  - Europa only (5th): 100.00%
