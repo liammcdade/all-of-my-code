@@ -579,7 +579,8 @@ class MainApp(tk.Tk):
             tk.Label(box, text=label, font=("Segoe UI", 12, "bold"), bg="white").pack()
             tk.Label(box, text=f"Republican: {rep_pct:.1f}%", font=("Segoe UI", 11), bg="white", fg=PARTY_COLORS["Republican"]).pack()
             tk.Label(box, text=f"Democrat: {dem_pct:.1f}%", font=("Segoe UI", 11), bg="white", fg=PARTY_COLORS["Democrat"]).pack()
-            tk.Label(box, text=f"Tie: {tie_pct:.1f}%", font=("Segoe UI", 11), bg="white", fg="#000000").pack()
+            tie_text = "Tie" if label in ("House Control", "Senate Control") else ""
+            tk.Label(box, text=f"{tie_text}: {tie_pct:.1f}%", font=("Segoe UI", 11), bg="white", fg="#000000").pack()
 
         boxes_frame = tk.Frame(container, bg="#f8f9fa")
         boxes_frame.pack(fill="both", expand=True)
@@ -688,7 +689,8 @@ class MainApp(tk.Tk):
             tk.Label(box, text=label, font=("Segoe UI", 12, "bold"), bg="white").pack()
             tk.Label(box, text=f"Republican: {rep_pct:.1f}%", font=("Segoe UI", 11), bg="white", fg=PARTY_COLORS["Republican"]).pack()
             tk.Label(box, text=f"Democrat: {dem_pct:.1f}%", font=("Segoe UI", 11), bg="white", fg=PARTY_COLORS["Democrat"]).pack()
-            tk.Label(box, text=f"Tie: {tie_pct:.1f}%", font=("Segoe UI", 11), bg="white", fg="#000000").pack()
+            tie_text = "Tie" if label in ("House Control", "Senate Control") else "No Unified Control" if label == "Unified Control" else "No Governor Control"
+            tk.Label(box, text=f"{tie_text}: {tie_pct:.1f}%", font=("Segoe UI", 11), bg="white", fg="#000000").pack()
 
         boxes_frame = tk.Frame(container, bg="#f8f9fa")
         boxes_frame.pack(fill="both", expand=True)
