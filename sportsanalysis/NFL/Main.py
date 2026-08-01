@@ -422,7 +422,7 @@ def run_sim():
         sb_wins[sb_winner] += 1
 
     print("\n" + "="*55)
-    print(f"{"TEAM":<25} | {"CONF TITLES":<12} | {"SUPER BOWL WIN ODDS"}")
+    print(f"{'TEAM':<25} | {'CONF TITLES':<12} | {'SUPER BOWL WIN ODDS'}")
     print("="*55)
     sorted_results = sorted(VALID_TEAMS, key=lambda x: sb_wins[x], reverse=True)
     for team in sorted_results:
