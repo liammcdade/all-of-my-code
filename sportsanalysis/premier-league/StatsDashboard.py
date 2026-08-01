@@ -1,16 +1,22 @@
-from pathlib import Path
-
-import tkinter as tk
-from tkinter import ttk
 import csv
-import json
-import hashlib
-import os
+import math
+import sys
+import threading
 from collections import defaultdict
-from tempfile import gettempdir
+from pathlib import Path
+import tkinter as tk
+from tkinter import ttk, messagebox
 
-CSV_PATH = Path(__file__).parent / "premier league data - player data.csv"
-CACHE_PATH = Path(gettempdir()) / "premier_league_ratings_cache.json"
+# ==============================================================================
+# 1. CONSTANTS & DATA LOGIC
+# ==============================================================================
+
+BASE_DIR = Path(__file__).parent
+CSV_PATH = BASE_DIR / "premier league data - player data.csv"
+CSV_PATH_2025 = BASE_DIR / "premier league data - player data 2025.csv"
+CSV_PATH_2024 = BASE_DIR / "premier league data - player data 2024.csv"
+CSV_PATH_2023 = BASE_DIR / "premier league data - player data 2023.csv"
+GK_CSV_PATH = BASE_DIR / "premier league data - goalkeepers.csv"
 
 STAT_GROUPS = {
     "General": ["Player", "Nation", "Pos", "Squad", "Age", "Born"],
@@ -18,83 +24,7 @@ STAT_GROUPS = {
     "Attacking": ["Gls", "Ast", "G+A", "G-PK", "PK", "PKatt"],
     "Discipline": ["CrdY", "CrdR"],
     "Per 90 Stats": ["Gls_P90", "Ast_P90", "G+A_P90", "G-PK_P90", "G+A-PK_P90"],
-    "Score": ["Rating"],
 }
-
-SCORED_STATS = {
-    "FW": ["Gls_P90", "Ast_P90", "G+A_P90", "G-PK_P90", "G+A-PK_P90"],
-    "MF": ["Gls_P90", "Ast_P90", "G+A_P90", "G-PK_P90", "G+A-PK_P90"],
-    "DF": ["Ast_P90", "G+A_P90", "G-PK_P90"],
-    "GK": ["Gls_P90", "Ast_P90", "G+A_P90", "G-PK_P90", "G+A-PK_P90"],
-}
-
-DISPLAY_NAMES = {
-    "Rk": "Rank",
-    "Player": "Player",
-    "Nation": "Nation",
-    "Pos": "Position",
-    "Squad": "Squad",
-    "Age": "Age",
-    "Born": "Born",
-    "MP": "Matches Played",
-    "Starts": "Starts",
-    "Min": "Minutes",
-    "90s": "90s Played",
-    "Gls": "Goals",
-    "Ast": "Assists",
-    "G+A": "Goals + Assists",
-    "G-PK": "Non-PK Goals",
-    "PK": "Penalty Goals",
-    "PKatt": "Penalty Attempts",
-    "CrdY": "Yellow Cards",
-    "CrdR": "Red Cards",
-    "Gls_P90": "Goals per 90",
-    "Ast_P90": "Assists per 90",
-    "G+A_P90": "G+A per 90",
-    "G-PK_P90": "Non-PK Goals per 90",
-    "G+A-PK_P90": "G+A-PK per 90",
-    "Rating": "Overall Rating",
-}
-
-TEAM_POWER_RANKINGS = {
-    "Arsenal": 97.5,
-    "Manchester City": 96.8,
-    "Manchester United": 95.8,
-    "Aston Villa": 95.5,
-    "Bournemouth": 95.2,
-    "Liverpool": 92.7,
-    "Nottingham Forest": 92.5,
-    "Brentford": 92.1,
-    "West Ham United": 91.8,
-    "Sunderland": 91.7,
-    "Newcastle United": 91.6,
-    "Fulham": 91.5,
-    "Brighton & Hove Albion": 91.4,
-    "Leeds United": 91.1,
-    "Tottenham Hotspur": 90.0,
-    "Crystal Palace": 89.8,
-    "Chelsea": 89.6,
-    "Everton": 89.6,
-    "Wolverhampton Wanderers": 86.0,
-    "Burnley": 84.7,
-}
-
-TEAM_NAME_ALIASES = {
-    "West Ham": "West Ham United",
-    "Newcastle": "Newcastle United",
-    "Brighton": "Brighton & Hove Albion",
-    "Tottenham": "Tottenham Hotspur",
-    "Wolves": "Wolverhampton Wanderers",
-    "Wolverhampton": "Wolverhampton Wanderers",
-}
-
-MEAN_TEAM_RATING = sum(TEAM_POWER_RANKINGS.values()) / len(TEAM_POWER_RANKINGS)
-TEAM_RATING_SCALE = 3.0
-DEFAULT_TEAM_RATING = MEAN_TEAM_RATING
-MIN_90S = 3.0
-MIN_90S_RATIO = 0.15
-
-GK_CSV_PATH = Path(__file__).parent / "premier league data - goalkeepers.csv"
 
 GK_STAT_GROUPS = {
     "General": ["Player", "Nation", "Pos", "Squad", "Age", "Born"],
@@ -102,33 +32,31 @@ GK_STAT_GROUPS = {
     "Goalkeeping": ["GA", "GA90", "SoTA", "Saves", "Save%", "CS", "CS%", "PKatt", "PKA", "PKsv", "PKm"],
 }
 
-GK_SCORED_STATS = {
-    "GK": {
-        "Save%": True,
-        "CS%": True,
-        "CS": True,
-        "GA90": False,
-    }
+DISPLAY_NAMES = {
+    "Player": "Player", "Nation": "Nation", "Pos": "Position", "Squad": "Squad",
+    "Age": "Age", "Born": "Born", "MP": "Matches Played", "Starts": "Starts",
+    "Min": "Minutes", "90s": "90s Played", "Gls": "Goals", "Ast": "Assists",
+    "G+A": "Goals + Assists", "G-PK": "Non-PK Goals", "PK": "Penalty Goals",
+    "PKatt": "Penalty Attempts", "CrdY": "Yellow Cards", "CrdR": "Red Cards",
+    "Gls_P90": "Goals per 90", "Ast_P90": "Assists per 90",
+    "G+A_P90": "G+A per 90", "G-PK_P90": "Non-PK Goals per 90",
+    "G+A-PK_P90": "G+A-PK per 90",
 }
-
 GK_DISPLAY_NAMES = {
-    "GA": "Goals Against",
-    "GA90": "Goals Against per 90",
-    "SoTA": "Shots on Target Against",
-    "Saves": "Saves",
-    "Save%": "Save Percentage",
-    "CS": "Clean Sheets",
-    "CS%": "Clean Sheet %",
-    "PKatt": "Penalty Attempts",
-    "PKA": "Penalty Kicks Allowed",
-    "PKsv": "Penalty Saves",
-    "PKm": "Penalty Misses",
+    "GA": "Goals Against", "GA90": "Goals Against per 90",
+    "SoTA": "Shots on Target Against", "Saves": "Saves",
+    "Save%": "Save Percentage", "CS": "Clean Sheets", "CS%": "Clean Sheet %",
+    "PKatt": "Penalty Attempts", "PKA": "Penalty Kicks Allowed",
+    "PKsv": "Penalty Saves", "PKm": "Penalty Misses",
 }
 
+NUMERIC_STATS = ("MP", "Starts", "Min", "90s", "Gls", "Ast", "G+A", "G-PK", "PK", "PKatt", "CrdY", "CrdR")
+METADATA_STATS = ("Player", "Nation", "Pos", "Squad", "Age", "Born")
+PER_90_DENOM = "90s"
 
-def _get_csv_hash() -> str:
-    with open(CSV_PATH, "rb") as f:
-        return hashlib.md5(f.read()).hexdigest()
+LEAGUE_TABLE_TAB_HEADERS = [
+    "Club", "MP", "W", "D", "L", "GF", "GA", "GD", "Pts"
+]
 
 
 def _safe_float(value: str) -> float:
@@ -140,24 +68,43 @@ def _safe_float(value: str) -> float:
 
 def _get_primary_position(player: dict[str, str]) -> str:
     pos = player.get("Pos", "")
-    if "," in pos:
-        return pos.split(",")[0].strip()
-    return pos.strip().upper()
+    return pos.split(",")[0].strip().upper() if "," in pos else pos.strip().upper()
 
 
-def _normalize_team_name(name: str) -> str:
-    return TEAM_NAME_ALIASES.get(name.strip(), name.strip())
-
-
-def _get_min_90s_threshold(players: list[dict[str, str]]) -> float:
-    avg_90s = sum(_safe_float(p.get("90s", "0")) for p in players) / max(len(players), 1)
-    return max(MIN_90S, avg_90s * MIN_90S_RATIO)
+def _parse_csv_file(*paths: Path, year: str = "", progress_callback=None) -> list[dict[str, str]]:
+    players: list[dict[str, str]] = []
+    counts: dict[str, int] = defaultdict(int)
+    for path in paths:
+        if not path.exists():
+            if progress_callback:
+                progress_callback(None)
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                reader = csv.reader(f)
+                raw_headers = next(reader)
+                headers = []
+                counts.clear()
+                for h in raw_headers:
+                    counts[h] += 1
+                    headers.append(f"{h}_P90" if counts[h] > 1 else h)
+                for row in reader:
+                    if len(row) == len(headers) and row[0] != "Rk":
+                        entry = dict(zip(headers, row))
+                        if year:
+                            entry["_year"] = year
+                        players.append(entry)
+        except (IOError, csv.Error):
+            pass
+        if progress_callback:
+            progress_callback(None)
+    return players
 
 
 def _load_gk_data() -> dict[str, dict[str, str]]:
-    gk_players: dict[str, dict[str, str]] = {}
+    gk: dict[str, dict[str, str]] = {}
     if not GK_CSV_PATH.exists():
-        return gk_players
+        return gk
     try:
         with open(GK_CSV_PATH, "r", encoding="utf-8") as f:
             reader = csv.reader(f)
@@ -166,569 +113,548 @@ def _load_gk_data() -> dict[str, dict[str, str]]:
             counts: dict[str, int] = defaultdict(int)
             for h in raw_headers:
                 counts[h] += 1
-                if counts[h] > 1:
-                    headers.append(f"{h}_P90")
-                else:
-                    headers.append(h)
+                headers.append(f"{h}_P90" if counts[h] > 1 else h)
             for row in reader:
                 if len(row) == len(headers):
-                    player = dict(zip(headers, row))
-                    name = player.get("Player", "").strip()
-                    if name:
-                        gk_players[name] = player
+                    p = dict(zip(headers, row))
+                    nm = p.get("Player", "").strip()
+                    if nm:
+                        gk[nm] = p
     except (IOError, csv.Error):
         pass
-    return gk_players
+    return gk
 
 
-def load_all_players() -> list[dict[str, str]]:
-    players: list[dict[str, str]] = []
-    with open(CSV_PATH, "r", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        raw_headers = next(reader)
-        headers = []
-        counts: dict[str, int] = defaultdict(int)
-        for h in raw_headers:
-            counts[h] += 1
-            if counts[h] > 1:
-                headers.append(f"{h}_P90")
-            else:
-                headers.append(h)
-        for row in reader:
-            if len(row) == len(headers):
-                players.append(dict(zip(headers, row)))
+def _compute_per_90_stats(players: list[dict[str, str]]) -> None:
+    for p in players:
+        games = _safe_float(p.get(PER_90_DENOM, "0"))
+        if games <= 0:
+            continue
+        p["Gls_P90"] = f"{_safe_float(p.get('Gls','0')) / games:.2f}"
+        p["Ast_P90"] = f"{_safe_float(p.get('Ast','0')) / games:.2f}"
+        p["G+A_P90"] = f"{_safe_float(p.get('G+A','0')) / games:.2f}"
+        p["G-PK_P90"] = f"{_safe_float(p.get('G-PK','0')) / games:.2f}"
+        p["G+A-PK_P90"] = f"{_safe_float(p.get('G+A-PK','0')) / games:.2f}"
 
+
+def _combine_records(base: dict[str, str], new: dict[str, str]) -> dict[str, str]:
+    combined = dict(base)
+    for k, v in new.items():
+        if k in METADATA_STATS:
+            combined[k] = v
+        elif k in NUMERIC_STATS:
+            combined[k] = str(_safe_float(base.get(k, "0")) + _safe_float(v))
+        else:
+            combined.setdefault(k, v)
+    return combined
+
+
+def load_all_players(progress_callback=None) -> tuple[list[dict[str, str]], dict[str, list[dict[str, str]]]]:
+    base = _parse_csv_file(CSV_PATH, progress_callback=progress_callback)
+    p2025 = _parse_csv_file(CSV_PATH_2025, year="2025", progress_callback=progress_callback)
+    p2024 = _parse_csv_file(CSV_PATH_2024, year="2024", progress_callback=progress_callback)
+    p2023 = _parse_csv_file(CSV_PATH_2023, year="2023", progress_callback=progress_callback)
+    yearly = {"2025": p2025, "2024": p2024, "2023": p2023}
+    for yr_key, yr_list in yearly.items():
+        deduped: dict[str, dict[str, str]] = {}
+        for p in yr_list:
+            name = p.get("Player", "").strip()
+            if not name:
+                continue
+            deduped[name] = _combine_records(deduped.get(name, {}), p)
+        yearly[yr_key] = list(deduped.values())
+    for yr in yearly.values():
+        _compute_per_90_stats(yr)
+    merged: dict[str, dict[str, str]] = {}
+    for p in base:
+        name = p.get("Player", "").strip()
+        if not name:
+            continue
+        merged[name] = _combine_records(merged.get(name, {}), p)
+
+    for yr in (p2023, p2024, p2025):
+        for p in yr:
+            name = p.get("Player", "").strip()
+            if not name:
+                continue
+            merged[name] = _combine_records(merged[name], p) if name in merged else p
+    players = list(merged.values())
+    _compute_per_90_stats(players)
+    for p in players:
+        nm = p.get("Player", "").strip()
+        if nm:
+            p["name_lower"] = nm.lower()
+            p["squad_lower"] = p.get("Squad", "").strip().lower()
+            p["name_stripped"] = nm
     gk_data = _load_gk_data()
     for p in players:
         if _get_primary_position(p) == "GK":
-            gk_info = gk_data.get(p["Player"].strip(), {})
-            for k, v in gk_info.items():
+            for k, v in gk_data.get(p.get("name_stripped", ""), {}).items():
                 if k not in p or not p[k]:
                     p[k] = v
-
-    return players
-
-
-def apply_team_adjustment(raw_ratings: dict[str, float], players: list[dict[str, str]]) -> dict[str, float]:
-    player_teams: dict[str, str] = {}
-    for p in players:
-        raw_name = p.get("Player", "").strip()
-        raw_squad = p.get("Squad", "")
-        if raw_name:
-            player_teams[raw_name] = _normalize_team_name(raw_squad)
-
-    adjusted: dict[str, float] = {}
-    for name, raw in raw_ratings.items():
-        team = player_teams.get(name, "")
-        team_rating = TEAM_POWER_RANKINGS.get(team, DEFAULT_TEAM_RATING)
-        team_factor = (MEAN_TEAM_RATING - team_rating) / MEAN_TEAM_RATING
-        adjustment = (raw - 5.0) * team_factor * TEAM_RATING_SCALE
-        adjusted[name] = raw + adjustment
-
-    return adjusted
+    if progress_callback:
+        progress_callback(None)
+    return players, yearly
 
 
-def calculate_ratings(players: list[dict[str, str]], progress_callback=None) -> dict[str, float]:
-    ratings: dict[str, list[float]] = defaultdict(list)
-
-    pos_groups: dict[str, list[dict[str, str]]] = defaultdict(list)
-    for p in players:
-        pos_groups[_get_primary_position(p)].append(p)
-
-    total_operations = 0
-    for pos_key, group in pos_groups.items():
-        stat_keys = SCORED_STATS.get(pos_key, [])
-        gk_stat_keys = list(GK_SCORED_STATS.get(pos_key, {}).keys())
-        total_operations += len(stat_keys) * len(group) + len(gk_stat_keys) * len(group)
-    
-    current = 0
-
-    for pos_key, group in pos_groups.items():
-        stat_keys = SCORED_STATS.get(pos_key, [])
-        gk_directions = GK_SCORED_STATS.get(pos_key, {})
-        gk_stat_keys = list(gk_directions.keys())
-
-        if not stat_keys and not gk_stat_keys:
-            continue
-
-        avg_90s = sum(_safe_float(p.get("90s", "0")) for p in group) / max(len(group), 1)
-        min_90s_threshold = max(MIN_90S, avg_90s * MIN_90S_RATIO)
-
-        for stat_key in stat_keys:
-            values = []
-            for p in group:
-                if _safe_float(p.get("90s", "0")) < min_90s_threshold:
-                    continue
-                val = _safe_float(p.get(stat_key, ""))
-                values.append((p["Player"].strip(), val))
-
-            values.sort(key=lambda x: x[1], reverse=True)
-            n = len(values)
-            for rank, (name, val) in enumerate(values, start=1):
-                percentile = 1.0 - (rank - 1) / max(n - 1, 1)
-                ratings[name].append(percentile)
-
-                current += 1
-                if progress_callback and total_operations > 0:
-                    progress_callback(current / total_operations)
-
-        for stat_key in gk_stat_keys:
-            values = []
-            for p in group:
-                if _safe_float(p.get("90s", "0")) < min_90s_threshold:
-                    continue
-                val = _safe_float(p.get(stat_key, "0"))
-                values.append((p["Player"].strip(), val))
-
-            higher_is_better = gk_directions.get(stat_key, True)
-            values.sort(key=lambda x: x[1], reverse=higher_is_better)
-            n = len(values)
-            for rank, (name, val) in enumerate(values, start=1):
-                percentile = 1.0 - (rank - 1) / max(n - 1, 1)
-                ratings[name].append(percentile)
-
-                current += 1
-                if progress_callback and total_operations > 0:
-                    progress_callback(current / total_operations)
-
-    overall: dict[str, float] = {}
-    for name, percentiles in ratings.items():
-        if percentiles:
-            overall[name] = (sum(percentiles) / len(percentiles)) * 10.0
-
-    return overall
+def calculate_ratings(players: list[dict[str, str]], **kwargs) -> dict[str, float]:
+    return {}
 
 
-class SplashScreen:
-    def __init__(self, root: tk.Tk, total_players: int):
-        self.root = root
-        self.root.title("Loading")
-        self.root.geometry("480x160")
-        self.root.resizable(False, False)
-        self.root.configure(bg="#f1f5f9")
-
-        main = ttk.Frame(root, padding=(40, 32, 40, 32))
-        main.pack(fill=tk.BOTH, expand=True)
-
-        self.label = ttk.Label(main, text=f"Calculating ratings for {total_players} players...", font=("Segoe UI Variable", 12))
-        self.label.pack(pady=(0, 20))
-
-        self.progress = ttk.Progressbar(main, length=400, mode="determinate")
-        self.progress.pack(pady=(0, 12))
-
-        self.status = ttk.Label(main, text="0%", font=("Segoe UI Variable", 10), foreground="#475569")
-        self.status.pack()
-
-    def update_progress(self, fraction: float) -> None:
-        self.progress["value"] = fraction * 100
-        self.status.config(text=f"{fraction * 100:.0f}%")
-        self.root.update_idletasks()
+def _league_table_qualification(rank: int) -> str:
+    if rank <= 4:
+        return "UEFA Champions League group stage"
+    if rank == 5:
+        return "Europa League group stage"
+    if rank >= 18:
+        return "Relegation"
+    return ""
 
 
-class StatsDashboard:
-    def __init__(self, root: tk.Tk, ratings: dict[str, float]):
-        self.root = root
-        self.root.title("Premier League Player Stats")
-        self.root.geometry("1280x800")
-        self.root.configure(bg="#f1f5f9")
+# ==============================================================================
+# 2. TKINTER UI COMPONENTS
+# ==============================================================================
+
+class CollapsibleGroup(ttk.Frame):
+    def __init__(self, parent, title: str, children: list[tuple[str, str]]):
+        super().__init__(parent)
+        self._title = title
+        self.expanded = True
         
-        self._setup_styles()
-
-        self.players: list[dict[str, str]] = []
-        self.ratings = ratings
-        self.load_data()
-
-        self._build_ui()
-        self._refresh_player_list()
-
-    def load_data(self) -> None:
-        self.players = load_all_players()
-
-    def _setup_styles(self) -> None:
-        style = ttk.Style()
-        style.theme_use("clam")
-
-        bg = "#f1f5f9"
-        card = "#ffffff"
-        primary = "#4f46e5"
-        primary_hover = "#4338ca"
-        text = "#0f172a"
-        text_secondary = "#475569"
-        border = "#e2e8f0"
-        accent_soft = "#eef2ff"
+        self.header_btn = ttk.Button(self, text=f"▼ {title}", command=self.toggle, style='Header.TButton')
+        self.header_btn.pack(fill=tk.X)
         
-        style.configure(".", background=bg, foreground=text, font=("Segoe UI Variable", 10))
-        style.configure("TFrame", background=bg)
-        style.configure("Card.TFrame", background=card, relief=tk.FLAT)
-        style.configure("TLabel", background=bg, foreground=text, font=("Segoe UI Variable", 10))
-        style.configure("Header.TLabel", background=bg, foreground=text, font=("Segoe UI Variable", 20, "bold"))
-        style.configure("Subheader.TLabel", background=bg, foreground=text_secondary, font=("Segoe UI Variable", 10))
-        style.configure("TButton", font=("Segoe UI Variable", 10), padding=(16, 10), background=card)
-        style.map("TButton", background=[("active", "#f8fafc")])
-        style.configure("TEntry", fieldbackground="white", bordercolor=border, padding=10, insertcolor=text)
-        style.configure("TProgressbar", background=primary, troughcolor=bg, borderwidth=0)
+        self.body = ttk.Frame(self)
+        self.body.pack(fill=tk.X)
         
-        style.configure("Treeview", 
-                       background=card, 
-                       foreground=text, 
-                       fieldbackground=card, 
-                       rowheight=40,
-                       borderwidth=0,
-                       relief=tk.FLAT)
-        style.configure("Treeview.Heading", 
-                       background=bg, 
-                       foreground=text_secondary, 
-                       font=("Segoe UI Variable", 10, "bold"), 
-                       padding=(12, 10),
-                       borderwidth=0)
-        style.map("Treeview", 
-                  background=[("selected", primary)],
-                  foreground=[("selected", "white")])
-        style.map("Treeview.Heading",
-                  background=[("active", bg)])
-
-    def _build_ui(self) -> None:
-        main = ttk.Frame(self.root, padding=(32, 28, 32, 28))
-        main.pack(fill=tk.BOTH, expand=True)
-
-        header_card = ttk.Frame(main, style="Card.TFrame")
-        header_card.pack(fill=tk.X, pady=(0, 24))
-        header_inner = ttk.Frame(header_card, padding=(28, 24, 28, 24))
-        header_inner.pack(fill=tk.X)
-        
-        ttk.Label(
-            header_inner,
-            text="Premier League Player Stats",
-            style="Header.TLabel",
-        ).pack(anchor=tk.W)
-        
-        ttk.Label(
-            header_inner,
-            text="Search players, view stats, and double-click any stat to see league rankings",
-            style="Subheader.TLabel",
-        ).pack(anchor=tk.W, pady=(6, 0))
-
-        search_card = ttk.Frame(main, style="Card.TFrame")
-        search_card.pack(fill=tk.X, pady=(0, 20))
-        search_inner = ttk.Frame(search_card, padding=(20, 16, 20, 16))
-        search_inner.pack(fill=tk.X)
-
-        ttk.Label(search_inner, text="Search Player:", font=("Segoe UI Variable", 11)).pack(side=tk.LEFT)
-        self.search_var = tk.StringVar()
-        self.search_entry = ttk.Entry(
-            search_inner, textvariable=self.search_var, width=60, font=("Segoe UI Variable", 11)
-        )
-        self.search_entry.pack(side=tk.LEFT, padx=16)
-        self.search_entry.bind("<KeyRelease>", lambda e: self._refresh_player_list())
-        self.search_entry.bind("<Return>", self._show_first_match)
-
-        ttk.Button(search_inner, text="Clear", command=self._clear_search).pack(side=tk.LEFT, padx=8)
-
-        content = ttk.PanedWindow(main, orient=tk.HORIZONTAL)
-        content.pack(fill=tk.BOTH, expand=True)
-
-        left_card = ttk.Frame(content, style="Card.TFrame")
-        content.add(left_card, weight=1)
-        left_inner = ttk.Frame(left_card, padding=(16, 16, 16, 16))
-        left_inner.pack(fill=tk.BOTH, expand=True)
-
-        list_header = ttk.Frame(left_inner)
-        list_header.pack(fill=tk.X, pady=(0, 12))
-        ttk.Label(list_header, text="Players", font=("Segoe UI Variable", 12, "bold")).pack(anchor=tk.W)
-
-        self.player_listbox = tk.Listbox(
-            left_inner, 
-            font=("Segoe UI Variable", 10), 
-            activestyle="dotbox", 
-            selectbackground="#4f46e5",
-            selectforeground="white",
-            borderwidth=0,
-            highlightthickness=1,
-            highlightbackground="#e2e8f0",
-            relief=tk.FLAT,
-            bg="white",
-            fg="#0f172a",
-            selectborderwidth=0,
-        )
-        self.player_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, ipady=8)
-        self.player_listbox.bind("<<ListboxSelect>>", self._on_player_select)
-
-        scrollbar = ttk.Scrollbar(left_inner, orient=tk.VERTICAL, command=self.player_listbox.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.player_listbox.config(yscrollcommand=scrollbar.set)
-
-        right_card = ttk.Frame(content, style="Card.TFrame")
-        content.add(right_card, weight=2)
-        right_inner = ttk.Frame(right_card, padding=(16, 16, 16, 16))
-        right_inner.pack(fill=tk.BOTH, expand=True)
-
-        stats_header = ttk.Frame(right_inner)
-        stats_header.pack(fill=tk.X, pady=(0, 12))
-        ttk.Label(stats_header, text="Player Statistics", font=("Segoe UI Variable", 12, "bold")).pack(anchor=tk.W)
-
-        columns = ("stat", "value")
-        self.stats_tree = ttk.Treeview(right_inner, columns=columns, show="headings", height=22)
-        self.stats_tree.heading("stat", text="Statistic")
-        self.stats_tree.heading("value", text="Value")
-        self.stats_tree.column("stat", width=280, anchor=tk.W)
-        self.stats_tree.column("value", width=160, anchor=tk.CENTER)
-        self.stats_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.stats_tree.bind("<Double-1>", self._on_stat_double_click)
-
-        stats_scroll = ttk.Scrollbar(right_inner, orient=tk.VERTICAL, command=self.stats_tree.yview)
-        stats_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.stats_tree.config(yscrollcommand=stats_scroll.set)
-
-        self.stats_tree.tag_configure("group", background="#f8fafc", font=("Segoe UI Variable", 10, "bold"), foreground="#475569")
-        self.stats_tree.tag_configure("row", font=("Segoe UI Variable", 10), background="#ffffff")
-        self.stats_tree.tag_configure("alt", font=("Segoe UI Variable", 10), background="#f8fafc")
-        self.stats_tree.tag_configure("highlight", background="#eef2ff", foreground="#4f46e5")
-
-    def _refresh_player_list(self) -> None:
-        term = self.search_var.get().strip().lower()
-        self.player_listbox.delete(0, tk.END)
-
-        filtered = []
-        for p in self.players:
-            name = p.get("Player", "")
-            squad = p.get("Squad", "")
-            if term in name.lower() or term in squad.lower():
-                filtered.append(p)
-
-        for display_idx, p in enumerate(filtered):
-            name = p.get("Player", "")
-            squad = p.get("Squad", "")
-            display = f"{name}  |  {squad}  |  {p.get('Pos', '')}"
-            self.player_listbox.insert(tk.END, display)
-            if display_idx % 2 == 0:
-                self.player_listbox.itemconfig(tk.END, background="#f8fafc")
-            else:
-                self.player_listbox.itemconfig(tk.END, background="#ffffff")
-
-        self._filtered_players = filtered
-
-    def _clear_search(self) -> None:
-        self.search_var.set("")
-        self._refresh_player_list()
-
-    def _show_first_match(self, event=None) -> None:
-        if not self._filtered_players:
-            return
-        self.player_listbox.selection_clear(0, tk.END)
-        self.player_listbox.selection_set(0)
-        self.player_listbox.activate(0)
-        self._on_player_select(None)
-
-    def _on_player_select(self, event) -> None:
-        selection = self.player_listbox.curselection()
-        if not selection or not hasattr(self, "_filtered_players"):
-            return
-
-        idx = selection[0]
-        if idx >= len(self._filtered_players):
-            return
-
-        player = self._filtered_players[idx]
-        self._display_stats(player)
-
-    def _on_stat_double_click(self, event) -> None:
-        selection = self.stats_tree.selection()
-        if not selection:
-            return
-
-        item = selection[0]
-        values = self.stats_tree.item(item, "values")
-        display_name = values[0].strip()
-
-        key = None
-        for k, v in DISPLAY_NAMES.items():
-            if v == display_name:
-                key = k
-                break
-
-        if key is None:
-            for k, v in GK_DISPLAY_NAMES.items():
-                if v == display_name:
-                    key = k
-                    break
-
-        if not key or key in ("Player",):
-            return
-
-        min_90s_threshold = _get_min_90s_threshold(self.players)
-        eligible_players = [p for p in self.players if _safe_float(p.get("90s", "0")) >= min_90s_threshold]
-
-        if key == "Rating":
-            sorted_players = sorted(
-                eligible_players,
-                key=lambda p: self.ratings.get(p["Player"].strip(), 0.0),
-                reverse=True,
-            )
-        else:
-            gk_directions = GK_SCORED_STATS.get("GK", {})
-            higher_is_better = gk_directions.get(key, True)
-            default_val = 0.0 if higher_is_better else float("inf")
+        for label, value in children:
+            row = ttk.Frame(self.body)
+            row.pack(fill=tk.X, pady=1)
             
-            sorted_players = sorted(
-                eligible_players,
-                key=lambda p: _safe_float(p.get(key, "0")) if key in p else default_val,
-                reverse=higher_is_better,
-            )
+            lbl = ttk.Label(row, text=label, width=25, anchor='w')
+            lbl.pack(side=tk.LEFT, padx=5)
+            
+            val_lbl = ttk.Label(row, text=str(value), anchor='e')
+            val_lbl.pack(side=tk.RIGHT, padx=5, fill=tk.X, expand=True)
 
-        win = tk.Toplevel(self.root)
-        win.title(f"All Players - {display_name}")
-        win.geometry("800x600")
-        win.configure(bg="#f1f5f9")
-
-        info_frame = ttk.Frame(win, padding=(24, 20, 24, 0))
-        info_frame.pack(fill=tk.X)
-
-        title_label = ttk.Label(
-            info_frame,
-            text=f"All Players — {display_name}",
-            font=("Segoe UI Variable", 16, "bold"),
-        )
-        title_label.pack(anchor=tk.W)
-
-        if key == "Rating":
-            subtitle = f"Sorted by team-adjusted overall rating (players with ≥ {min_90s_threshold:.1f} 90s)"
+    def toggle(self):
+        self.expanded = not self.expanded
+        symbol = "▼" if self.expanded else "▶"
+        self.header_btn.config(text=f"{symbol} {self._title}")
+        if self.expanded:
+            self.body.pack(fill=tk.X)
         else:
-            subtitle = f"Sorted by raw match data (players with ≥ {min_90s_threshold:.1f} 90s)"
-        sub_label = ttk.Label(info_frame, text=subtitle, font=("Segoe UI Variable", 9), foreground="#475569")
-        sub_label.pack(anchor=tk.W, pady=(4, 0))
+            self.body.pack_forget()
 
-        tree_frame = ttk.Frame(win, style="Card.TFrame")
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=24, pady=16)
 
-        cols = ("rank", "player", "squad", "value")
-        tree = ttk.Treeview(tree_frame, columns=cols, show="headings", height=22)
-        tree.heading("rank", text="#")
-        tree.heading("player", text="Player")
-        tree.heading("squad", text="Squad")
-        tree.heading("value", text=display_name)
-        tree.column("rank", width=60, anchor=tk.CENTER)
-        tree.column("player", width=280, anchor=tk.W)
-        tree.column("squad", width=220, anchor=tk.W)
-        tree.column("value", width=140, anchor=tk.CENTER)
-        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=8, pady=8)
-
-        scroll = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=tree.yview)
-        scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        tree.config(yscrollcommand=scroll.set)
-
-        tree.tag_configure("odd", background="#f8fafc")
-        tree.tag_configure("even", background="#ffffff")
-
-        for i, p in enumerate(sorted_players, start=1):
-            tag = "odd" if i % 2 == 1 else "even"
-            raw_value = p.get(key, "") if key != "Rating" else f"{self.ratings.get(p['Player'].strip(), 0.0):.1f}"
-            tree.insert(
-                "",
-                tk.END,
-                values=(i, p.get("Player", ""), p.get("Squad", ""), raw_value),
-                tags=(tag,),
-            )
-
-    def _display_stats(self, player: dict[str, str]) -> None:
-        for item in self.stats_tree.get_children():
-            self.stats_tree.delete(item)
-
-        player_rating = self.ratings.get(player["Player"].strip(), 0.0)
-        rating_display = f"{player_rating:.1f}/10"
-
-        is_first_row = True
-        row_index = 0
-        pos = _get_primary_position(player)
+class StatsPanel(ttk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
         
-        if pos == "GK" and player.get("GA"):
-            stat_groups = GK_STAT_GROUPS
-            display_names = {**DISPLAY_NAMES, **GK_DISPLAY_NAMES}
+        self.canvas = tk.Canvas(self, borderwidth=0, highlightthickness=0, background="#f8fafc")
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = ttk.Frame(self.canvas)
+        
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+        
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+        
+        for widget in (self.canvas, self.scrollable_frame):
+            widget.bind("<MouseWheel>", self._on_mousewheel)
+            widget.bind("<Button-4>", self._on_mousewheel)
+            widget.bind("<Button-5>", self._on_mousewheel)
+
+    def _on_mousewheel(self, event):
+        if sys.platform == 'win32':
+            self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         else:
-            stat_groups = STAT_GROUPS
-            display_names = DISPLAY_NAMES
+            if event.num == 4:
+                self.canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                self.canvas.yview_scroll(1, "units")
+
+    def show_player(self, player: dict):
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+            
+        name = player.get("name_stripped", player.get("Player", ""))
+        
+        name_lbl = ttk.Label(self.scrollable_frame, text=name, font=("Segoe UI", 16, "bold"))
+        name_lbl.pack(anchor='w', pady=(0, 5))
+        
+        is_gk = _get_primary_position(player) == "GK" and bool(player.get("GA"))
+        stat_groups = GK_STAT_GROUPS if is_gk else STAT_GROUPS
+        display_names = {**DISPLAY_NAMES, **GK_DISPLAY_NAMES} if is_gk else DISPLAY_NAMES
         
         for group_name, keys in stat_groups.items():
-            group_id = self.stats_tree.insert("", tk.END, values=(f"  {group_name}", ""), tags=("group",))
+            children = []
             for key in keys:
-                if key == "Rating":
-                    display = display_names.get(key, key)
-                    value = rating_display
-                    tag = "highlight" if is_first_row else ("alt" if row_index % 2 == 0 else "row")
-                    self.stats_tree.insert("", tk.END, values=(f"    {display}", value), tags=(tag,))
-                    is_first_row = False
-                    row_index += 1
-                elif key in player:
-                    display = display_names.get(key, key)
+                if key in player and player[key]:
                     value = player[key]
-                    tag = "highlight" if is_first_row else ("alt" if row_index % 2 == 0 else "row")
-                    self.stats_tree.insert("", tk.END, values=(f"    {display}", value), tags=(tag,))
-                    is_first_row = False
-                    row_index += 1
+                    children.append((display_names.get(key, key), value))
+            
+            if children:
+                group = CollapsibleGroup(self.scrollable_frame, group_name, children)
+                group.pack(fill=tk.X, pady=5)
 
 
-def load_or_calculate_ratings(players: list[dict[str, str]]) -> dict[str, float]:
-    csv_hash = _get_csv_hash()
-    cache_file = CACHE_PATH
-    ratings_version = "1.4"
+class StatsDashboard(ttk.Frame):
+    def __init__(self, parent, players: list[dict], yearly: dict):
+        super().__init__(parent)
+        self.pack(fill=tk.BOTH, expand=True)
+        
+        self.all_players = players
+        self.yearly_players = yearly
+        self.players = players
+        
+        self._filtered_players = list(self.players)
+        
+        self._setup_styles()
+        self._build_ui()
+        self._refresh_all()
+        
+    def _setup_styles(self):
+        style = ttk.Style(self)
+        style.theme_use('clam')
+        
+        style.configure("TFrame", background="#f8fafc")
+        style.configure("TLabel", background="#f8fafc", font=("Segoe UI", 10))
+        style.configure("Header.TLabel", font=("Segoe UI", 20, "bold"), background="#f8fafc")
+        style.configure("Subheader.TLabel", font=("Segoe UI", 10), foreground="#475569", background="#f8fafc")
+        style.configure("Card.TFrame", background="white", relief="solid", borderwidth=1)
+        style.configure("Card.TLabel", background="white")
+        
+        style.configure("Treeview", rowheight=28, font=("Segoe UI", 10))
+        style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
+        
+        style.configure("Header.TButton", font=("Segoe UI", 10, "bold"), foreground="#4f46e5")
 
-    if os.path.exists(cache_file):
+    def _build_ui(self):
+        main_frame = ttk.Frame(self, padding=20)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        header_card = ttk.Frame(main_frame, style="Card.TFrame", padding=20)
+        header_card.pack(fill=tk.X, pady=(0, 15))
+        ttk.Label(header_card, text="Premier League Player Stats", style="Header.TLabel").pack(anchor='w')
+        ttk.Label(header_card, text="Browse player statistics across seasons", style="Subheader.TLabel").pack(anchor='w')
+        
+        search_card = ttk.Frame(main_frame, style="Card.TFrame", padding=15)
+        search_card.pack(fill=tk.X, pady=(0, 15))
+        
+        ttk.Label(search_card, text="Search Player:").pack(side=tk.LEFT, padx=(0, 5))
+        self.search_var = tk.StringVar()
+        self.search_var.trace("w", self._on_search_changed)
+        self.search_entry = ttk.Entry(search_card, textvariable=self.search_var, width=30)
+        self.search_entry.pack(side=tk.LEFT, padx=(0, 15))
+        
+        ttk.Label(search_card, text="Period:").pack(side=tk.LEFT, padx=(15, 5))
+        self.year_var = tk.StringVar(value="All")
+        self.year_combo = ttk.Combobox(search_card, textvariable=self.year_var, values=["All", "2023", "2024", "2025"], state="readonly", width=10)
+        self.year_combo.pack(side=tk.LEFT)
+        self.year_combo.bind("<<ComboboxSelected>>", self._on_year_change)
+        
+        self.notebook = ttk.Notebook(main_frame)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+        
+        # Tab 1: Player Explorer
+        self.player_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.player_tab, text="Player Explorer")
+        
+        paned = ttk.PanedWindow(self.player_tab, orient=tk.HORIZONTAL)
+        paned.pack(fill=tk.BOTH, expand=True)
+        
+        list_frame = ttk.Frame(paned)
+        paned.add(list_frame, weight=1)
+        
+        self.player_tree = ttk.Treeview(list_frame, columns=("Name", "Pos", "Squad"), show="headings")
+        self.player_tree.heading("Name", text="Player")
+        self.player_tree.heading("Pos", text="Position")
+        self.player_tree.heading("Squad", text="Squad")
+        
+        self.player_tree.column("Name", width=200)
+        self.player_tree.column("Pos", width=80)
+        self.player_tree.column("Squad", width=150)
+        
+        tree_scroll = ttk.Scrollbar(list_frame, orient="vertical", command=self.player_tree.yview)
+        self.player_tree.configure(yscrollcommand=tree_scroll.set)
+        
+        self.player_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.player_tree.bind("<<TreeviewSelect>>", self._on_player_select)
+        
+        detail_frame = ttk.Frame(paned)
+        paned.add(detail_frame, weight=1)
+        
+        self.stats_panel = StatsPanel(detail_frame)
+        self.stats_panel.pack(fill=tk.BOTH, expand=True)
+        
+        # Tab 2: Heat Map
+        self.heat_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.heat_tab, text="Heat Map")
+        
+        self.heat_tree = ttk.Treeview(self.heat_tab, columns=("Player", "Pos", "Squad", "Gls/90", "Ast/90"), show="headings")
+        for col in ("Player", "Pos", "Squad", "Gls/90", "Ast/90"):
+            self.heat_tree.heading(col, text=col)
+            self.heat_tree.column(col, width=120 if col not in ("Player", "Squad") else 200)
+            
+        heat_scroll = ttk.Scrollbar(self.heat_tab, orient="vertical", command=self.heat_tree.yview)
+        self.heat_tree.configure(yscrollcommand=heat_scroll.set)
+        self.heat_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        heat_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Tab 3: Rankings
+        self.rank_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.rank_tab, text="Rankings")
+        
+        self.rank_tree = ttk.Treeview(self.rank_tab, columns=("#", "Player", "Pos", "Squad"), show="headings")
+        for col in ("#", "Player", "Pos", "Squad"):
+            self.rank_tree.heading(col, text=col)
+            self.rank_tree.column(col, width=120 if col not in ("Player", "Squad") else 200)
+            
+        rank_scroll = ttk.Scrollbar(self.rank_tab, orient="vertical", command=self.rank_tree.yview)
+        self.rank_tree.configure(yscrollcommand=rank_scroll.set)
+        self.rank_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        rank_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Tab 4: League Table
+        self.ltable_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.ltable_tab, text="League Table")
+        
+        self.ltable_tree = ttk.Treeview(self.ltable_tab, columns=LEAGUE_TABLE_TAB_HEADERS, show="headings")
+        for col in LEAGUE_TABLE_TAB_HEADERS:
+            self.ltable_tree.heading(col, text=col)
+            self.ltable_tree.column(col, width=100 if col != "Club" else 200)
+            
+        ltable_scroll = ttk.Scrollbar(self.ltable_tab, orient="vertical", command=self.ltable_tree.yview)
+        self.ltable_tree.configure(yscrollcommand=ltable_scroll.set)
+        self.ltable_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        ltable_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+    def _on_search_changed(self, *args):
+        if hasattr(self, '_search_after_id'):
+            self.after_cancel(self._search_after_id)
+        self._search_after_id = self.after(200, self._apply_search)
+
+    def _apply_search(self):
+        term = self.search_var.get().strip().lower()
+        if term:
+            self._filtered_players = [
+                p for p in self.players
+                if term in p.get("name_lower", "") or term in p.get("squad_lower", "")
+            ]
+        else:
+            self._filtered_players = list(self.players)
+        self._refresh_player_tree()
+
+    def _on_year_change(self, event=None):
+        year = self.year_var.get()
+        if year == "All":
+            self.players = self.all_players
+        else:
+            self.players = self.yearly_players.get(year, [])
+        
+        self._filtered_players = list(self.players)
+        self._refresh_all()
+
+    def _on_player_select(self, event=None):
+        selected = self.player_tree.selection()
+        if not selected:
+            return
+        item = self.player_tree.item(selected[0])
+        player_name = item['values'][0]
+        
+        player = next((p for p in self.players if p.get("name_stripped") == player_name), None)
+        if player:
+            self.stats_panel.show_player(player)
+
+    def _refresh_all(self):
+        self._refresh_player_tree()
+        self._refresh_heat_map()
+        self._refresh_rankings()
+        self._refresh_league_table()
+
+    def _refresh_player_tree(self):
+        self.player_tree.delete(*self.player_tree.get_children())
+        sorted_players = sorted(self._filtered_players, key=lambda p: p.get("name_stripped", ""))
+        
+        for p in sorted_players:
+            name = p.get("name_stripped", "")
+            self.player_tree.insert("", tk.END, values=(
+                name, _get_primary_position(p), p.get("Squad", "")
+            ))
+
+    def _refresh_heat_map(self):
+        self.heat_tree.delete(*self.heat_tree.get_children())
+        if not self.players:
+            return
+            
+        sorted_players = sorted(self.players, key=lambda p: _safe_float(p.get("Gls_P90", "0")), reverse=True)
+        
+        for p in sorted_players:
+            name = p.get("name_stripped", "")
+            gls = _safe_float(p.get("Gls_P90", "0"))
+            ast = _safe_float(p.get("Ast_P90", "0"))
+            
+            intensity = gls + ast
+            max_val = max((_safe_float(p.get("Gls_P90", "0")) + _safe_float(p.get("Ast_P90", "0")) for p in self.players), default=1.0)
+            norm = intensity / max_val if max_val > 0 else 0
+            
+            if norm > 0.75:
+                tag = "heat_high"
+            elif norm > 0.4:
+                tag = "heat_med"
+            else:
+                tag = "heat_low"
+                
+            self.heat_tree.insert("", tk.END, values=(
+                name, _get_primary_position(p), p.get("Squad", ""),
+                f"{gls:.2f}", f"{ast:.2f}"
+            ), tags=(tag,))
+            
+        self.heat_tree.tag_configure("heat_high", background="#0047b3", foreground="white")
+        self.heat_tree.tag_configure("heat_med", background="#668df2", foreground="white")
+        self.heat_tree.tag_configure("heat_low", background="#eef2ff", foreground="black")
+
+    def _refresh_rankings(self):
+        self.rank_tree.delete(*self.rank_tree.get_children())
+        if not self.players:
+            return
+            
+        sorted_players = sorted(self.players, key=lambda p: p.get("name_stripped", ""))
+        seen = set()
+        
+        idx = 1
+        for p in sorted_players:
+            name = p.get("name_stripped", "")
+            if name and name not in seen:
+                seen.add(name)
+                self.rank_tree.insert("", tk.END, values=(
+                    idx, name, _get_primary_position(p), p.get("Squad", "")
+                ))
+                idx += 1
+
+    def _refresh_league_table(self):
+        self.ltable_tree.delete(*self.ltable_tree.get_children())
+        
+        clubs = [
+            "Bournemouth", "Arsenal", "Aston Villa", "Brentford", "Brighton",
+            "Chelsea", "Coventry", "Palace", "Everton", "Fulham",
+            "Hull", "Ipswich Town", "Leeds", "Liverpool", "Man City",
+            "Man United", "Newcastle", "Nottm Forest", "Sunderland", "Spurs"
+        ]
+        
+        for rank, club in enumerate(clubs, start=1):
+            qual = _league_table_qualification(rank)
+            tag = ""
+            if "Champions League" in qual: tag = "ucl"
+            elif "Europa League" in qual: tag = "uel"
+            elif "Relegation" in qual: tag = "rel"
+            
+            self.ltable_tree.insert("", tk.END, values=(
+                club, "0", "0", "0", "0", "0", "0", "0", "0"
+            ), tags=(tag,))
+            
+        self.ltable_tree.tag_configure("ucl", background="#dcfce7")
+        self.ltable_tree.tag_configure("uel", background="#dbeafe")
+        self.ltable_tree.tag_configure("rel", background="#fee2e2")
+
+
+class LoadingDialog(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Loading")
+        self.geometry("480x160")
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+        
+        self.protocol("WM_DELETE_WINDOW", lambda: None)
+        
+        frame = ttk.Frame(self, padding=30)
+        frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.status_label = ttk.Label(frame, text="Loading player data...", font=("Segoe UI", 12, "bold"))
+        self.status_label.pack(pady=(0, 15))
+        
+        self.progress = ttk.Progressbar(frame, orient="horizontal", length=300, mode="determinate")
+        self.progress.pack(pady=(0, 10))
+        
+        self.pct_label = ttk.Label(frame, text="0%", font=("Segoe UI", 10))
+        self.pct_label.pack()
+        
+        self.center()
+
+    def center(self):
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"+{x}+{y}")
+
+    def update_progress(self, value):
+        if value is None:
+            return
+        self.progress['value'] = value * 100
+        self.pct_label.config(text=f"{int(value * 100)}%")
+        self.update_idletasks()
+
+
+class LoaderThread(threading.Thread):
+    def __init__(self, progress_callback, finish_callback, error_callback):
+        super().__init__()
+        self.progress_callback = progress_callback
+        self.finish_callback = finish_callback
+        self.error_callback = error_callback
+        self.daemon = True
+
+    def run(self):
         try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                cache = json.load(f)
-            if cache.get("csv_hash") == csv_hash and cache.get("version") == ratings_version:
-                return cache.get("ratings", {})
-        except (json.JSONDecodeError, IOError):
-            pass
-
-    splash_root = tk.Tk()
-    splash_root.withdraw()
-
-    splash = tk.Toplevel(splash_root)
-    splash.title("Loading")
-    splash.geometry("480x160")
-    splash.resizable(False, False)
-    splash.configure(bg="#f1f5f9")
-
-    main = ttk.Frame(splash, padding=(40, 32, 40, 32))
-    main.pack(fill=tk.BOTH, expand=True)
-
-    ttk.Label(main, text=f"Calculating ratings for {len(players)} players...", font=("Segoe UI Variable", 12)).pack(pady=(0, 20))
-    progress = ttk.Progressbar(main, length=400, mode="determinate")
-    progress.pack(pady=(0, 12))
-    status_label = ttk.Label(main, text="0%", font=("Segoe UI Variable", 10), foreground="#475569")
-    status_label.pack()
-
-    splash.update()
-
-    def progress_callback(fraction: float) -> None:
-        progress["value"] = fraction * 100
-        status_label.config(text=f"{fraction * 100:.0f}%")
-        splash.update_idletasks()
-
-    ratings = calculate_ratings(players, progress_callback)
-    ratings = apply_team_adjustment(ratings, players)
-
-    splash.destroy()
-    splash_root.destroy()
-
-    try:
-        with open(cache_file, "w", encoding="utf-8") as f:
-            json.dump({"csv_hash": csv_hash, "version": ratings_version, "ratings": ratings}, f)
-    except IOError:
-        pass
-
-    return ratings
+            players, yearly = load_all_players(progress_callback=self.progress_callback)
+            self.progress_callback(1.0)
+            self.finish_callback(players, yearly)
+        except Exception as e:
+            self.error_callback(str(e))
 
 
-def main() -> None:
-    players = load_all_players()
-
-    ratings = load_or_calculate_ratings(players)
-
+def load_or_show_dashboard():
     root = tk.Tk()
-    app = StatsDashboard(root, ratings)
+    root.title("Premier League Player Stats")
+    root.geometry("1360x860")
+    root.withdraw()
+    
+    dialog = LoadingDialog(root)
+    
+    def on_progress(f=None):
+        root.after(0, dialog.update_progress, f)
+        
+    def on_finished(players, yearly):
+        def _show():
+            dialog.destroy()
+            root.deiconify()
+            StatsDashboard(root, players, yearly)
+        root.after(0, _show)
+        
+    def on_error(err):
+        def _show_err():
+            dialog.destroy()
+            messagebox.showerror("Error", f"Error loading data: {err}")
+            root.destroy()
+        root.after(0, _show_err)
+        
+    thread = LoaderThread(on_progress, on_finished, on_error)
+    thread.start()
+    
     root.mainloop()
 
 
 if __name__ == "__main__":
-    main()
+    load_or_show_dashboard()

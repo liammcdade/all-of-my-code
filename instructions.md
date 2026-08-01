@@ -1,472 +1,364 @@
-Python Code Quality Ruleset
+# Python Engineering Standards
 
-Use these rules for all generated or edited code. The goal is:
+These standards apply to **all generated, modified, and reviewed Python code**.
 
-maximum readability
-low nesting
-modular structure
-predictable behavior
-fast debugging
-easy future expansion
-1. Maximum Nesting Rule
-Hard limit
-Never nest more than 3 levels deep.
+## Core Principles
 
-Bad:
+Every solution must prioritize, in this order:
 
-if a:
-    for x in items:
-        if x.valid:
-            while x.running:
-                ...
+1. Correctness
+2. Readability
+3. Maintainability
+4. Modularity
+5. Testability
+6. Predictable behavior
+7. Performance (only after correctness)
 
-Good:
+Never sacrifice readability for cleverness.
 
-if not a:
-    return
+---
 
-for item in items:
-    process_item(item)
-2. Prefer Early Returns
+## 1. Maximum Nesting
 
-Avoid giant conditional pyramids.
+**Rule**
 
-Bad:
+- Never exceed **3 levels of indentation**.
+- Use helper functions, guard clauses, or early returns instead.
 
-def process(team):
-    if team:
-        if team.active:
-            if team.points > 10:
-                return calculate(team)
+---
 
-Good:
+## 2. Prefer Guard Clauses
 
-def process(team):
-    if not team:
-        return None
+Replace nested condition pyramids with early returns.
 
-    if not team.active:
-        return None
+### Good
 
-    if team.points <= 10:
-        return None
+```python
+if not team:
+    return None
 
-    return calculate(team)
-3. One Function = One Responsibility
+if not team.active:
+    return None
 
-Each function should do ONE thing only.
+return calculate(team)
+3. Single Responsibility Principle
 
-Bad:
+Every function should perform one clearly defined task.
 
-def simulate():
-    load_data()
-    simulate_matches()
-    update_table()
-    print_results()
-    save_csv()
+Functions should not simultaneously:
 
-Good:
+Load data
+Simulate
+Calculate
+Save files
+Print output
 
-def run_simulation():
-    data = load_data()
-    results = simulate_matches(data)
-    table = build_table(results)
+Break work into dedicated functions.
 
-    export_results(table)
-4. Function Size Limits
-Preferred
-10–40 lines per function
-Maximum
-60 lines absolute maximum
+4. Function Size
+
+Preferred:
+
+10–40 lines
+
+Maximum:
+
+60 lines
 
 If longer:
 
-split into helper functions
-5. File Structure Standard
+Split into helper functions.
+Remove duplicated logic.
+Simplify branching.
+5. Module Size
 
-Every Python file should follow this order:
+Preferred:
 
-# Imports
-# Constants
-# Data Models
-# Utility Functions
-# Core Logic
-# Simulation Engine
-# Statistics
-# Output
-# Main Entry Point
-6. No Magic Numbers
+Under 500 lines
 
-Every repeated number becomes a named constant.
+Maximum:
 
-Bad:
+1000 lines however if the file has multiple segments each segment can be max 500 and 500 x the amount of segment
 
-home_advantage = 33.8
+Split larger files into modules or packages.
 
-Good:
+6. Standard File Layout
+Imports
+Constants
+Enums
+Dataclasses
+Type Aliases
+Configuration
+Utilities
+Validation
+Core Logic
+Simulation Engine
+Statistics
+Formatting / Display
+Main Entry Point
+7. Imports
 
-HOME_ADVANTAGE_ELO = 33.8
+Order imports as:
 
-Bad:
+Standard library
+Third-party packages
+Local project imports
 
-if diff > 180:
+Alphabetize each section.
 
-Good:
+Never use wildcard imports.
 
-DRAW_BALANCE_THRESHOLD = 180
-
-if diff > DRAW_BALANCE_THRESHOLD:
-7. No Duplicate Logic
-
-If code appears twice:
-
-extract a function
-
-Bad:
-
-table[home]["GF"] += hg
-table[home]["GA"] += ag
-
-table[away]["GF"] += ag
-table[away]["GA"] += hg
-
-Repeated elsewhere again.
-
-Good:
-
-apply_goals(table, home, away, hg, ag)
-8. Naming Rules
+8. Naming
 Variables
-snake_case only
 
-Good:
+Use snake_case.
 
-home_expected_goals
-
-Bad:
-
-homeExpectedGoals
-hgx
 Functions
 
-Must start with verbs.
+Use verbs.
 
-Good:
+Examples:
 
-simulate_match()
-update_elo()
-calculate_table()
+calculate_rating
+simulate_match
+update_table
+Classes
 
-Bad:
+Use PascalCase.
 
-match_simulation()
-elo()
-table()
+Examples:
+
+TeamStats
+SimulationContext
 Constants
 
-ALL_CAPS only.
+Use UPPER_SNAKE_CASE.
 
-HOME_ADVANTAGE
-MAX_GOALS
-DEFAULT_ELO
-9. Avoid Giant Dictionaries in Main Logic
+9. Type Hints
 
-Move large datasets into:
+Every public function must use type hints.
 
-separate files
-JSON
-CSV
-config modules
+Type all collections.
 
-Bad:
+Avoid untyped code.
 
-elo = {
-    ...
-    200 lines
-}
+10. Docstrings
 
-Good:
+Public modules, classes, and functions require docstrings.
 
-elo = load_elo_ratings()
-10. No Hidden State Mutation
+Use Google or NumPy style consistently.
 
-Functions should clearly show what changes.
+11. Dataclasses
 
-Bad:
+Prefer dataclasses for structured data.
 
-simulate_match()
+Use:
 
-Secretly edits:
+@dataclass(slots=True)
 
-elo
-table
-injuries
-stats
+where appropriate.
 
-Good:
+Avoid deeply nested dictionaries.
 
-hg, ag = simulate_match(home, away)
+12. Constants
 
-update_table(table, home, away, hg, ag)
-update_elo(ratings, home, away, hg, ag)
-11. Keep Simulation Pure
+Replace repeated or unexplained numbers with named constants.
 
-Simulation functions should:
+Never leave magic numbers in code.
 
-return values
-not print
-not save files
-not mutate globals
+13. Configuration
 
-Bad:
+All configurable values belong in a single configuration module or dataclass.
 
-def simulate():
-    print("Running")
+Never scatter configuration throughout the project.
 
-Good:
+14. DRY
 
-def simulate():
-    return results
-12. Main Loop Must Stay Small
+Never duplicate logic.
 
-Bad:
+Extract repeated code into reusable helpers.
 
-for sim in range(sims):
-    ...
-    300 lines
+15. Explicit Side Effects
 
-Good:
+Functions should make mutations obvious.
 
-for _ in range(NUM_SIMULATIONS):
-    result = run_single_simulation()
-    update_statistics(result)
-13. Separate Calculation From Display
+Prefer returning values over modifying external state.
 
-Never mix math and printing.
+16. Pure Functions
 
-Bad:
+Calculation functions should:
 
-print(np.mean(points))
+Return values
+Avoid printing
+Avoid file I/O
+Avoid modifying globals
+17. Separate Logic from Presentation
 
-Good:
+Business logic must never be mixed with UI or console output.
 
-average_points = calculate_average(points)
-display_average_points(average_points)
-14. Avoid Deeply Coupled Functions
-
-Functions should require minimal outside knowledge.
-
-Bad:
-
-simulate_match(home, away)
-
-Depends on:
-
-global elo
-global injuries
-global form
-global constants
-
-Good:
-
-simulate_match(
-    home,
-    away,
-    elo,
-    injuries,
-    form,
-    settings
-)
-15. Use Dataclasses for Structured Data
-
-Bad:
-
-team["GF"]
-team["GA"]
-team["Pts"]
-
-Good:
-
-@dataclass
-class TeamStats:
-    goals_for: int
-    goals_against: int
-    points: int
-16. No 1000-Line Files
-Preferred
-under 500 lines
-Maximum
-800 lines
-
-17. Every Section Needs a Clear Purpose
-
-Bad:
-
-# random stuff
-
-Good:
-
-# Monte Carlo Simulation Engine
-18. Limit Arguments
-Preferred
-3–5 arguments
-
-If more:
-
-use config objects/dataclasses
-
-Bad:
-
-simulate_match(
-    home,
-    away,
-    elo,
-    injuries,
-    form,
-    rd,
-    settings,
-    weather,
-    referee
-)
-
-Good:
-
-simulate_match(home, away, simulation_context)
-19. Use Typed Functions
-
-Always use type hints.
-
-Good:
-
-def calculate_probability(diff: float) -> float:
-20. No Massive Print Blocks
-
-Move output formatting into dedicated functions.
-
-Bad:
-
-print(f"...")
-print(f"...")
-print(f"...")
-
-Good:
-
-display_table(results)
-display_probabilities(probabilities)
-21. Config Must Be Centralized
-
-All tunable values belong in one place.
-
-Good:
-
-SIMULATION_SETTINGS = {
-    "home_advantage": 33.8,
-    "draw_factor": 0.25,
-    "k_factor": 25,
-}
-22. Comments Explain WHY, Not WHAT
-
-Bad:
-
-# add goals
-team["GF"] += goals
-
-Good:
-
-# Slight inflation improves realism for high-variance matches
-23. Prefer Composition Over Giant Functions
-
-Bad:
-
-run_everything()
-
-Good:
-
-results = simulate_season()
-stats = calculate_statistics(results)
-display_results(stats)
-24. Keep Global Variables Minimal
+18. Global State
 
 Allowed globals:
 
-constants
-configuration
-immutable lookup data
+Constants
+Immutable lookup tables
+Configuration
 
-Avoid mutable global state.
+Avoid mutable global variables.
 
-25. Validate Inputs
+19. Parameters
 
-Bad:
+Preferred:
 
-def poisson_random(lam):
+3–5 parameters
 
-Good:
+If more are required, use a dataclass or context object.
 
-def poisson_random(lam: float) -> int:
-    if lam < 0:
-        raise ValueError("Lambda cannot be negative")
-26. Performance Rules
+20. Validation
+
+Validate all public inputs.
+
+Raise meaningful exceptions for invalid data.
+
+21. Error Handling
+
+Catch only expected exceptions.
+
+Never use:
+
+except:
+
+Always catch specific exception types.
+
+22. Logging
+
+Use the logging module for diagnostics.
+
+Use print() only for user-facing output.
+
+23. Comments
+
+Comments explain why, never what.
+
+Avoid redundant comments.
+
+24. Performance
 
 Optimize only after:
 
-correctness
-readability
-modularity
+Correctness
+Readability
+Profiling
 
-Do not prematurely optimize.
+Never prematurely optimize.
 
-27. Numba Rules
+25. Numba
 
-Only use @numba.jit on:
+Only use @numba.jit or @numba.njit for isolated numeric hot paths.
 
-pure numeric functions
-isolated hot paths
+Never decorate orchestration, UI, or I/O code.
 
-Never on:
+26. Composition
 
-giant orchestration functions
-print logic
-dictionary-heavy code
-28. Avoid Long Chains
+Prefer many small functions over one large function.
 
-Bad:
+27. Data Structures
 
-table[team]["stats"]["attack"]["xg"]
+Prefer classes or dataclasses over deeply nested dictionaries.
 
-Good:
+28. Single Source of Truth
 
-team_stats.attack_xg
-29. One Source of Truth
+Avoid storing the same information in multiple places.
 
-Avoid duplicated data.
+29. Testing
 
-Bad:
+Write deterministic, testable functions.
 
-elo_attack
-elo_defense
-team_strength
-power_rating
+Prefer dependency injection over global state.
 
-Without synchronization.
+30. PEP 8
 
-30. Final Clean Code Checklist
+Follow PEP 8 unless project requirements explicitly state otherwise.
 
-Before finishing:
+Use:
 
-max nesting ≤ 3
-no duplicated blocks
-functions small
-globals minimized
-constants extracted
-typed functions
-modular structure
-no giant loops
-no giant functions
-calculations separated from output
-no hidden mutations
-descriptive names only
-simulation logic isolated
-reusable helpers extracted
-config centralized
-comments explain reasoning only
+pathlib
+f-strings
+context managers
+enumerate()
+zip()
+
+Avoid unnecessary complexity.
+
+31. Modern Python
+
+Prefer modern language features:
+
+pathlib.Path
+dataclass(slots=True)
+Enum
+StrEnum
+match
+Union operator (|)
+Self
+
+when appropriate.
+
+32. Security
+
+Never:
+
+use eval()
+use exec()
+hardcode secrets
+trust external input
+
+Validate all user input.
+
+33. Resource Management
+
+Always use context managers.
+
+Example:
+
+with open(path) as file:
+    ...
+34. Deterministic Simulations
+
+Support reproducibility through explicit random seeds.
+
+35. API Design
+
+Functions should have predictable inputs, outputs, and behavior.
+
+Avoid surprising side effects.
+
+36. Final Checklist
+
+Before completing any code:
+
+Correctness verified
+PEP 8 compliant
+Max nesting ≤ 3
+Small functions
+No duplicated logic
+No hidden mutations
+No magic numbers
+Typed functions
+Dataclasses where appropriate
+Pure calculations
+Modular design
+Descriptive names
+Proper error handling
+Logging instead of debug prints
+Configuration centralized
+Easy to extend
+Easy to test
+Modern Python practices
+No dead or unused code
+Guiding Principle
+
+Write code as if it will be maintained by another experienced engineer five years from now. Favor clarity, correctness, modularity, and long-term maintainability over clever or overly concise solutions.
+
+
+This format is ideal for a `README.md` or `PYTHON_STANDARDS.md` because it uses proper Markdown headings, lists, co
