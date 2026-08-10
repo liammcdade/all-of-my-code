@@ -4,6 +4,7 @@ import random
 import sys
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -96,7 +97,20 @@ TOTAL_HOSTS = 6
 TOTAL_DIRECT = 40
 PLAYOFF_WINNERS = 2
 TOTAL_TEAMS = 48
-NUM_SIMULATIONS = 1000
+NUM_SIMULATIONS = 10000
+
+UEFA_PARTICIPATING = False
+
+UEFA_TOTAL_HOSTS = sum(cfg["auto_hosts"] for conf, cfg in CONFEDERATIONS.items() if conf == "UEFA")
+UEFA_TOTAL_DIRECT = sum(cfg["remaining_direct_slots"] for conf, cfg in CONFEDERATIONS.items() if conf == "UEFA")
+
+if not UEFA_PARTICIPATING:
+    TOTAL_HOSTS_ACTIVE = TOTAL_HOSTS - UEFA_TOTAL_HOSTS
+    TOTAL_DIRECT_ACTIVE = TOTAL_DIRECT - UEFA_TOTAL_DIRECT
+else:
+    TOTAL_HOSTS_ACTIVE = TOTAL_HOSTS
+    TOTAL_DIRECT_ACTIVE = TOTAL_DIRECT
+TOTAL_TEAMS_ACTIVE = TOTAL_HOSTS_ACTIVE + TOTAL_DIRECT_ACTIVE + PLAYOFF_WINNERS
 ELO_RATINGS: Dict[str, int] = {
     "Spain": 2259, "Argentina": 2173, "England": 2125, "France": 2070, "Colombia": 2003,
     "Portugal": 1995, "Brazil": 1993, "Netherlands": 1971, "Norway": 1951, "Belgium": 1948,
@@ -161,6 +175,39 @@ AFC_RANKING_ORDER = [
     "Singapore", "Maldives", "Nepal", "Pakistan", "Bangladesh", "Sri Lanka",
     "Cambodia", "Mongolia", "Bhutan", "Macau", "Laos", "Brunei", "Timor-Leste", "Guam",
 ]
+
+WORLD_CUP_2026_TEAMS = {
+    "Austria", "Belgium", "Bosnia and Herzegovina", "Croatia", "Czech Republic", "England",
+    "France", "Germany", "Netherlands", "Norway", "Portugal", "Scotland", "Spain",
+    "Sweden", "Switzerland", "Türkiye",
+    "Argentina", "Brazil", "Colombia", "Ecuador", "Paraguay", "Uruguay",
+    "Algeria", "Cape Verde", "DR Congo", "Egypt", "Ghana", "Ivory Coast",
+    "Morocco", "Senegal", "South Africa", "Tunisia",
+    "Australia", "Iran", "Iraq", "Japan", "Jordan", "Qatar", "Saudi Arabia",
+    "South Korea", "Uzbekistan",
+    "Canada", "Curaçao", "Haiti", "Mexico", "Panama", "United States",
+    "New Zealand",
+}
+ALL_HISTORICAL_WORLD_CUP_TEAMS = {
+    "Austria", "Belgium", "Bosnia and Herzegovina", "Bulgaria", "Croatia",
+    "Czech Republic", "Denmark", "England", "France", "Germany", "Greece",
+    "Hungary", "Iceland", "Israel", "Italy", "Netherlands", "Northern Ireland",
+    "Norway", "Poland", "Portugal", "Republic of Ireland", "Romania", "Russia",
+    "Scotland", "Serbia", "Slovakia", "Slovenia", "Spain", "Sweden",
+    "Switzerland", "Turkey", "Ukraine", "Wales",
+    "Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador",
+    "Paraguay", "Peru", "Uruguay",
+    "Canada", "Costa Rica", "Cuba", "Curaçao", "El Salvador", "Haiti",
+    "Honduras", "Jamaica", "Mexico", "Panama", "Trinidad and Tobago",
+    "United States",
+    "Algeria", "Angola", "Cape Verde", "Cameroon", "DR Congo", "Egypt",
+    "Ghana", "Ivory Coast", "Morocco", "Nigeria", "Senegal", "South Africa",
+    "Togo", "Tunisia",
+    "Australia", "China", "Indonesia", "Iran", "Iraq", "Japan", "Jordan",
+    "Kuwait", "North Korea", "Qatar", "Saudi Arabia", "South Korea",
+    "United Arab Emirates", "Uzbekistan",
+    "New Zealand",
+}
 
 
 @dataclass(slots=True)
@@ -239,7 +286,7 @@ def sort_records(records: Dict[str, TeamRecord]) -> List[TeamRecord]:
 def resolve_elo(name: str) -> int:
     if name in ELO_RATINGS:
         return ELO_RATINGS[name]
-    aliases = {"Republic of Ireland": "Ireland", "DR Congo": "Dem. Rep. of Congo", "Republic of the Congo": "Congo"}
+    aliases = {"Republic of Ireland": "Ireland", "DR Congo": "Dem. Rep. of Congo", "Republic of the Congo": "Congo", "Türkiye": "Turkey"}
     alias = aliases.get(name)
     return ELO_RATINGS.get(alias, DEFAULT_ELO) if alias else DEFAULT_ELO
 
@@ -524,8 +571,8 @@ def simulate_caf_2030_format() -> Tuple[List[str], List[str]]:
 
 
 def simulate_intercontinental_playoff(qualifiers: List[str]) -> List[str]:
-    if len(qualifiers) != 6:
-        raise ValueError("Intercontinental playoff requires exactly 6 teams")
+    if len(qualifiers) < 4:
+        raise ValueError("Intercontinental playoff requires at least 4 teams")
     teams = [TeamRecord(name, "InterConfederation", elo=resolve_elo(name)) for name in qualifiers]
     teams.sort(key=lambda t: t.elo, reverse=True)
 
@@ -535,16 +582,31 @@ def simulate_intercontinental_playoff(qualifiers: List[str]) -> List[str]:
             if hg != ag:
                 return a if hg > ag else b
         return random.choice([a, b])
-    return [knockout(teams[0], knockout(teams[2], teams[3])).name,
-            knockout(teams[1], knockout(teams[4], teams[5])).name]
+
+    if len(teams) == 6:
+        return [knockout(teams[0], knockout(teams[2], teams[3])).name,
+                knockout(teams[1], knockout(teams[4], teams[5])).name]
+    if len(teams) == 5:
+        return [knockout(teams[0], knockout(teams[2], teams[3])).name,
+                knockout(teams[1], teams[4]).name]
+    if len(teams) == 4:
+        return [knockout(teams[0], teams[3]).name,
+                knockout(teams[1], teams[2]).name]
+
+    winners = []
+    for i in range(0, len(teams) - 1, 2):
+        winners.append(knockout(teams[i], teams[i + 1]))
+    if len(teams) % 2 == 1:
+        winners.append(teams[-1])
+    return winners[:2]
 
 
 def validate_totals() -> bool:
-    total_hosts = sum(cfg["auto_hosts"] for cfg in CONFEDERATIONS.values())
-    total_direct = sum(cfg["remaining_direct_slots"] for cfg in CONFEDERATIONS.values())
+    total_hosts = TOTAL_HOSTS_ACTIVE
+    total_direct = TOTAL_DIRECT_ACTIVE
     total = total_hosts + total_direct + PLAYOFF_WINNERS
-    logger.info("Slot allocation verified: %s/%s", total, TOTAL_TEAMS)
-    return total == TOTAL_TEAMS
+    logger.info("Slot allocation verified: %s/%s", total, TOTAL_TEAMS_ACTIVE)
+    return total == TOTAL_TEAMS_ACTIVE
 
 
 def run_qualifying_simulation(seed: int | None = None) -> Dict[str, List[str]]:
@@ -557,14 +619,17 @@ def run_qualifying_simulation(seed: int | None = None) -> Dict[str, List[str]]:
         "AFC_playoff": [], "CONCACAF_playoff": [], "OFC_playoff": [],
     }
     for conf, hosts in HOST_NATIONS.items():
+        if conf == "UEFA" and not UEFA_PARTICIPATING:
+            continue
         qualified[conf].extend(hosts)
     conmebol_non_hosts = [n for n in CONFEDERATIONS["CONMEBOL"]["member_nations"] if n not in HOST_NATIONS["CONMEBOL"]]
     direc, playoff = simulate_conmebol_qualifying(conmebol_non_hosts)
     qualified["CONMEBOL"].extend(direc)
     qualified["CONMEBOL_playoff"] = playoff
-    uefa_direct, uefa_playoff = simulate_uefa_swiss_format(CONFEDERATIONS["UEFA"]["member_nations"])
-    qualified["UEFA"].extend(uefa_direct)
-    qualified["UEFA_playoff"] = uefa_playoff
+    if UEFA_PARTICIPATING:
+        uefa_direct, uefa_playoff = simulate_uefa_swiss_format(CONFEDERATIONS["UEFA"]["member_nations"])
+        qualified["UEFA"].extend(uefa_direct)
+        qualified["UEFA_playoff"] = uefa_playoff
     concacaf_direct, concacaf_playoff = simulate_concacaf_2030_format()
     qualified["CONCACAF"].extend(concacaf_direct)
     qualified["CONCACAF_playoff"] = concacaf_playoff
@@ -585,27 +650,54 @@ def run_qualifying_simulation(seed: int | None = None) -> Dict[str, List[str]]:
         qualified["AFC_playoff"][0],
         qualified["CONCACAF_playoff"][0],
         qualified["OFC_playoff"][0],
-        qualified["UEFA_playoff"][0],
     ]
+    if UEFA_PARTICIPATING:
+        playoff_teams.append(qualified["UEFA_playoff"][0])
     qualified["Intercontinental"] = simulate_intercontinental_playoff(playoff_teams)
     return qualified
 
 
-def run_monte_carlo(num_sims: int, seed: int | None = None) -> Dict[str, float]:
-    all_teams = sorted({t for cfg in CONFEDERATIONS.values() for t in cfg["member_nations"]})
+def run_monte_carlo(num_sims: int, seed: int | None = None) -> Tuple[Dict[str, float], int, Dict[str, float], int, float]:
+    if UEFA_PARTICIPATING:
+        all_teams = sorted({t for cfg in CONFEDERATIONS.values() for t in cfg["member_nations"]})
+        never_wc_teams = NEVER_WORLD_CUP_TEAMS_FULL
+        exact_match_set = WORLD_CUP_2026_TEAMS
+        confs_to_count = ("UEFA", "CAF", "CONMEBOL", "AFC", "CONCACAF", "OFC")
+    else:
+        all_teams = sorted({t for conf, cfg in CONFEDERATIONS.items() if conf != "UEFA" for t in cfg["member_nations"]})
+        never_wc_teams = [t for t in NEVER_WORLD_CUP_TEAMS_FULL if t not in CONFEDERATIONS["UEFA"]["member_nations"]]
+        exact_match_set = {t for t in WORLD_CUP_2026_TEAMS if t not in CONFEDERATIONS["UEFA"]["member_nations"]}
+        confs_to_count = ("CAF", "CONMEBOL", "AFC", "CONCACAF", "OFC")
+
     qualified_count: Dict[str, int] = {name: 0 for name in all_teams}
+    exact_match_count = 0
+    never_qualified_count: Dict[str, int] = {name: 0 for name in never_wc_teams}
+    debutant_sim_count = 0
+    total_debutants = 0
     if seed is not None:
         random.seed(seed)
-    for i in range(num_sims):
+    for i in tqdm(range(num_sims), desc="Monte Carlo", unit="sim"):
         results = run_qualifying_simulation()
-        for conf in ("UEFA", "CAF", "CONMEBOL", "AFC", "CONCACAF", "OFC"):
+        sim_qualified = set()
+        for conf in confs_to_count:
             for team in results.get(conf, []):
                 qualified_count[team] += 1
+                sim_qualified.add(team)
         for team in results.get("Intercontinental", []):
             qualified_count[team] += 1
-        if (i + 1) % 100 == 0 or (i + 1) == num_sims:
-            logger.info("Progress: %d/%d (%.1f%%)", i + 1, num_sims, (i + 1) / num_sims * 100)
-    return {name: (count / num_sims) * 100 for name, count in qualified_count.items()}
+            sim_qualified.add(team)
+        if sim_qualified == exact_match_set:
+            exact_match_count += 1
+        debutants_in_sim = 0
+        for team in never_wc_teams:
+            if team in sim_qualified:
+                never_qualified_count[team] += 1
+                debutants_in_sim += 1
+        total_debutants += debutants_in_sim
+        if debutants_in_sim > 0:
+            debutant_sim_count += 1
+    avg_debutants = total_debutants / num_sims if num_sims > 0 else 0.0
+    return {name: (count / num_sims) * 100 for name, count in qualified_count.items()}, exact_match_count, {name: (count / num_sims) * 100 for name, count in never_qualified_count.items()}, debutant_sim_count, avg_debutants
 
 
 def print_probability_table(probs: Dict[str, float]) -> None:
@@ -617,23 +709,52 @@ def print_probability_table(probs: Dict[str, float]) -> None:
             print(f"{team:<30} {prob:>5.1f}%")
 
 
+def print_exact_match_probability(num_sims: int, exact_count: int) -> None:
+    pct = (exact_count / num_sims) * 100 if num_sims > 0 else 0.0
+    team_count = TOTAL_TEAMS_ACTIVE if not UEFA_PARTICIPATING else TOTAL_TEAMS
+    print(f"\n{'Exact World Cup field replication':^65}")
+    print("=" * 65)
+    print(f"  Simulations matching all {team_count} teams: {exact_count}/{num_sims}")
+    print(f"  Probability: {pct:.4f}%")
+
+
+def print_never_qualified_probabilities(probs: Dict[str, float], num_sims: int, debutant_sim_count: int, avg_debutants: float) -> None:
+    pct = (debutant_sim_count / num_sims) * 100 if num_sims > 0 else 0.0
+    print(f"\n{'Debutant Candidates (never at any World Cup)':^65}")
+    print("=" * 65)
+    print(f"  Chance of at least one new debutant: {debutant_sim_count}/{num_sims} ({pct:.2f}%)")
+    print(f"  Average number of debutants per sim: {avg_debutants:.2f}")
+    print("-" * 65)
+    for team, prob in sorted(probs.items(), key=lambda x: x[1], reverse=True):
+        if prob > 0:
+            print(f"{team:<30} {prob:>5.1f}%")
+
+
 def print_summary_table() -> None:
-    print(f"\n{'CONFEDERATION':<15} {'BASE':>5} {'HOSTS':>6} {'DIRECT':>7} {'PLAYOFF':>8}")
-    print("-" * 50)
+    print(f"\n{'CONFEDERATION':<15} {'BASE':>5} {'HOSTS':>6} {'DIRECT':>7} {'PLAYOFF':>8} {'PARTICIPATING':>13}")
+    print("-" * 63)
     for conf, cfg in CONFEDERATIONS.items():
-        print(f"{conf:<15} {cfg['base_slots']:>5} {cfg['auto_hosts']:>6} {cfg['remaining_direct_slots']:>7} {cfg['playoff_slots']:>8}")
-    print("-" * 50)
-    total_base = sum(cfg["base_slots"] for cfg in CONFEDERATIONS.values())
-    total_hosts = sum(cfg["auto_hosts"] for cfg in CONFEDERATIONS.values())
-    total_direct = sum(cfg["remaining_direct_slots"] for cfg in CONFEDERATIONS.values())
-    total_playoff = sum(cfg["playoff_slots"] for cfg in CONFEDERATIONS.values())
-    print(f"{'TOTAL':<15} {total_base:>5} {total_hosts:>6} {total_direct:>7} {total_playoff:>8}")
+        participating = "Yes" if (conf != "UEFA" or UEFA_PARTICIPATING) else "No"
+        print(f"{conf:<15} {cfg['base_slots']:>5} {cfg['auto_hosts']:>6} {cfg['remaining_direct_slots']:>7} {cfg['playoff_slots']:>8} {participating:>13}")
+    print("-" * 63)
+    if UEFA_PARTICIPATING:
+        total_base = sum(cfg["base_slots"] for cfg in CONFEDERATIONS.values())
+        total_hosts = sum(cfg["auto_hosts"] for cfg in CONFEDERATIONS.values())
+        total_direct = sum(cfg["remaining_direct_slots"] for cfg in CONFEDERATIONS.values())
+        total_playoff = sum(cfg["playoff_slots"] for cfg in CONFEDERATIONS.values())
+    else:
+        total_base = sum(cfg["base_slots"] for conf, cfg in CONFEDERATIONS.items() if conf != "UEFA")
+        total_hosts = sum(cfg["auto_hosts"] for conf, cfg in CONFEDERATIONS.items() if conf != "UEFA")
+        total_direct = sum(cfg["remaining_direct_slots"] for conf, cfg in CONFEDERATIONS.items() if conf != "UEFA")
+        total_playoff = sum(cfg["playoff_slots"] for conf, cfg in CONFEDERATIONS.items() if conf != "UEFA")
+    print(f"{'TOTAL':<15} {total_base:>5} {total_hosts:>6} {total_direct:>7} {total_playoff:>8} {'':>13}")
 
 
 def print_qualified_teams(results: Dict[str, List[str]]) -> None:
     print(f"\n{'2030 FIFA World Cup - Qualified Teams':^65}")
     print("=" * 65)
-    for conf in ("UEFA", "CAF", "CONMEBOL", "AFC", "CONCACAF", "OFC"):
+    confs = ("UEFA", "CAF", "CONMEBOL", "AFC", "CONCACAF", "OFC") if UEFA_PARTICIPATING else ("CAF", "CONMEBOL", "AFC", "CONCACAF", "OFC")
+    for conf in confs:
         direct = results.get(conf, [])
         playoff = results.get(f"{conf}_playoff", [])
         print(f"\n{conf} ({len(direct)} direct, {len(playoff)} playoff):")
@@ -664,20 +785,33 @@ def run_inline_tests() -> None:
     assert sort_records(r)[0].name == "A"
     assert resolve_elo("Spain") == 2259
     assert resolve_elo("Unknown") == DEFAULT_ELO
+    assert resolve_elo("Türkiye") == ELO_RATINGS["Turkey"]
     random.seed(1)
     res = run_qualifying_simulation(seed=1)
+    active_key = "TOTAL_TEAMS_ACTIVE"
     total = sum(len(v) for k, v in res.items() if "playoff" not in k)
-    assert total == TOTAL_TEAMS, total
+    assert total == TOTAL_TEAMS_ACTIVE, total
     for conf in HOST_NATIONS:
+        if conf == "UEFA" and not UEFA_PARTICIPATING:
+            continue
         for host in HOST_NATIONS[conf]:
             assert host in res[conf]
-    probs = run_monte_carlo(10, seed=42)
-    assert len(probs) == len(get_all_teams())
+    probs, _, _, _, _ = run_monte_carlo(10, seed=42)
+    if UEFA_PARTICIPATING:
+        assert len(probs) == len(get_all_teams())
+    else:
+        non_uefa_teams = [t for t in get_all_teams() if t not in CONFEDERATIONS["UEFA"]["member_nations"]]
+        assert len(probs) == len(non_uefa_teams), f"{len(probs)} != {len(non_uefa_teams)}"
     print("Inline tests passed")
 
 
 def get_all_teams() -> List[str]:
     return sorted({t for cfg in CONFEDERATIONS.values() for t in cfg["member_nations"]})
+
+
+NEVER_WORLD_CUP_TEAMS_FULL = sorted({
+    t for t in get_all_teams() if t not in ALL_HISTORICAL_WORLD_CUP_TEAMS
+})
 
 
 if __name__ == "__main__":
@@ -695,8 +829,10 @@ if __name__ == "__main__":
         results = run_qualifying_simulation(seed)
         print_qualified_teams(results)
         total_qualified = sum(len(v) for k, v in results.items() if "playoff" not in k)
-        print(f"\nTotal tournament slots filled: {total_qualified}/{TOTAL_TEAMS}")
-        print(f"Hosts: {TOTAL_HOSTS} | Direct: {TOTAL_DIRECT} | Playoff winners: {PLAYOFF_WINNERS}")
+        print(f"\nTotal tournament slots filled: {total_qualified}/{TOTAL_TEAMS_ACTIVE}")
+        print(f"Hosts: {TOTAL_HOSTS_ACTIVE} | Direct: {TOTAL_DIRECT_ACTIVE} | Playoff winners: {PLAYOFF_WINNERS}")
         print(f"\nRunning Monte Carlo simulation ({NUM_SIMULATIONS:,} iterations)...")
-        probabilities = run_monte_carlo(NUM_SIMULATIONS, seed=seed)
+        probabilities, exact_count, never_qualified_probs, debutant_sim_count, avg_debutants = run_monte_carlo(NUM_SIMULATIONS, seed=seed)
         print_probability_table(probabilities)
+        print_exact_match_probability(NUM_SIMULATIONS, exact_count)
+        print_never_qualified_probabilities(never_qualified_probs, NUM_SIMULATIONS, debutant_sim_count, avg_debutants)

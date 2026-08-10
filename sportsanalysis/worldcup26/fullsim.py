@@ -117,6 +117,11 @@ if __name__ == "__main__":
     for team in (SF1_WINNER, SF2_WINNER):
         print(f"  {team:<12}: {winner_tracker[team] / NUM_SIMS * 100:.2f}%")
 
+    spain_win_pct = winner_tracker[SF1_WINNER] / NUM_SIMS * 100
+    print(f"\n{'2026 World Cup exact final result (Spain wins)':^60}")
+    print("=" * 60)
+    print(f"  {'Spain wins':<12}: {spain_win_pct:.2f}%")
+
     print("\n" + "=" * 60)
     print("BRONZE MEDAL: France vs England")
     print("=" * 60)
