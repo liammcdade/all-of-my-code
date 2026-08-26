@@ -1,0 +1,416 @@
+general_election_year,constituency_name,by_election_date,incumbent_mp_name,incumbent_elected_party_name,incumbent_final_party_name,winner_mp_name,winner_party_name,cause,cause_category,governing_outcome
+1955,Ulster Mid,1955-08-11,Tom Mitchell,Sinn Féin,Sinn Féin,Charles Beattie,Ulster Unionist Party,Disqualification,Disqualified / Expelled,Opposition Gain
+1955,Gateshead West,1955-12-07,John Hall,Labour,Labour,Harry Randall,Labour,Death,Death,Opposition Defence
+1955,Greenock,1955-12-08,Hector McNeil,Labour,Labour,Dickson Mabon,Labour,Death,Death,Opposition Defence
+1955,Torquay,1955-12-15,Charles Williams,Conservative,Conservative,Frederic Bennett,Conservative,Death,Death,Government Defence
+1955,Blaydon,1956-02-02,William Whiteley,Labour,Labour,Robert Woof,Labour,Death,Death,Opposition Defence
+1955,Leeds North East,1956-02-09,Osbert Peake,Conservative,Conservative,"Sir Keith Joseph, Bt.",Conservative,Elevation to a hereditary peerage,Peerage,Government Defence
+1955,Gainsborough,1956-02-14,Harry Crookshank,Conservative,Conservative,Marcus Kimball,Conservative,Elevation to a hereditary peerage,Peerage,Government Defence
+1955,Taunton,1956-02-14,Henry Hopkinson,Conservative,Conservative,Edward du Cann,Conservative,Elevation to a hereditary peerage,Peerage,Government Defence
+1955,Hereford,1956-02-14,James Thomas,Conservative,Conservative,David Gibson-Watt,Conservative,Elevation to a hereditary peerage,Peerage,Government Defence
+1955,Walthamstow West,1956-03-01,Clement Attlee,Labour,Labour,Edward Redhead,Labour,Elevation to a hereditary peerage,Peerage,Opposition Defence
+1955,Ulster Mid,1956-05-08,Charles Beattie,Ulster Unionist Party,Ulster Unionist Party,George Forrest,Independent,Disqualification,Disqualified / Expelled,Opposition Gain
+1955,Tonbridge,1956-06-07,Gerald Williams,Conservative,Conservative,Richard Hornby,Conservative,Resignation,Resignation,Government Defence
+1955,Newport,1956-07-06,Peter Freeman,Labour,Labour,Sir Frank Soskice,Labour,Death,Death,Opposition Defence
+1955,Chester-le-Street,1956-09-27,Patrick Bartley,Labour,Labour,Norman Pentland,Labour,Death,Death,Opposition Defence
+1955,"Chester, City of",1956-11-15,Basil Nield,Conservative,Conservative,John Temple,Conservative,Recorder of Manchester,Appointment,Government Defence
+1955,Melton,1956-12-19,Anthony Nutting,Conservative,Conservative,Mervyn Pike,Conservative,Resignation (disagreement with party over Suez),Resignation,Government Defence
+1955,Lewisham North,1957-02-14,"Sir Austin Hudson, Bt.",Conservative,Conservative,Niall MacDermot,Labour,Death,Death,Opposition Gain
+1955,Wednesbury,1957-02-28,Stanley Evans,Labour,Labour,John Stonehouse,Labour,Resignation (disagreement with party over Suez),Resignation,Opposition Defence
+1955,Carmarthen,1957-02-28,Rhys Hopkin Morris,Liberal Democrats,Liberal Democrats,Megan Lloyd George,Labour,Death,Death,Opposition Gain
+1955,Warwick and Leamington,1957-03-07,Sir Anthony Eden,Conservative,Conservative,John Hobson,Conservative,Resignation due to ill health,Resignation,Government Defence
+1955,Bristol West,1957-03-07,Walter Monckton,Conservative,Conservative,Robert Cooke,Conservative,Elevation to a hereditary peerage,Peerage,Government Defence
+1955,Newcastle upon Tyne North,1957-03-21,Gwilym Lloyd George,Conservative,Conservative,William Elliott,Conservative,Elevation to a hereditary peerage,Peerage,Government Defence
+1955,Beckenham,1957-03-21,Patrick Buchan-Hepburn,Conservative,Conservative,Philip Goodhart,Conservative,Elevation to a hereditary peerage,Peerage,Government Defence
+1955,Edinburgh South,1957-05-29,Sir William Darling,Conservative,Conservative,Michael Hutchison,Conservative,Resignation,Resignation,Government Defence
+1955,Hornsey,1957-05-30,Sir David Gammans,Conservative,Conservative,Lady Muriel Gammans,Conservative,Death,Death,Government Defence
+1955,East Ham North,1957-05-30,Percy Daines,Labour,Labour,Reginald Prentice,Labour,Death,Death,Opposition Defence
+1955,Dorset North,1957-06-27,Robert Crouch,Conservative,Conservative,Richard Glyn,Conservative,Death,Death,Government Defence
+1955,Gloucester,1957-09-12,Moss Turner-Samuels,Labour,Labour,Jack Diamond,Labour,Death,Death,Opposition Defence
+1955,Ipswich,1957-10-24,Richard Stokes,Labour,Labour,Dingle Foot,Labour,Death,Death,Opposition Defence
+1955,Leicester South East,1957-11-28,Charles Waterhouse,Conservative,Conservative,John Peel,Conservative,Resignation,Resignation,Government Defence
+1955,Liverpool Garston,1957-12-05,Sir Victor Raikes,Conservative,Conservative,Richard Bingham,Conservative,Resignation (dispute with party),Resignation,Government Defence
+1955,Rochdale,1958-02-12,Wentworth Schofield,Conservative,Conservative,Jack McCann,Labour,Death,Death,Opposition Gain
+1955,Glasgow Kelvingrove,1958-03-13,Walter Elliot,Conservative,Conservative,Mary McAlister,Labour,Death,Death,Opposition Gain
+1955,Torrington,1958-03-27,George Lambert,Conservative,Conservative,Mark Bonham-Carter,Liberal Democrats,Succession to peerage,Peerage,Opposition Gain
+1955,Islington North,1958-05-15,Wilfred Fienburgh,Labour,Labour,Gerald Reynolds,Labour,Death (road accident),Death,Opposition Defence
+1955,St Helens,1958-06-12,Sir Hartley Shawcross,Labour,Labour,Leslie Spriggs,Labour,Resignation,Resignation,Opposition Defence
+1955,Wigan,1958-06-12,Ronald Williams,Labour,Labour,Alan Fitch,Labour,Death,Death,Opposition Defence
+1955,Argyll,1958-06-12,Sir Duncan McCallum,Conservative,Conservative,Michael Noble,Conservative,Death,Death,Government Defence
+1955,Weston-Super-Mare,1958-06-12,Sir Ian Orr-Ewing,Conservative,Conservative,David Webster,Conservative,Death,Death,Government Defence
+1955,Ealing South,1958-06-12,Angus Maude,Conservative,Conservative,Brian Batsford,Conservative,Resignation,Resignation,Government Defence
+1955,Chichester,1958-11-06,Hon. Sir Lancelot Joynson-Hicks,Conservative,Conservative,Walter Loveys,Conservative,Succession to the peerage,Peerage,Government Defence
+1955,Morecambe and Lonsdale,1958-11-06,Sir Ian Fraser,Conservative,Conservative,Basil de Ferranti,Conservative,Elevation to a life peerage,Peerage,Government Defence
+1955,Pontypool,1958-11-10,Granville West,Labour,Labour,Leo Abse,Labour,Elevation to a life peerage,Peerage,Opposition Defence
+1955,Aberdeenshire East,1958-11-20,Sir Robert Boothby,Conservative,Conservative,Patrick Wolrige-Gordon,Conservative,Elevation to a life peerage,Peerage,Government Defence
+1955,Shoreditch and Finsbury,1958-11-27,Victor Collins,Labour,Labour,Michael Cliffe,Labour,Elevation to a life peerage,Peerage,Opposition Defence
+1955,Southend West,1959-01-29,Sir Henry Channon,Conservative,Conservative,Paul Channon,Conservative,Death,Death,Government Defence
+1955,Harrow East,1959-03-19,Ian Harvey,Conservative,Conservative,Anthony Courtney,Conservative,Resignation (scandal),Resignation,Government Defence
+1955,Belfast East,1959-03-19,Alan McKibbin,Ulster Unionist Party,Ulster Unionist Party,Stanley McMaster,Ulster Unionist Party,Death,Death,Opposition Defence
+1955,Norfolk South West,1959-03-25,Sidney Dye,Labour,Labour,Albert Hilton,Labour,Death (road accident),Death,Opposition Defence
+1955,Galloway,1959-04-09,John Mackie,Conservative,Conservative,John Brewis,Conservative,Death,Death,Government Defence
+1955,Penistone,1959-06-11,Henry McGhee,Labour,Labour,John Mendelson,Labour,Death,Death,Opposition Defence
+1955,Whitehaven,1959-06-18,Frank Anderson,Labour,Labour,Joseph Symonds,Labour,Death,Death,Opposition Defence
+1959,Harrow West,1960-03-17,Lewis John Edwards,Labour,Labour,Michael Shaw,Conservative,Death,Death,Government Gain
+1959,Brighouse and Spenborough,1960-03-17,Sir Albert Braithwaite,Conservative,Conservative,John Page,Conservative,Death (suicide),Death,Government Defence
+1959,Edinburgh North,1960-05-19,William Rankine Milligan,Conservative,Conservative,"John Montagu-Douglas-Scott, Earl of Dalkeith",Conservative,Appointment to Court of Session,Appointment,Government Defence
+1959,Bedfordshire Mid,1960-11-16,Alan Lennox-Boyd,Conservative,Conservative,Stephen Hastings,Conservative,Hereditary peerage,Peerage,Government Defence
+1959,Carshalton,1960-11-16,Philip Bell,Conservative,Conservative,Edwin Taylor,Conservative,Appointment as County Court Judge,Appointment,Government Defence
+1959,Bolton East,1960-11-16,Derick Heathcoat-Amory,Conservative,Conservative,Robin Maxwell-Hyslop,Conservative,Hereditary peerage,Peerage,Government Defence
+1959,Petersfield,1960-11-16,Christopher Holland-Martin,Conservative,Conservative,Jasper More,Conservative,Death,Death,Government Defence
+1959,Tiverton,1960-11-16,Hon. Peter Legh,Conservative,Conservative,Joan Quennell,Conservative,Succession to peerage,Peerage,Government Defence
+1959,Ludlow,1960-11-16,Antony Head,Conservative,Conservative,Walter Elliot,Conservative,Hereditary peerage on appointment as High Commissioner to Nigeria,Peerage,Government Defence
+1959,Ebbw Vale,1960-11-17,Aneurin Bevan,Labour,Labour,Michael Foot,Labour,Death,Death,Opposition Defence
+1959,Blyth,1960-11-24,Alfred Robens,Labour,Labour,Eddie Milne,Labour,Appointment as chairman of National Coal Board,Appointment,Opposition Defence
+1959,High Peak,1961-03-16,Hugh Molson,Conservative,Conservative,David Walder,Conservative,Life peerage,Peerage,Government Defence
+1959,Cambridgeshire,1961-03-16,Gerald Howard,Conservative,Conservative,Francis Pym,Conservative,Appointment as High Court Judge,Appointment,Government Defence
+1959,Colchester,1961-03-16,Cuthbert Alport,Conservative,Conservative,Antony Buck,Conservative,Life peerage on appointment as High Commissioner to Rhodesia,Peerage,Government Defence
+1959,Worcester,1961-03-16,George Ward,Conservative,Conservative,Peter Walker,Conservative,Hereditary peerage,Peerage,Government Defence
+1959,Birmingham Small Heath,1961-03-23,William Wheeldon,Labour,Labour,Denis Howell,Labour,Death,Death,Opposition Defence
+1959,Paisley,1961-04-20,Douglas Johnston,Labour,Labour,John Robertson,Labour,Appointment to Court of Session,Appointment,Opposition Defence
+1959,Warrington,1961-04-20,Dr Edith Summerskill,Labour,Labour,Thomas Williams,Labour,Life peerage,Peerage,Opposition Defence
+1959,Bristol South East,1961-05-04,Tony Benn,Labour,Labour,Malcolm St Clair,Conservative,Succession to peerage,Peerage,Government Gain
+1959,Manchester Moss Side,1961-11-07,James Watts,Conservative,Conservative,Frank Taylor,Conservative,Death,Death,Government Defence
+1959,Oswestry,1961-11-09,David Ormsby-Gore,Conservative,Conservative,John Biffen,Conservative,Appointment as Ambassador to the United States,Appointment,Government Defence
+1959,Fife East,1961-11-09,"Sir James Henderson-Stewart, Bt.",Conservative,Conservative,Sir John E. Gilmour,Conservative,Death,Death,Government Defence
+1959,Glasgow Bridgeton,1961-11-16,James Carmichael,Labour,Labour,James Bennett,Labour,Resignation (ill-health?),Resignation,Opposition Defence
+1959,Lincoln,1962-03-08,Geoffrey de Freitas,Labour,Labour,Dick Taverne,Labour,Appointed as High Commissioner to Ghana,Appointment,Opposition Defence
+1959,Blackpool North,1962-03-13,Toby Low,Conservative,Conservative,Norman Miscampbell,Conservative,Hereditary peerage,Peerage,Government Defence
+1959,Orpington,1962-03-14,Donald Sumner,Conservative,Conservative,Eric Lubbock,Liberal Democrats,Appointment as County Court Judge,Appointment,Opposition Gain
+1959,Middlesbrough East,1962-03-14,Hilary Marquand,Labour,Labour,Arthur Bottomley,Labour,"Appointment as director of International Institute for Labour Studies, Geneva",Appointment,Opposition Defence
+1959,Pontefract,1962-03-22,George Sylvester,Labour,Labour,Joseph Harper,Labour,Death,Death,Opposition Defence
+1959,Stockton-on-Tees,1962-04-05,George Chetwynd,Labour,Labour,Bill Rodgers,Labour,Appointment as director of North-East Development Council,Appointment,Opposition Defence
+1959,Derby North,1962-04-17,Clifford Wilcock,Labour,Labour,Niall MacDermot,Labour,Death,Death,Opposition Defence
+1959,Montgomery,1962-05-15,Clement Davies,Liberal Democrats,Liberal Democrats,Emlyn Hooson,Liberal Democrats,Death,Death,Opposition Defence
+1959,Middlesbrough West,1962-06-06,Edward Wakefield,Conservative,Conservative,Aidan Crawley,Conservative,Appointment as Commissioner for Malta,Appointment,Government Defence
+1959,Derbyshire West,1962-06-06,Sir Jocelyn Simon,Conservative,Conservative,Jeremy Bray,Labour,Appointment as President of Probate Division of the High Court,Appointment,Opposition Gain
+1959,West Lothian,1962-06-14,John Taylor,Labour,Labour,Tam Dalyell,Labour,Death,Death,Opposition Defence
+1959,Leicester North East,1962-07-12,Sir Lynn Ungoed-Thomas,Labour,Labour,Tom Bradley,Labour,Appointment as High Court Judge,Appointment,Opposition Defence
+1959,Chippenham,1962-11-22,David Eccles,Conservative,Conservative,Daniel Awdry,Conservative,Hereditary peerage,Peerage,Government Defence
+1959,Dorset South,1962-11-22,Sir Reginald Manningham-Buller,Conservative,Conservative,Arthur Jones,Conservative,Hereditary peerage on appointment as Lord High Chancellor of Great Britain,Peerage,Government Defence
+1959,Glasgow Woodside,1962-11-22,Richard Collard,Conservative,Conservative,Ian Gilmour,Conservative,Death,Death,Government Defence
+1959,Glasgow Woodside,1962-11-22,William Grant,Conservative,Conservative,Neil Carmichael,Labour,Appointment as Lord Justice Clerk,Appointment,Opposition Gain
+1959,Norfolk Central,1962-11-22,Viscount Hinchingbrooke,Conservative,Conservative,Guy Barnett,Labour,Succession to peerage,Peerage,Opposition Gain
+1959,Colne Valley,1963-03-21,Glenvil Hall,Labour,Labour,Patrick Duffy,Labour,Death,Death,Opposition Defence
+1959,Rotherham,1963-03-28,Jack Jones,Labour,Labour,Brian O'Malley,Labour,Death (road accident),Death,Opposition Defence
+1959,Swansea East,1963-03-28,David Mort,Labour,Labour,Neil McBride,Labour,Death,Death,Opposition Defence
+1959,Leeds South,1963-06-20,Hugh Gaitskell,Labour,Labour,Merlyn Rees,Labour,Death,Death,Opposition Defence
+1959,Deptford,1963-07-04,Sir Leslie Plummer,Labour,Labour,John Silkin,Labour,Death,Death,Opposition Defence
+1959,West Bromwich,1963-07-04,John Dugdale,Labour,Labour,Maurice Foley,Labour,Death,Death,Opposition Defence
+1959,Stratford-on-Avon,1963-08-15,John Profumo,Conservative,Conservative,Angus Maude,Conservative,Resignation (lying to the House of Commons),Resignation,Government Defence
+1959,Bristol South East,1963-08-20,Malcolm St Clair,Conservative,Conservative,Tony Benn,Labour,Resignation,Resignation,Opposition Gain
+1959,Belfast South,1963-10-22,Sir David Campbell,Ulster Unionist Party,Ulster Unionist Party,Rafton Pounder,Ulster Unionist Party,Death,Death,Opposition Defence
+1959,Kinross and West Perthshire,1963-11-07,Gilmour Leburn,Conservative,Conservative,Sir Alec Douglas-Home,Conservative,Death,Death,Government Defence
+1959,Luton,1963-11-07,Dr. Charles Hill,Conservative,Conservative,Will Howie,Labour,Life peerage on appointment as chairman of Independent Television Authority,Peerage,Opposition Gain
+1959,Dundee West,1963-11-21,John Strachey,Labour,Labour,Peter Doig,Labour,Death,Death,Opposition Defence
+1959,Manchester Openshaw,1963-12-05,William Williams,Labour,Labour,Charles Morris,Labour,Death,Death,Opposition Defence
+1959,St Marylebone,1963-12-05,Sir Wavell Wakefield,Conservative,Conservative,Quintin Hogg,Conservative,Hereditary peerage,Peerage,Government Defence
+1959,Sudbury and Woodbridge,1963-12-05,John Hare,Conservative,Conservative,Keith Stainton,Conservative,Hereditary peerage,Peerage,Government Defence
+1959,Dumfries,1963-12-12,Niall MacPherson,Conservative,Conservative,David Anderson,Conservative,Hereditary peerage,Peerage,Government Defence
+1959,Winchester,1964-05-14,Richard Brooman-White,Conservative,Conservative,Gregor Mackenzie,Labour,Death,Death,Opposition Gain
+1959,Rutherglen,1964-05-14,Peter Smithers,Conservative,Conservative,Morgan Morgan-Giles,Conservative,Appointment as Secretary-General of Council of Europe,Appointment,Government Defence
+1959,Devizes,1964-05-14,Percivall Pott,Conservative,Conservative,Charles Morrison,Conservative,Death,Death,Government Defence
+1959,Bury St Edmunds,1964-05-14,Sir William Aitken,Conservative,Conservative,Eldon Griffiths,Conservative,Death,Death,Government Defence
+1959,Faversham,1964-06-04,Percy Wells,Labour,Labour,Terence Boston,Labour,Death,Death,Opposition Defence
+1959,Liverpool Scotland,1964-06-11,David Logan,Labour,Labour,Walter Alldritt,Labour,Death,Death,Opposition Defence
+1964,Leyton,1965-01-21,Frank Bowles,Labour,Labour,Frank Cousins,Labour,Life peerage to provide seat for Minister of Technology Frank Cousins,Peerage,Government Defence
+1964,Nuneaton,1965-01-21,Reg Sorensen,Labour,Labour,Ronald Buxton,Conservative,Life peerage to provide seat for Foreign Secretary Patrick Gordon Walker,Peerage,Opposition Gain
+1964,Salisbury,1965-02-04,John Morrison,Conservative,Conservative,Michael Hamilton,Conservative,Hereditary peerage,Peerage,Opposition Defence
+1964,East Grinstead,1965-02-04,Evelyn Emmet,Conservative,Conservative,Geoffrey Johnson Smith,Conservative,Life peerage,Peerage,Opposition Defence
+1964,Altrincham and Sale,1965-02-04,Fred Erroll,Conservative,Conservative,Anthony Barber,Conservative,Hereditary peerage,Peerage,Opposition Defence
+1964,Saffron Walden,1965-03-23,R. A. Butler,Conservative,Conservative,Peter Kirk,Conservative,Life peerage,Peerage,Opposition Defence
+1964,"Roxburgh, Selkirk and Peebles",1965-03-24,Charles Donaldson,Conservative,Conservative,David Steel,Liberal Democrats,Death,Death,Opposition Gain
+1964,Abertillery,1965-04-01,Llywelyn Williams,Labour,Labour,Clifford Williams,Labour,Death,Death,Government Defence
+1964,Birmingham Hall Green,1965-05-06,Aubrey Jones,Conservative,Conservative,Reginald Eyre,Conservative,Appointment as chairman of National Board for Prices and Incomes,Appointment,Opposition Defence
+1964,Hove,1965-07-22,Anthony Marlowe,Conservative,Conservative,Martin Maddan,Conservative,Resignation (ill-health),Resignation,Opposition Defence
+1964,Cities of London and Westminster,1965-11-04,Sir Harry Hylton-Foster,Speaker,Speaker,John Smith,Conservative,Death,Death,Opposition Gain
+1964,Erith and Crayford,1965-11-11,Norman Dodds,Labour,Labour,James Wellbeloved,Labour,Death,Death,Government Defence
+1964,Hull North,1966-01-27,Henry Solomons,Labour,Labour,Kevin McNamara,Labour,Death,Death,Government Defence
+1966,Carmarthen,1966-07-14,Megan Lloyd George,Labour,Labour,Gwynfor Evans,Plaid Cymru,Death,Death,Opposition Gain
+1966,Glasgow Pollok,1967-03-09,Iorwerth Thomas,Labour,Labour,Alec Jones,Labour,Death,Death,Government Defence
+1966,Rhondda West,1967-03-09,Frank Cousins,Labour,Labour,Leslie Huckfield,Labour,Resignation,Resignation,Government Defence
+1966,Nuneaton,1967-03-09,Alexander Garrow,Labour,Labour,Esmond Wright,Conservative,Death,Death,Opposition Gain
+1966,Honiton,1967-03-16,Robert Mathew,Conservative,Conservative,Peter Emery,Conservative,Death,Death,Opposition Defence
+1966,Brierley Hill,1967-04-27,John Talbot,Conservative,Conservative,Fergus Montgomery,Conservative,Death,Death,Opposition Defence
+1966,Cambridge,1967-09-21,Robert Davies,Labour,Labour,David Lane,Conservative,Death,Death,Opposition Gain
+1966,Walthamstow West,1967-09-21,Edward Redhead,Labour,Labour,Frederick Silvester,Conservative,Death,Death,Opposition Gain
+1966,Hamilton,1967-11-02,Konni Zilliacus,Labour,Labour,Kenneth Marks,Labour,Death,Death,Government Defence
+1966,Manchester Gorton,1967-11-02,Thomas Fraser,Labour,Labour,Winifred Ewing,SNP,Appointment to North Scotland Hydro-Electricity Board,Appointment,Opposition Gain
+1966,Leicester South West,1967-11-02,Herbert Bowden,Labour,Labour,Thomas Boardman,Conservative,Appointment as chairman of Independent Television Authority,Appointment,Opposition Gain
+1966,Derbyshire West,1967-11-23,Aidan Crawley,Conservative,Conservative,James Scott-Hopkins,Conservative,Appointment as chairman of London Weekend Television,Resignation,Opposition Defence
+1966,Kensington South,1968-03-14,William Roots,Conservative,Conservative,Sir Brandon Rhys Williams,Conservative,Resignation (ill-health?),Resignation,Opposition Defence
+1966,Warwick and Leamington,1968-03-28,Bernard Floud,Labour,Labour,Kenneth Baker,Conservative,Death (suicide),Death,Opposition Gain
+1966,Meriden,1968-03-28,George Wigg,Labour,Labour,Donald Williams,Conservative,Life peerage on appointment as chairman of Horserace Betting Levy Board,Peerage,Opposition Gain
+1966,Acton,1968-03-28,Christopher Rowland,Labour,Labour,Keith Speed,Conservative,Death,Death,Opposition Gain
+1966,Dudley,1968-03-28,John Hobson,Conservative,Conservative,Dudley Smith,Conservative,Death,Death,Opposition Defence
+1966,Oldham West,1968-06-13,Richard Winterbottom,Labour,Labour,Edward Griffiths,Labour,Death,Death,Government Defence
+1966,Sheffield Brightside,1968-06-13,Leslie Hale,Labour,Labour,Bruce Campbell,Conservative,Resignation,Resignation,Opposition Gain
+1966,Nelson and Colne,1968-06-27,Sydney Silverman,Labour,Labour,David Waddington,Conservative,Death,Death,Opposition Gain
+1966,Caerphilly,1968-07-18,Ness Edwards,Labour,Labour,Alfred Evans,Labour,Death,Death,Government Defence
+1966,Bassetlaw,1968-10-31,Frederick Bellenger,Labour,Labour,Joseph Ashton,Labour,Death,Death,Government Defence
+1966,New Forest,1968-11-07,Oliver Crosthwaite-Eyre,Conservative,Conservative,Patrick McNair-Wilson,Conservative,Resignation,Resignation,Opposition Defence
+1966,Brighton Pavilion,1969-03-27,Sir William Teeling,Conservative,Conservative,Julian Amery,Conservative,Resignation,Resignation,Opposition Defence
+1966,Weston-Super-Mare,1969-03-27,William Robinson,Labour,Labour,Michael McNair-Wilson,Conservative,Death,Death,Opposition Gain
+1966,Walthamstow East,1969-03-27,David Webster,Conservative,Conservative,Jerry Wiggin,Conservative,Death,Death,Opposition Defence
+1966,Ulster Mid,1969-04-17,George Forrest,Ulster Unionist Party,Ulster Unionist Party,Bernadette Devlin,Unity,Death,Death,Opposition Gain
+1966,Chichester,1969-05-22,Walter Loveys,Conservative,Conservative,Christopher Chataway,Conservative,Death,Death,Opposition Defence
+1966,Birmingham Ladywood,1969-06-26,Victor Yates,Labour,Labour,Wallace Lawler,Liberal Democrats,Death,Death,Opposition Gain
+1966,Islington North,1969-10-30,Gerald Reynolds,Labour,Labour,Michael O'Halloran,Labour,Death,Death,Government Defence
+1966,Newcastle-under-Lyme,1969-10-30,Stephen Swingler,Labour,Labour,John Golding,Labour,Death,Death,Government Defence
+1966,Swindon,1969-10-30,Francis Noel-Baker,Labour,Labour,Christopher Ward,Conservative,Resignation,Resignation,Opposition Gain
+1966,Glasgow Gorbals,1969-10-30,Alice Cullen,Labour,Labour,Frank McElhone,Labour,Death,Death,Government Defence
+1966,Paddington North,1969-10-30,Ben Parkin,Labour,Labour,Arthur Latham,Labour,Death,Death,Government Defence
+1966,Wellingborough,1969-12-04,Harry Howarth,Labour,Labour,Peter Fry,Conservative,Death,Death,Opposition Gain
+1966,Louth,1969-12-04,Sir Cyril Osborne,Conservative,Conservative,Jeffrey Archer,Conservative,Death,Death,Opposition Defence
+1966,Bridgwater,1970-03-12,Gerald Wills,Conservative,Conservative,Tom King,Conservative,Death,Death,Opposition Defence
+1966,Ayrshire South,1970-03-19,Emrys Hughes,Labour,Labour,James Sillars,Labour,Death,Death,Government Defence
+1970,St Marylebone,1970-10-22,Quintin Hogg,Conservative,Conservative,Kenneth Baker,Conservative,Life peerage on appointment as Lord High Chancellor of Great Britain,Peerage,Government Defence
+1970,Enfield West,1970-11-19,Iain Macleod,Conservative,Conservative,Cecil Parkinson,Conservative,Death,Death,Government Defence
+1970,Liverpool Scotland,1971-04-01,Walter Alldritt,Labour,Labour,Frank Marsden,Labour,Resignation,Resignation,Opposition Defence
+1970,Arundel and Shoreham,1971-04-01,Henry Kerby,Conservative,Conservative,Richard Luce,Conservative,Death,Death,Government Defence
+1970,Goole,1971-05-27,James Dance,Conservative,Conservative,Terry Davis,Labour,Death,Death,Opposition Gain
+1970,Southampton Itchen,1971-05-27,Horace King,Speaker,Speaker,Bob Mitchell,Labour,Life peerage,Peerage,Opposition Gain
+1970,Bromsgrove,1971-05-27,George Jeger,Labour,Labour,Edmund Marshall,Labour,Death,Death,Opposition Defence
+1970,Hayes and Harlington,1971-06-17,Arthur Skeffington,Labour,Labour,Neville Sandelson,Labour,Death,Death,Opposition Defence
+1970,Greenwich,1971-07-08,Richard Marsh,Labour,Labour,Guy Barnett,Labour,Chairman of British Rail,Appointment,Opposition Defence
+1970,Stirling and Falkirk,1971-09-16,Malcolm Macpherson,Labour,Labour,Harry Ewing,Labour,Death,Death,Opposition Defence
+1970,Widnes,1971-09-23,James MacColl,Labour,Labour,Gordon Oakes,Labour,Death,Death,Opposition Defence
+1970,Macclesfield,1971-09-30,Sir Arthur Vere Harvey,Conservative,Conservative,Nicholas Winterton,Conservative,Life peerage,Peerage,Government Defence
+1970,Merthyr Tydfil,1972-04-13,S. O. Davies,Independent,Independent,Edward Rowlands,Labour,Death,Death,Opposition Gain
+1970,Kingston upon Thames,1972-05-04,John Boyd-Carpenter,Conservative,Conservative,Norman Lamont,Conservative,Chairman of Civil Aviation Authority,Appointment,Government Defence
+1970,Southwark,1972-05-04,Ray Gunter,Labour,Independent,Harry Lamborn,Labour,Resignation (dispute with party),Resignation,Opposition Defence
+1970,Rochdale,1972-10-26,Jack McCann,Labour,Labour,Cyril Smith,Liberal Democrats,Death,Death,Opposition Gain
+1970,Uxbridge,1972-12-07,Richard Sharples,Conservative,Conservative,Graham Tope,Liberal Democrats,Governor of Bermuda,Appointment,Opposition Gain
+1970,Sutton and Cheam,1972-12-07,Charles Curran,Conservative,Conservative,Michael Shersby,Conservative,Death,Death,Government Defence
+1970,Chester-le-Street,1973-03-01,Norman Pentland,Labour,Labour,Giles Radice,Labour,Death,Death,Opposition Defence
+1970,Dundee East,1973-03-01,Dick Taverne,Labour,Independent,Dick Taverne,Democratic Labour,Sought re-election upon change of party allegiance,Reelection,Opposition Gain
+1970,Lincoln,1973-03-01,George Thomson,Labour,Labour,George Machin,Labour,Appointment as European Commissioner,Appointment,Opposition Defence
+1970,West Bromwich,1973-05-24,Maurice Foley,Labour,Labour,Betty Boothroyd,Labour,Appointment to the European Commission staff,Appointment,Opposition Defence
+1970,Westhoughton,1973-05-24,Tom Price,Labour,Labour,Roger Stott,Labour,Death,Death,Opposition Defence
+1970,Manchester Exchange,1973-06-27,William Griffiths,Labour,Labour,Frank Hatton,Labour,Death,Death,Opposition Defence
+1970,Isle of Ely,1973-07-26,Malcolm Stoddart-Scott,Conservative,Conservative,David Austick,Liberal Democrats,Death,Death,Opposition Gain
+1970,Ripon,1973-07-26,Harry Legge-Bourke,Conservative,Conservative,Clement Freud,Liberal Democrats,Death,Death,Opposition Gain
+1970,Hove,1973-11-08,Earl of Dalkeith,Conservative,Conservative,Alexander Fletcher,Conservative,Succession to the Peerage,Peerage,Government Defence
+1970,Glasgow Govan,1973-11-08,John Rankin,Labour,Labour,Margo MacDonald,SNP,Death,Death,Opposition Gain
+1970,Edinburgh North,1973-11-08,Antony Lambton,Conservative,Conservative,Alan Beith,Liberal Democrats,Resignation (scandal),Resignation,Opposition Gain
+1970,Berwick-upon-Tweed,1973-11-08,Martin Maddan,Conservative,Conservative,Timothy Sainsbury,Conservative,Death,Death,Government Defence
+1974,Newham South,1974-05-23,Sir Elwyn Jones,Labour,Labour,Nigel Spearing,Labour,Life peerage on appointment as Lord High Chancellor of Great Britain,Peerage,Government Defence
+1975,Woolwich West,1975-06-26,William Hamling,Labour,Labour,Peter Bottomley,Conservative,Death,Death,Opposition Gain
+1975,Coventry North West,1976-03-04,Maurice Edelman,Labour,Labour,Geoffrey Robinson,Labour,Death,Death,Government Defence
+1975,Wirral,1976-03-11,Selwyn Lloyd,Speaker,Speaker,David Hunt,Conservative,Life peerage,Peerage,Opposition Gain
+1975,Carshalton,1976-03-11,Robert Carr,Conservative,Conservative,Nigel Forman,Conservative,Life peerage,Peerage,Opposition Defence
+1975,Rotherham,1976-06-24,Brian O'Malley,Labour,Labour,Stanley Crowther,Labour,Death,Death,Government Defence
+1975,Thurrock,1976-07-15,Hugh Delargy,Labour,Labour,Oonagh McDonald,Labour,Death,Death,Government Defence
+1975,Workington,1976-11-04,Fred Peart,Labour,Labour,Richard Page,Conservative,Life peerage on appointment as Leader of the House of Lords,Peerage,Opposition Gain
+1975,Newcastle Upon Tyne Central,1976-11-04,Edward Short,Labour,Labour,Harry Cowans,Labour,New career as chairman of Cable & Wireless,Resignation,Government Defence
+1975,Walsall North,1976-11-04,John Stonehouse,Labour,Independent,Robin Hodgson,Conservative,Resignation (convicted of insurance fraud),Resignation,Opposition Gain
+1975,Cambridge,1976-12-02,David Lane,Conservative,Conservative,Robert Rhodes James,Conservative,New career as chairman for the Commission for Racial Equality,Resignation,Opposition Defence
+1975,City of London and Westminster South,1977-02-24,Christopher Tugendhat,Conservative,Conservative,Peter Brooke,Conservative,European Commissioner,Appointment,Opposition Defence
+1975,Birmingham Stechford,1977-03-31,Roy Jenkins,Labour,Labour,Andrew MacKay,Conservative,President of the European Commission,Appointment,Opposition Gain
+1975,Grimsby,1977-04-28,David Marquand,Labour,Labour,Tim Smith,Conservative,New career as Chief of Staff to Roy Jenkins,Resignation,Opposition Gain
+1975,Ashfield,1977-04-28,Anthony Crosland,Labour,Labour,Austin Mitchell,Labour,Death,Death,Government Defence
+1975,Saffron Walden,1977-07-07,Sir Peter Kirk,Conservative,Conservative,Alan Haselhurst,Conservative,Death,Death,Opposition Defence
+1975,Birmingham Ladywood,1977-08-18,Brian Walden,Labour,Labour,John Sever,Labour,Appointment as presenter of LWT programme Weekend World,Resignation,Government Defence
+1975,Bournemouth East,1977-11-24,John Cordle,Conservative,Conservative,David Atkinson,Conservative,Resignation: found in contempt of the House,Resignation,Opposition Defence
+1975,Ilford North,1978-03-02,Millie Miller,Labour,Labour,Vivian Bendall,Conservative,Death,Death,Opposition Gain
+1975,Glasgow Garscadden,1978-04-13,William Small,Labour,Labour,Donald Dewar,Labour,Death,Death,Government Defence
+1975,Lambeth Central,1978-04-20,Marcus Lipton,Labour,Labour,John Tilley,Labour,Death,Death,Government Defence
+1975,Epsom and Ewell,1978-04-27,Peter Rawlinson,Conservative,Conservative,Archie Hamilton,Conservative,Life peerage,Peerage,Opposition Defence
+1975,Wycombe,1978-04-27,Sir John Hall,Conservative,Conservative,Ray Whitney,Conservative,Death,Death,Opposition Defence
+1975,Hamilton,1978-05-31,Alexander Wilson,Labour,Labour,George Robertson,Labour,Death,Death,Government Defence
+1975,Manchester Moss Side,1978-07-13,Frank Hatton,Labour,Labour,George Morton,Labour,Death,Death,Government Defence
+1975,Penistone,1978-07-13,John Mendelson,Labour,Labour,Allen McKay,Labour,Death,Death,Government Defence
+1975,Pontefract and Castleford,1978-10-26,Joe Harper,Labour,Labour,Geoffrey Lofthouse,Labour,Death,Death,Government Defence
+1975,Berwick and East Lothian,1978-10-26,John Mackintosh,Labour,Labour,John Home Robertson,Labour,Death,Death,Government Defence
+1975,Clitheroe,1979-03-01,David Walder,Conservative,Conservative,David Waddington,Conservative,Death,Death,Opposition Defence
+1975,Knutsford,1979-03-01,John Davies,Conservative,Conservative,Jock Bruce-Gardyne,Conservative,Resignation on medical advice,Resignation,Opposition Defence
+1975,Liverpool Edge Hill,1979-03-29,Sir Arthur Irvine,Labour,Labour,David Alton,Liberal Democrats,Death,Death,Opposition Gain
+1979,Manchester Central,1979-09-27,Harold Lever,Labour,Labour,Robert Litherland,Labour,Life peerage,Peerage,Opposition Defence
+1979,Hertfordshire South West,1979-12-13,Geoffrey Dodsworth,Conservative,Conservative,Richard Page,Conservative,Resignation on medical advice,Resignation,Government Defence
+1979,Southend East,1980-03-13,Sir Stephen McAdden,Conservative,Conservative,Teddy Taylor,Conservative,Death,Death,Government Defence
+1979,Glasgow Central,1980-06-26,Thomas McMillan,Labour,Labour,Bob McTaggart,Labour,Death,Death,Opposition Defence
+1979,Fermanagh and South Tyrone,1981-04-09,Frank Maguire,Independent,Independent,Bobby Sands,Independent,Death,Death,Opposition Defence
+1979,Warrington,1981-07-16,Sir Thomas Williams,Labour,Labour,Douglas Hoyle,Labour,Appointment as High Court judge,Appointment,Opposition Defence
+1979,Fermanagh and South Tyrone,1981-08-20,Bobby Sands,Independent,Independent,Owen Carron,Independent,Death (hunger strike),Death,Opposition Defence
+1979,Croydon North West,1981-10-22,Robert Taylor,Conservative,Conservative,Bill Pitt,Liberal Democrats,Death,Death,Opposition Gain
+1979,Crosby,1981-11-26,Sir Graham Page,Conservative,Conservative,Shirley Williams,Social Democratic Party,Death,Death,Opposition Gain
+1979,Belfast South,1982-03-04,Robert Bradford,Ulster Unionist Party,Ulster Unionist Party,Martin Smyth,Ulster Unionist Party,Death (killed by IRA),Death,Opposition Defence
+1979,Glasgow Hillhead,1982-03-25,Sir Thomas Galbraith,Conservative,Conservative,Roy Jenkins,Social Democratic Party,Death,Death,Opposition Gain
+1979,Beaconsfield,1982-05-27,Sir Ronald Bell,Conservative,Conservative,Tim Smith,Conservative,Death,Death,Government Defence
+1979,Mitcham and Morden,1982-06-03,Bruce Douglas-Mann,Labour,Independent,Angela Rumbold,Conservative,Sought re-election upon change of party allegiance,Reelection,Government Gain
+1979,Coatbridge and Airdrie,1982-06-24,James Dempsey,Labour,Labour,Thomas Clarke,Labour,Death,Death,Opposition Defence
+1979,Gower,1982-09-16,Ifor Davies,Labour,Labour,Gareth Wardell,Labour,Death,Death,Opposition Defence
+1979,Birmingham Northfield,1982-10-28,Harry Lamborn,Labour,Labour,Harriet Harman,Labour,Death,Death,Opposition Defence
+1979,Peckham,1982-10-28,Jocelyn Cadbury,Conservative,Conservative,John Spellar,Labour,Death (suicide),Death,Opposition Gain
+1979,Glasgow Queen's Park,1982-12-02,Frank McElhone,Labour,Labour,Helen McElhone,Labour,Death,Death,Opposition Defence
+1979,Bermondsey,1983-02-24,Robert Mellish,Labour,Independent,Simon Hughes,Liberal Democrats,Resignation (dispute with party),Resignation,Opposition Gain
+1979,Darlington,1983-03-24,Edward Fletcher,Labour,Labour,Oswald O'Brien,Labour,Death,Death,Opposition Defence
+1983,Penrith and The Border,1983-07-28,William Whitelaw,Conservative,Conservative,David Maclean,Conservative,Hereditary peerage on appointment as Leader of the House of Lords,Peerage,Government Defence
+1983,Chesterfield,1984-03-01,Eric Varley,Labour,Labour,Tony Benn,Labour,Appointment as Chairman of Coalite PLC,Resignation,Opposition Defence
+1983,Cynon Valley,1984-05-03,Ioan Evans,Labour,Labour,Ann Clwyd,Labour,Death,Death,Opposition Defence
+1983,Stafford,1984-05-03,Sir Hugh Fraser,Conservative,Conservative,Bill Cash,Conservative,Death (lung cancer),Death,Government Defence
+1983,Surrey South West,1984-05-03,Viscount Macmillan of Ovenden,Conservative,Conservative,Virginia Bottomley,Conservative,Death (heart failure),Death,Government Defence
+1983,Portsmouth South,1984-06-14,Bonner Pink,Conservative,Conservative,Mike Hancock,Social Democratic Party,Death,Death,Opposition Gain
+1983,Enfield Southgate,1984-12-13,Sir Anthony Berry,Conservative,Conservative,Michael Portillo,Conservative,Death (terrorism),Death,Government Defence
+1983,Brecon and Radnor,1985-07-04,Tom Hooson,Conservative,Conservative,Richard Livsey,Liberal Democrats,Death (heart attack),Death,Opposition Gain
+1983,Tyne Bridge,1985-12-05,Harry Cowans,Labour,Labour,David Clelland,Labour,Death,Death,Opposition Defence
+1983,Upper Bann,1986-01-23,James Nicholson,Ulster Unionist Party,Ulster Unionist Party,Seamus Mallon,SDLP,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Gain
+1983,Down North,1986-01-23,Enoch Powell,Ulster Unionist Party,Ulster Unionist Party,Enoch Powell,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Antrim East,1986-01-23,Clifford Forsythe,Ulster Unionist Party,Ulster Unionist Party,Clifford Forsythe,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Antrim North,1986-01-23,Roy Beggs,Ulster Unionist Party,Ulster Unionist Party,Roy Beggs,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Antrim South,1986-01-23,Cecil Walker,Ulster Unionist Party,Ulster Unionist Party,Cecil Walker,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Belfast East,1986-01-23,Martin Smyth,Ulster Unionist Party,Ulster Unionist Party,Martin Smyth,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Belfast North,1986-01-23,Peter Robinson,DUP,DUP,Peter Robinson,DUP,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Strangford,1986-01-23,Ian Paisley,DUP,DUP,Ian Paisley,DUP,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Ulster Mid,1986-01-23,William McCrea,DUP,DUP,William McCrea,DUP,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Newry and Armagh,1986-01-23,John Taylor,Ulster Unionist Party,Ulster Unionist Party,John Taylor,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Londonderry East,1986-01-23,William Ross,Ulster Unionist Party,Ulster Unionist Party,William Ross,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Lagan Valley,1986-01-23,James Molyneaux,Ulster Unionist Party,Ulster Unionist Party,James Molyneaux,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Fermanagh and South Tyrone,1986-01-23,Ken Maginnis,Ulster Unionist Party,Ulster Unionist Party,Ken Maginnis,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Down South,1986-01-23,Harold McCusker,Ulster Unionist Party,Ulster Unionist Party,Harold McCusker,Ulster Unionist Party,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Belfast South,1986-01-23,James Kilfedder,UPUP,UPUP,James Kilfedder,UPUP,Sought re-election in opposition to the Anglo-Irish Agreement,Reelection,Opposition Defence
+1983,Fulham,1986-04-10,Martin Stevens,Conservative,Conservative,Nick Raynsford,Labour,Death,Death,Opposition Gain
+1983,Ryedale,1986-05-08,John Spence,Conservative,Conservative,Elizabeth Shields,Liberal Democrats,Death,Death,Opposition Gain
+1983,Derbyshire West,1986-05-08,Matthew Parris,Conservative,Conservative,Patrick McLoughlin,Conservative,Appointment as presenter of LWT programme Weekend World,Resignation,Government Defence
+1983,Newcastle-under-Lyme,1986-07-17,John Golding,Labour,Labour,Llin Golding,Labour,Appointment as General Secretary of the National Communications Union,Resignation,Opposition Defence
+1983,Knowsley North,1986-11-13,Robert Kilroy-Silk,Labour,Labour,George Howarth,Labour,New BBC TV presenter career,Resignation,Opposition Defence
+1983,Greenwich,1987-02-26,Guy Barnett,Labour,Labour,Rosie Barnes,Social Democratic Party,Death,Death,Opposition Gain
+1983,Truro,1987-03-12,David Penhaligon,Liberal Democrats,Liberal Democrats,Matthew Taylor,Liberal Democrats,Death (road accident),Death,Opposition Defence
+1987,Kensington,1988-07-14,"Sir Brandon Rhys Williams, Bt.",Conservative,Conservative,Dudley Fishburn,Conservative,Death (leukaemia),Death,Government Defence
+1987,Glasgow Govan,1988-11-10,Bruce Millan,Labour,Labour,Jim Sillars,SNP,Appointment as European Commissioner,Appointment,Opposition Gain
+1987,Epping Forest,1988-12-15,Sir John Biggs-Davison,Conservative,Conservative,Steven Norris,Conservative,Death,Death,Government Defence
+1987,Richmond,1989-02-23,Leon Brittan,Conservative,Conservative,William Hague,Conservative,Appointment as European Commissioner,Appointment,Government Defence
+1987,Pontypridd,1989-02-23,Brynmor John,Labour,Labour,Kim Howells,Labour,Death (chronic fatigue syndrome),Death,Opposition Defence
+1987,Vale of Glamorgan,1989-05-04,Sir Raymond Gower,Conservative,Conservative,John Smith,Labour,Death,Death,Opposition Gain
+1987,Vauxhall,1989-06-15,Stuart Holland,Labour,Labour,Kate Hoey,Labour,"Appointment to the European University Institute, Florence",Resignation,Opposition Defence
+1987,Glasgow Central,1989-06-15,Bob McTaggart,Labour,Labour,Mike Watson,Labour,Death (heart attack),Death,Opposition Defence
+1987,Staffordshire Mid,1990-03-22,John Heddle,Conservative,Conservative,Sylvia Heal,Labour,Death (suicide),Death,Opposition Gain
+1987,Upper Bann,1990-05-17,Harold McCusker,Ulster Unionist Party,Ulster Unionist Party,David Trimble,Ulster Unionist Party,Death (cancer),Death,Opposition Defence
+1987,Bootle,1990-05-24,Allan Roberts,Labour,Labour,Michael Carr,Labour,Death (cancer),Death,Opposition Defence
+1987,Knowsley South,1990-09-27,Sean Hughes,Labour,Labour,Edward O'Hara,Labour,Death (cancer),Death,Opposition Defence
+1987,Eastbourne,1990-10-18,Ian Gow,Conservative,Conservative,David Bellotti,Liberal Democrats,Death (terrorism),Death,Opposition Gain
+1987,Bootle,1990-11-08,Michael Carr,Labour,Labour,Joseph Benton,Labour,Death (heart attack),Death,Opposition Defence
+1987,Bradford North,1990-11-08,Pat Wall,Labour,Labour,Terry Rooney,Labour,Death (long illness),Death,Opposition Defence
+1987,Paisley North,1990-11-29,Allen Adams,Labour,Labour,Irene Adams,Labour,Death (brain haemorrhage),Death,Opposition Defence
+1987,Paisley South,1990-11-29,Norman Buchan,Labour,Labour,Gordon McMaster,Labour,Death,Death,Opposition Defence
+1987,Ribble Valley,1991-03-07,David Waddington,Conservative,Conservative,Michael Carr,Liberal Democrats,Life peerage on appointment as Leader of the House of Lords,Peerage,Opposition Gain
+1987,Neath,1991-04-04,Donald Coleman,Labour,Labour,Peter Hain,Labour,Death,Death,Opposition Defence
+1987,Monmouth,1991-05-16,Sir John Stradling Thomas,Conservative,Conservative,Huw Edwards,Labour,Death,Death,Opposition Gain
+1987,Liverpool Walton,1991-07-04,Eric Heffer,Labour,Labour,Peter Kilfoyle,Labour,Death (cancer),Death,Opposition Defence
+1987,Langbaurgh,1991-11-07,Richard Holt,Conservative,Conservative,Ashok Kumar,Labour,Death,Death,Opposition Gain
+1987,Hemsworth,1991-11-07,George Buckley,Labour,Labour,Derek Enright,Labour,Death,Death,Opposition Defence
+1987,Kincardine and Deeside,1991-11-07,Alick Buchanan-Smith,Conservative,Conservative,Nicol Stephen,Liberal Democrats,Death,Death,Opposition Gain
+1992,Newbury,1993-05-06,Judith Chaplin,Conservative,Conservative,David Rendel,Liberal Democrats,Death (complications following surgery),Death,Opposition Gain
+1992,Christchurch,1993-07-29,Robert Adley,Conservative,Conservative,Diana Maddock,Liberal Democrats,Death (heart attack),Death,Opposition Gain
+1992,Rotherham,1994-05-05,Jimmy Boyce,Labour,Labour,Denis MacShane,Labour,Death (heart attack),Death,Opposition Defence
+1992,Barking,1994-06-09,Jo Richardson,Labour,Labour,Margaret Hodge,Labour,Death (long illness),Death,Opposition Defence
+1992,Dagenham,1994-06-09,Bryan Gould,Labour,Labour,Judith Church,Labour,"Appointment as Vice-Chancellor of the University of Waikato, New Zealand",Resignation,Opposition Defence
+1992,Eastleigh,1994-06-09,Ron Leighton,Labour,Labour,Stephen Timms,Labour,Death,Death,Opposition Defence
+1992,Newham North East,1994-06-09,Stephen Milligan,Conservative,Conservative,David Chidgey,Liberal Democrats,Death (auto-erotic asphyxiation),Death,Opposition Gain
+1992,Bradford South,1994-06-09,Bob Cryer,Labour,Labour,Gerry Sutcliffe,Labour,Death (road accident),Death,Opposition Defence
+1992,Monklands East,1994-06-30,John Smith,Labour,Labour,Helen Liddell,Labour,Death (heart attack),Death,Opposition Defence
+1992,Dudley West,1994-12-15,John Blackburn,Conservative,Conservative,Ian Pearson,Labour,Death (heart attack),Death,Opposition Gain
+1992,Islwyn,1995-02-16,Neil Kinnock,Labour,Labour,Don Touhig,Labour,Appointment as European Commissioner,Appointment,Opposition Defence
+1992,Perth and Kinross,1995-05-25,Sir Nicholas Fairbairn,Conservative,Conservative,Roseanna Cunningham,SNP,Death (liver cirrhosis),Death,Opposition Gain
+1992,Down North,1995-06-15,Sir James Kilfedder,Independent,UPUP,Robert McCartney,United Kingdom Unionist Party,Death (heart attack),Death,Opposition Defence
+1992,Littleborough and Saddleworth,1995-07-27,Geoffrey Dickens,Conservative,Conservative,Chris Davies,Liberal Democrats,Death (long illness),Death,Opposition Gain
+1992,Hemsworth,1996-02-01,Derek Enright,Labour,Labour,Jon Trickett,Labour,Death (cancer),Death,Opposition Defence
+1992,Staffordshire South East,1996-04-11,Sir David Lightbown,Conservative,Conservative,Brian Jenkins,Labour,Death (heart attack),Death,Opposition Gain
+1992,Barnsley East,1996-12-12,Terry Patchett,Labour,Labour,Jeff Ennis,Labour,Death (cancer),Death,Opposition Defence
+1992,Wirral South,1997-02-27,Barry Porter,Conservative,Conservative,Ben Chapman,Labour,Death (cancer),Death,Opposition Gain
+1997,Uxbridge,1997-07-31,Sir Michael Shersby,Conservative,Conservative,John Randall,Conservative,Death (heart attack),Death,Opposition Defence
+1997,Paisley South,1997-11-06,Gordon McMaster,Labour,Labour,Douglas Alexander,Labour,Death (suicide),Death,Government Defence
+1997,Beckenham,1997-11-20,Piers Merchant,Conservative,Conservative,Jacqui Lait,Conservative,Resignation (scandal),Resignation,Opposition Defence
+1997,Winchester,1997-11-20,Mark Oaten,Liberal Democrats,Liberal Democrats,Mark Oaten,Liberal Democrats,Void election,Disqualified / Expelled,Opposition Defence
+1997,Leeds Central,1999-06-10,Derek Fatchett,Labour,Labour,Hilary Benn,Labour,Death (heart attack),Death,Government Defence
+1997,Eddisbury,1999-07-22,Alastair Goodlad,Conservative,Conservative,Stephen O'Brien,Conservative,Appointment as High Commissioner to Australia,Appointment,Opposition Defence
+1997,Hamilton South,1999-09-23,George Robertson,Labour,Labour,Bill Tynan,Labour,Life peerage upon appointment as Secretary-General of NATO,Peerage,Government Defence
+1997,Wigan,1999-09-23,Roger Stott,Labour,Labour,Neil Turner,Labour,Death (long illness),Death,Government Defence
+1997,Kensington and Chelsea,1999-11-25,Alan Clark,Conservative,Conservative,Michael Portillo,Conservative,Death (cancer),Death,Opposition Defence
+1997,Ceredigion,2000-02-03,Cynog Dafis,Plaid Cymru,Plaid Cymru,Simon Thomas,Plaid Cymru,Resignation following election to the Welsh Assembly,Alternative office,Opposition Defence
+1997,Romsey,2000-05-04,Michael Colvin,Conservative,Conservative,Sandra Gidley,Liberal Democrats,Death (accidental fire),Death,Opposition Gain
+1997,Tottenham,2000-06-22,Bernie Grant,Labour,Labour,David Lammy,Labour,Death (heart attack),Death,Government Defence
+1997,Antrim South,2000-09-21,Clifford Forsythe,Ulster Unionist Party,Ulster Unionist Party,William McCrea,DUP,Death (sudden illness),Death,Opposition Gain
+1997,West Bromwich West,2000-11-23,Betty Boothroyd,Speaker,Speaker,Adrian Bailey,Labour,Life peerage,Peerage,Government Gain
+1997,Glasgow Anniesland,2000-11-23,Donald Dewar,Labour,Labour,John Robertson,Labour,Death (Brain haemorrhage after heart surgery),Death,Government Defence
+1997,Preston,2000-11-23,Audrey Wise,Labour,Labour,Mark Hendrick,Labour,Death (cancer),Death,Government Defence
+1997,Falkirk West,2000-12-21,Dennis Canavan,Labour,Independent,Eric Joyce,Labour,Resignation in order to concentrate on his role as a Member of the Scottish Parliament,Alternative office,Government Defence
+2001,Ipswich,2001-11-22,Jamie Cann,Labour,Labour,Chris Mole,Labour,Death (liver disease),Death,Government Defence
+2001,Ogmore,2002-02-14,Sir Raymond Powell,Labour,Labour,Huw Irranca-Davies,Labour,Death (unknown; probable asthma attack),Death,Government Defence
+2001,Brent East,2003-09-18,Paul Daisley,Labour,Labour,Sarah Teather,Liberal Democrats,Death (cancer),Death,Opposition Gain
+2001,Birmingham Hodge Hill,2004-07-15,Terry Davis,Labour,Labour,Liam Byrne,Labour,Resignation on appointment as Secretary-General of the Council of Europe,Appointment,Government Defence
+2001,Leicester South,2004-07-15,Jim Marshall,Labour,Labour,Parmjit Singh Gill,Liberal Democrats,Death (heart attack),Death,Opposition Gain
+2001,Hartlepool,2004-09-30,Peter Mandelson,Labour,Labour,Iain Wright,Labour,Resignation on appointment as European Commissioner,Appointment,Government Defence
+2005,Cheadle,2005-07-14,Patsy Calton,Liberal Democrats,Liberal Democrats,Mark Hunter,Liberal Democrats,Death (cancer),Death,Opposition Defence
+2005,Livingston,2005-09-29,Robin Cook,Labour,Labour,Jim Devine,Labour,Death (heart disease),Death,Government Defence
+2005,Dunfermline and West Fife,2006-02-09,Rachel Squire,Labour,Labour,Willie Rennie,Liberal Democrats,Death (cancer/stroke),Death,Opposition Gain
+2005,Bromley and Chislehurst,2006-06-29,Eric Forth,Conservative,Conservative,Bob Neill,Conservative,Death (cancer),Death,Opposition Defence
+2005,Blaenau Gwent,2006-06-29,Peter Law,Independent,Independent,Dai Davies,Independent,Death (cancer),Death,Opposition Defence
+2005,Ealing Southall,2007-07-19,Piara Khabra,Labour,Labour,Virendra Sharma,Labour,Death (liver problems),Death,Government Defence
+2005,Sedgefield,2007-07-19,Tony Blair,Labour,Labour,Phil Wilson,Labour,Resignation on appointment as Middle East Envoy,Resignation,Government Defence
+2005,Crewe and Nantwich,2008-05-22,Gwyneth Dunwoody,Labour,Labour,Edward Timpson,Conservative,Death (heart attack),Death,Opposition Gain
+2005,Henley,2008-06-26,Boris Johnson,Conservative,Conservative,John Howell,Conservative,Election as Mayor of London,Alternative office,Opposition Defence
+2005,Haltemprice and Howden,2008-07-10,David Davis,Conservative,Conservative,David Davis,Conservative,Resigned to recontest,Reelection,Opposition Defence
+2005,Glasgow East,2008-07-24,David Marshall,Labour,Labour,John Mason,SNP,Resignation due to ill health,Resignation,Opposition Gain
+2005,Glenrothes,2008-11-06,John MacDougall,Labour,Labour,Lindsay Roy,Labour,Death (mesothelioma),Death,Government Defence
+2005,Norwich North,2009-07-23,Ian Gibson,Labour,Labour,Chloe Smith,Conservative,Resignation,Resignation,Opposition Gain
+2005,Glasgow North East,2009-11-12,Michael Martin,Speaker,Speaker,Willie Bain,Labour,Resignation,Resignation,Government Gain
+2010,Oldham East and Saddleworth,2011-01-13,Phil Woolas,Labour,Labour,Debbie Abrahams,Labour,Void election; reported personally guilty of false statements of fact concerning a candidate.,Disqualified / Expelled,Opposition Defence
+2010,Barnsley Central,2011-03-03,Eric Illsley,Labour,Labour,Dan Jarvis,Labour,Resignation (pleaded guilty to charges of false accounting stemming from the United Kingdom Parliamentary expenses scandal),Resignation,Opposition Defence
+2010,Leicester South,2011-05-05,Peter Soulsby,Labour,Labour,Jon Ashworth,Labour,Resignation (to contest the mayoralty of Leicester),Alternative office,Opposition Defence
+2010,Belfast West,2011-06-09,Gerry Adams,Sinn Féin,Sinn Féin,Paul Maskey,Sinn Féin,Resignation (to contest the Louth constituency in the Irish general election),Alternative office,Opposition Defence
+2010,Inverclyde,2011-06-30,David Cairns,Labour,Labour,Iain McKenzie,Labour,Death (pancreatitis),Death,Opposition Defence
+2010,Feltham and Heston,2011-12-15,Alan Keen,Labour,Labour,Seema Malhotra,Labour,Death (cancer),Death,Opposition Defence
+2010,Bradford West,2012-03-29,Marsha Singh,Labour,Labour,George Galloway,Respect,Resignation (serious health problems),Resignation,Opposition Gain
+2010,Cardiff South and Penarth,2012-11-15,Louise Mensch,Conservative,Conservative,Andy Sawford,Labour,Resignation for family reasons,Resignation,Opposition Gain
+2010,Manchester Central,2012-11-15,Tony Lloyd,Labour,Labour,Lucy Powell,Labour,Resignation to contest Greater Manchester Police and Crime Commissioner election,Alternative office,Opposition Defence
+2010,Corby,2012-11-15,Alun Michael,Labour,Labour,Stephen Doughty,Labour,Resignation to contest South Wales Police and Crime Commissioner election,Alternative office,Opposition Defence
+2010,Rotherham,2012-11-29,Denis MacShane,Labour,Labour,Sarah Champion,Labour,Resignation (following recommendation from the Standards and Privileges Committee that he be suspended for 12 months for submitting false expenses invoices stemming from the United Kingdom Parliamentary expenses scandal),Resignation,Opposition Defence
+2010,Middlesbrough,2012-11-29,Stuart Bell,Labour,Labour,Andy McDonald,Labour,Death (cancer),Death,Opposition Defence
+2010,Croydon North,2012-11-29,Malcolm Wicks,Labour,Labour,Steve Reed,Labour,Death (cancer),Death,Opposition Defence
+2010,Eastleigh,2013-02-28,Chris Huhne,Liberal Democrats,Liberal Democrats,Mike Thornton,Liberal Democrats,Resignation following pleading guilty to perverting the course of justice,Resignation,Government Defence
+2010,Ulster Mid,2013-03-07,Martin McGuinness,Sinn Féin,Sinn Féin,Francie Molloy,Sinn Féin,Resignation to end 'double-jobbing' as Member of Parliament and Member of the Northern Ireland Assembly,Alternative office,Opposition Defence
+2010,South Shields,2013-05-02,David Miliband,Labour,Labour,Emma Lewell-Buck,Labour,Resignation to join International Rescue Committee,Resignation,Opposition Defence
+2010,Wythenshawe and Sale East,2014-02-13,Paul Goggins,Labour,Labour,Mike Kane,Labour,Death (stroke/haemorrhage),Death,Opposition Defence
+2010,Newark,2014-06-05,Patrick Mercer,Conservative,Conservative,Robert Jenrick,Conservative,Resignation (following recommendation from the Standards Committee that he be suspended for six months for breach of the paid advocacy rule),Resignation,Government Defence
+2010,Clacton,2014-10-09,Jim Dobbin,Labour,Labour,Liz McInnes,Labour,Death (acute alcohol toxicity with food aspiration),Death,Opposition Defence
+2010,Heywood and Middleton,2014-10-09,Douglas Carswell,Conservative,Conservative,Douglas Carswell,UK Independence Party (UKIP),Sought re-election upon change of party allegiance,Reelection,Opposition Gain
+2010,Rochester and Strood,2014-11-20,Mark Reckless,Conservative,Conservative,Mark Reckless,UK Independence Party (UKIP),Sought re-election upon change of party allegiance,Reelection,Opposition Gain
+2015,Oldham West and Royton,2015-12-03,Michael Meacher,Labour,Labour,Jim McMahon,Labour,Death (short illness).,Death,Opposition Defence
+2015,Sheffield Brightside and Hillsborough,2016-05-05,Harry Harpham,Labour,Labour,Gill Furniss,Labour,Death (cancer).,Death,Opposition Defence
+2015,Ogmore,2016-05-05,Huw Irranca-Davies,Labour,Labour,Christopher Elmore,Labour,Resignation to contest the Welsh Assembly election.,Alternative office,Opposition Defence
+2015,Tooting,2016-06-16,Sadiq Khan,Labour,Labour,Rosena Allin-Khan,Labour,Resignation upon his election as Mayor of London.,Alternative office,Opposition Defence
+2015,Batley and Spen,2016-10-20,Jo Cox,Labour,Labour,Tracy Brabin,Labour,Death (murder).,Death,Opposition Defence
+2015,Witney,2016-10-20,David Cameron,Conservative,Conservative,Robert Courts,Conservative,Resignation as an MP two months after resigning as Prime Minister and Leader of Conservative Party.,Resignation,Government Defence
+2015,Richmond Park,2016-12-01,Zac Goldsmith,Conservative,Conservative,Sarah Olney,Liberal Democrats,Sought reelection as an Independent in opposition to the government's decision on the expansion of Heathrow Airport.,Reelection,Opposition Gain
+2015,Sleaford and North Hykeham,2016-12-08,Stephen Phillips,Conservative,Conservative,Caroline Johnson,Conservative,Resignation citing irreconcilable differences with the government.,Resignation,Government Defence
+2015,Copeland,2017-02-23,Jamie Reed,Labour,Labour,Trudy Harrison,Conservative,Resignation to take up his new role in the nuclear power industry.,Resignation,Government Gain
+2015,Stoke-on-Trent Central,2017-02-23,Tristram Hunt,Labour,Labour,Gareth Snell,Labour,Resignation to take up his new role as head of the Victoria and Albert Museum.,Resignation,Opposition Defence
+2017,Tyrone West,2018-05-03,Barry McElduff,Sinn Féin,Sinn Féin,Órfhlaith Begley,Sinn Féin,Resignation after making a joke about the Kingsmill massacre on social media.,Resignation,Opposition Defence
+2017,Lewisham East,2018-06-14,Heidi Alexander,Labour,Labour,Janet Daby,Labour,Resignation on appointment as Deputy Mayor of London.,Appointment,Opposition Defence
+2017,Newport West,2019-04-04,Paul Flynn,Labour,Labour,Ruth Jones,Labour,Death (long illness).,Death,Opposition Defence
+2017,Peterborough,2019-06-06,Fiona Onasanya,Labour,Labour,Lisa Forbes,Labour,"Successful recall petition via the provisions of the Recall of MPs Act 2015, after Onasanya's conviction for perverting the course of justice, in relation to a motoring offence.",Recall,Opposition Defence
+2017,Brecon and Radnorshire,2019-08-01,Chris Davies,Conservative,Conservative,Jane Dodds,Liberal Democrats,"Successful recall petition via the provisions of the Recall of MPs Act 2015, after Davies' conviction for false expenses claims, pursuant to the Parliamentary Standards Act 2009.",Recall,Opposition Gain
+2019,Hartlepool,2021-05-06,Mike Hill,Labour,Labour,Jill Mortimer,Conservative,Resignation following allegations of sexual harassment and victimisation.,Resignation,Government Gain
+2019,Airdrie and Shotts,2021-05-13,Neil Gray,SNP,SNP,Anum Qaisar,SNP,Resignation to contest the seat of Airdrie and Shotts in the Scottish Parliament.,Alternative office,Opposition Defence
+2019,Chesham and Amersham,2021-06-17,Cheryl Gillan,Conservative,Conservative,Sarah Green,Liberal Democrats,Death (cancer).,Death,Opposition Gain
+2019,Batley and Spen,2021-07-01,Tracy Brabin,Labour,Labour,Kim Leadbeater,Labour,Resignation after being elected as Mayor of West Yorkshire.,Alternative office,Opposition Defence
+2019,Old Bexley and Sidcup,2021-12-02,James Brokenshire,Conservative,Conservative,Louie French,Conservative,Death (cancer).,Death,Government Defence
+2019,Shropshire North,2021-12-16,Owen Paterson,Conservative,Conservative,Helen Morgan,Liberal Democrats,Resignation after having been found to have broken lobbying rules.,Resignation,Opposition Gain
+2019,Southend West,2022-02-03,David Amess,Conservative,Conservative,Anna Firth,Conservative,Death (murder).,Death,Government Defence
+2019,Birmingham Erdington,2022-03-03,Jack Dromey,Labour,Labour,Paulette Hamilton,Labour,Death (heart failure).,Death,Opposition Defence
+2019,Wakefield,2022-06-23,Imran Ahmad Khan,Conservative,Conservative,Simon Lightwood,Labour,Resignation after being convicted of sexually assaulting a 15-year-old boy.,Resignation,Opposition Gain
+2019,Tiverton and Honiton,2022-06-23,Neil Parish,Conservative,Conservative,Richard Foord,Liberal Democrats,Resignation after being accused of watching pornography in the House of Commons on two occasions.,Resignation,Opposition Gain
+2019,"Chester, City of",2022-12-01,Chris Matheson,Labour,Labour,Samantha Dixon,Labour,Resignation after being suspended for serious sexual misconduct,Resignation,Opposition Defence
+2019,Stretford and Urmston,2022-12-15,Kate Green,Labour,Labour,Andrew Western,Labour,Resignation to take up job as deputy mayor of Greater Manchester,Appointment,Opposition Defence
+2019,Lancashire West,2023-02-09,Rosie Cooper,Labour,Labour,Ashley Dalton,Labour,Resignation to take up job as chair of Mersey Care NHS Foundation Trust.,Appointment,Opposition Defence
+2019,Uxbridge and South Ruislip,2023-07-20,Boris Johnson,Conservative,Conservative,Steve Tuckwell,Conservative,"Resignation ""with immediate effect"" after being handed results of investigation into allegations he misled Parliament over Partygate.",Resignation,Government Defence
+2019,Selby and Ainsty,2023-07-20,Nigel Adams,Conservative,Conservative,Keir Mather,Labour,"Resignation ""with immediate effect"".",Resignation,Opposition Gain
+2019,Somerton and Frome,2023-07-20,David Warburton,Conservative,Conservative,Sarah Dyke,Liberal Democrats,"Announced his resignation on 17 June, 14 months after being suspended from the Conservative Party pending an investigation.",Resignation,Opposition Gain
+2019,Rutherglen and Hamilton West,2023-10-05,Margaret Ferrier,SNP,SNP,Michael Shanks,Labour,"Successful recall petition via the provisions of the Recall of MPs Act 2015, after Ferrier broke COVID-19 rules in 2020.",Recall,Opposition Gain
+2019,Tamworth,2023-10-19,Chris Pincher,Conservative,Conservative,Sarah Edwards,Labour,Resignation after losing his appeal for his suspension due to groping allegations.,Resignation,Opposition Gain
+2019,Bedfordshire Mid,2023-10-19,Nadine Dorries,Conservative,Conservative,Alistair Strathern,Labour,"Resignation ""with immediate effect"", although had not formally resigned until 26 August.",Resignation,Opposition Gain
+2019,Kingswood,2024-02-15,Chris Skidmore,Conservative,Conservative,Damien Egan,Labour,Resignation in protest of the Conservative government's bill to grant new oil and gas licences.,Resignation,Opposition Gain
+2019,Wellingborough,2024-02-15,Peter Bone,Conservative,Conservative,Gen Kitchen,Labour,Successful recall petition after allegations of bullying and sexual misconduct.,Recall,Opposition Gain
+2019,Rochdale,2024-02-29,Tony Lloyd,Labour,Labour,George Galloway,Workers Party of Britain,Death (leukaemia),Death,Opposition Defence
+2019,Blackpool South,2024-05-02,Scott Benton,Conservative,Conservative,Chris Webb,Labour,Resigned after being suspended for five weeks and being subject to a recall petition,Resignation,Opposition Gain

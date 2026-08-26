@@ -1,88 +1,462 @@
+import random
+import math
+import html
+from pathlib import Path
+from collections import defaultdict
+from itertools import combinations
+
 import numpy as np
 from tqdm import tqdm
 
-# Current stats for Charlton Athletic and Leyton Orient as of the end of the regular season
-# Pld=46 for both as the full league season is over.
-team_stats = {
-    "Charlton Athletic": {"Pld": 46, "GF": 67, "GA": 43, "Pts": 85},
-    "Leyton Orient": {"Pld": 46, "GF": 72, "GA": 48, "Pts": 78},
+
+# ====================== ELO RATINGS (LEAGUE ONE) ======================
+# Estimated ELOs based on recent performance and squad strength
+elo = {
+    "Huddersfield Town": 1685,
+    "Stockport County": 1640,
+    "Bradford City": 1625,
+    "Luton Town": 1710,
+    "Cambridge United": 1595,
+    "Sheffield Wednesday": 1660,
+    "Mansfield Town": 1580,
+    "Bromley": 1545,
+    "Milton Keynes Dons": 1605,
+    "Oxford United": 1590,
+    "Leicester City": 1670,
+    "Stevenage": 1575,
+    "Wycombe Wanderers": 1585,
+    "Blackpool": 1600,
+    "Burton Albion": 1550,
+    "Notts County": 1565,
+    "Reading": 1615,
+    "Wigan Athletic": 1610,
+    "Doncaster Rovers": 1570,
+    "Leyton Orient": 1555,
+    "Barnsley": 1620,
+    "Plymouth Argyle": 1630,
+    "Peterborough United": 1635,
+    "AFC Wimbledon": 1540,
 }
 
-# --- Simulation Parameters ---
-runs = 100000  # Number of times to simulate the match
+teams = list(elo.keys())
+NUM_TEAMS = len(teams)  # 24
+GAMES_PER_TEAM = NUM_TEAMS - 1
+TOTAL_GAMES = NUM_TEAMS * GAMES_PER_TEAM
 
-# --- Outcome Counters ---
-charlton_athletic_wins = 0
-leyton_orient_wins = 0
-draws = 0
+# ====================== FINISHED RESULTS ======================
+# Results from Matchday 1 as provided
+finished_results = [
+    ("Notts County", "Leicester City", 1, 1),
+    ("Reading", "Luton Town", 3, 4),
+    ("Oxford United", "Milton Keynes Dons", 2, 2),
+    ("Bradford City", "Peterborough United", 2, 0),
+    ("Leyton Orient", "Sheffield Wednesday", 1, 2),
+    ("Huddersfield Town", "AFC Wimbledon", 3, 0),
+    ("Burton Albion", "Stevenage", 1, 1),
+    ("Barnsley", "Bromley", 0, 1),
+    ("Cambridge United", "Wigan Athletic", 3, 2),
+    ("Mansfield Town", "Doncaster Rovers", 2, 1),
+    ("Blackpool", "Wycombe Wanderers", 1, 1),
+    ("Plymouth Argyle", "Stockport County", 1, 3),
+    # Doncaster Rovers 0–0 Barnsley (82 mins elapsed)Luton Town 2–2 Notts County (60 mins elapsed)EFL
+    ("Doncaster Rovers", "Barnsley", 0, 0),
+    ("Luton Town", "Notts County", 2, 2),
+]
 
-# --- Simulation Logic ---
+# ====================== AUTO-GENERATE REMAINING FIXTURES ======================
+all_fixtures = set()
+for home, away in combinations(teams, 2):
+    all_fixtures.add((home, away))
+    all_fixtures.add((away, home))
+
+finished_pairs = {(h, a) for h, a, _, _ in finished_results}
+
+remaining_fixtures = [
+    (home, away)
+    for home, away in sorted(all_fixtures)
+    if (home, away) not in finished_pairs
+]
+
+# ====================== MODEL PARAMETERS ======================
+HOME_ADVANTAGE = 60       # Slightly lower than Championship
+DRAW_BASE = 0.26          # League One tends to be slightly more draw-prone
+DRAW_WIDTH = 220
+
+# ====================== STARTING POINTS ======================
+# No points deductions currently active for these teams
+STARTING_POINTS = {}
+
+# ====================== APPLY RESULT ======================
+def apply_result(table, home, away, hg, ag):
+    table[home]["GF"] += hg
+    table[home]["GA"] += ag
+    table[away]["GF"] += ag
+    table[away]["GA"] += hg
+
+    if hg > ag:
+        table[home]["Pts"] += 3
+    elif ag > hg:
+        table[away]["Pts"] += 3
+    else:
+        table[home]["Pts"] += 1
+        table[away]["Pts"] += 1
 
 
-def simulate_goals_for_team(team_avg_gf, opponent_avg_ga):
-    """
-    Simulates goals scored by a team in a match using a Poisson distribution.
-    The expected goals are influenced by the team's average goals for and the opponent's average goals against.
-    """
-    # Simple average for expected goals in this specific match context
-    # More sophisticated models might use strength ratings, etc.
+# ====================== BUILD STARTING TABLE ======================
+def build_starting_table():
+    table = {t: {"Pts": STARTING_POINTS.get(t, 0), "GF": 0, "GA": 0} for t in teams}
+    for home, away, hg, ag in finished_results:
+        apply_result(table, home, away, hg, ag)
+    return table
+
+
+# ====================== MATCH ENGINE ======================
+def simulate_match(home, away):
+    diff = elo[home] - elo[away] + HOME_ADVANTAGE
+
+    p_home_base = 1 / (1 + 10 ** (-diff / 400))
+    p_draw = DRAW_BASE * math.exp(-(diff**2) / (2 * DRAW_WIDTH**2))
+
+    p_home = p_home_base * (1 - p_draw)
+    p_away = (1 - p_home_base) * (1 - p_draw)
+
+    r = random.random()
+
+    home_xg = max(0.25, 1.40 + diff / 500)
+    away_xg = max(0.25, 1.05 - diff / 550)
+
+    if r < p_home:
+        return _sample_win(home_xg, away_xg, home_wins=True)
+    elif r < p_home + p_draw:
+        g = np.random.poisson((home_xg + away_xg) / 2)
+        return g, g
+    else:
+        return _sample_win(home_xg, away_xg, home_wins=False)
+
+
+def _sample_win(home_xg, away_xg, home_wins):
+    while True:
+        hg = np.random.poisson(home_xg)
+        ag = np.random.poisson(away_xg)
+        if home_wins and hg > ag:
+            return hg, ag
+        if not home_wins and ag > hg:
+            return hg, ag
+
+
+# ====================== PLAYOFF SIMULATION (LEAGUE ONE FORMAT) ======================
+def games_played_per_team():
+    return max(1, len(finished_results) * 2 // len(teams))
+
+
+def simulate_goals_for_team(team_avg_gf, opponent_avg_ga, is_home=False):
     lambda_val = max(0, (team_avg_gf + opponent_avg_ga) / 2)
+    if is_home:
+        lambda_val *= 1.1
     return np.random.poisson(lambda_val)
 
 
-print(
-    f"Simulating the Charlton Athletic vs Leyton Orient League One Play-Off Final {runs} times...\n"
-)
+def simulate_single_match(home_team, away_team, table):
+    """Used for neutral venue Final"""
+    gp = games_played_per_team()
+    home_avg_gf = table[home_team]["GF"] / gp
+    home_avg_ga = table[home_team]["GA"] / gp
+    away_avg_gf = table[away_team]["GF"] / gp
+    away_avg_ga = table[away_team]["GA"] / gp
 
-for _ in tqdm(range(runs), desc="Simulating Matches"):
-    # Calculate average goals for/against based on full season stats
-    charlton_avg_gf = (
-        team_stats["Charlton Athletic"]["GF"] / team_stats["Charlton Athletic"]["Pld"]
-    )
-    charlton_avg_ga = (
-        team_stats["Charlton Athletic"]["GA"] / team_stats["Charlton Athletic"]["Pld"]
-    )
+    # Neutral venue - no home advantage multiplier
+    home_goals = simulate_goals_for_team(home_avg_gf, away_avg_ga, is_home=False)
+    away_goals = simulate_goals_for_team(away_avg_gf, home_avg_ga, is_home=False)
 
-    orient_avg_gf = (
-        team_stats["Leyton Orient"]["GF"] / team_stats["Leyton Orient"]["Pld"]
-    )
-    orient_avg_ga = (
-        team_stats["Leyton Orient"]["GA"] / team_stats["Leyton Orient"]["Pld"]
-    )
-
-    # Simulate goals for each team
-    # Home/Away advantage is not explicitly modeled here as it's a neutral venue (Wembley).
-    charlton_goals = simulate_goals_for_team(charlton_avg_gf, orient_avg_ga)
-    orient_goals = simulate_goals_for_team(orient_avg_gf, charlton_avg_ga)
-
-    # Determine match outcome
-    if charlton_goals > orient_goals:
-        charlton_athletic_wins += 1
-    elif orient_goals > charlton_goals:
-        leyton_orient_wins += 1
+    if home_goals > away_goals:
+        return home_team
+    elif away_goals > home_goals:
+        return away_team
     else:
-        # In a play-off final, a draw after 90 mins leads to extra time/penalties.
-        # For this simulation, we'll consider it a 'draw' if scores are level after regular time.
-        draws += 1
+        return np.random.choice([home_team, away_team])
 
-# --- Display Results ---
 
-print("\n--- Simulation Results ---")
-print(f"Total simulations: {runs}\n")
+def simulate_two_leg_tie(higher_seed, lower_seed, table):
+    """Standard League One Semi-Final: Higher seed gets 2nd leg at home"""
+    gp = games_played_per_team()
+    
+    h_gf = table[higher_seed]["GF"] / gp
+    h_ga = table[higher_seed]["GA"] / gp
+    l_gf = table[lower_seed]["GF"] / gp
+    l_ga = table[lower_seed]["GA"] / gp
 
-# Calculate percentages
-charlton_win_percent = (charlton_athletic_wins / runs) * 100
-orient_win_percent = (leyton_orient_wins / runs) * 100
-draw_percent = (draws / runs) * 100
+    # Leg 1: Lower seed at home
+    leg1_h_goals = simulate_goals_for_team(l_gf, h_ga, is_home=True)
+    leg1_a_goals = simulate_goals_for_team(h_gf, l_ga, is_home=False)
+    
+    # Leg 2: Higher seed at home
+    leg2_h_goals = simulate_goals_for_team(h_gf, l_ga, is_home=True)
+    leg2_a_goals = simulate_goals_for_team(l_gf, h_ga, is_home=False)
 
-print(f"Charlton Athletic wins: {charlton_athletic_wins} ({charlton_win_percent:.2f}%)")
-print(f"Leyton Orient wins: {leyton_orient_wins} ({orient_win_percent:.2f}%)")
-print(f"Draws (after 90 mins): {draws} ({draw_percent:.2f}%)")
+    higher_agg = leg1_a_goals + leg2_h_goals
+    lower_agg = leg1_h_goals + leg2_a_goals
 
-print("\n--- Important Note for Play-Off Finals ---")
-print(
-    "This simulation predicts the outcome after 90 minutes. In a real play-off final, if the score is a draw, the match goes to extra time and potentially penalties to determine a winner."
-)
-print(
-    "The 'Draws' percentage above represents matches that would proceed to extra time."
-)
+    if higher_agg > lower_agg:
+        return higher_seed
+    elif lower_agg > higher_agg:
+        return lower_seed
+    else:
+        # Tied aggregate: random choice (could add penalties logic)
+        return np.random.choice([higher_seed, lower_seed])
+
+
+# ====================== MONTE CARLO ======================
+sims = 5000
+
+auto_promotion = defaultdict(int)
+playoff_qualify = defaultdict(int)
+total_promotion = defaultdict(int)
+releg = defaultdict(int)
+avg_points = defaultdict(list)
+promoted_trios = defaultdict(int)
+relegated_quartets = defaultdict(int)  # League One relegates 4 teams
+position_counts = defaultdict(lambda: defaultdict(int))
+
+stats_tracking = {t: {"W": 0, "D": 0, "L": 0, "GD": 0} for t in teams}
+
+total_fixtures = len(finished_results) + len(remaining_fixtures)
+print(f"Running {sims:,} simulations...")
+print(f"  Finished games: {len(finished_results)}")
+print(f"  Remaining fixtures to simulate: {len(remaining_fixtures)}")
+print(f"  Total fixtures per sim: {total_fixtures}")
+
+
+def _track_stats(stats, team, gf, ga):
+    diff = gf - ga
+    if diff > 0:
+        stats[team]["W"] += 1
+    elif diff < 0:
+        stats[team]["L"] += 1
+    else:
+        stats[team]["D"] += 1
+    stats[team]["GD"] += diff
+
+
+for _ in tqdm(range(sims), desc="Simulating", unit="sim"):
+    table = build_starting_table()
+
+    for home, away in remaining_fixtures:
+        hg, ag = simulate_match(home, away)
+        apply_result(table, home, away, hg, ag)
+        _track_stats(stats_tracking, home, hg, ag)
+        _track_stats(stats_tracking, away, ag, hg)
+
+    ranking = sorted(
+        table.items(),
+        key=lambda x: (
+            x[1]["Pts"],
+            x[1]["GF"] - x[1]["GA"],
+            x[1]["GF"],
+        ),
+        reverse=True,
+    )
+
+    for pos, (team, data) in enumerate(ranking, 1):
+        avg_points[team].append(data["Pts"])
+        position_counts[team][pos] += 1
+
+        # League One: Top 2 Auto, 3-6 Playoffs, Bottom 4 Relegated
+        if pos <= 2:
+            auto_promotion[team] += 1
+            total_promotion[team] += 1
+        if 3 <= pos <= 6:
+            playoff_qualify[team] += 1
+        if pos >= NUM_TEAMS - 3:  # Positions 21, 22, 23, 24
+            releg[team] += 1
+
+    # LEAGUE ONE PLAYOFFS
+    # Semi-Finals: 3rd vs 6th, 4th vs 5th (Two Legs)
+    semi1_winner = simulate_two_leg_tie(ranking[2][0], ranking[5][0], table)
+    semi2_winner = simulate_two_leg_tie(ranking[3][0], ranking[4][0], table)
+
+    # Final: Single Leg at Neutral Venue
+    winner = simulate_single_match(semi1_winner, semi2_winner, table)
+    total_promotion[winner] += 1
+
+    # Record promoted trio
+    promoted = [ranking[0][0], ranking[1][0], winner]
+    promoted_trios[frozenset(promoted)] += 1
+
+    # Record relegated quartet (Bottom 4)
+    relegated = [ranking[i][0] for i in range(NUM_TEAMS - 4, NUM_TEAMS)]
+    relegated_quartets[frozenset(relegated)] += 1
+
+
+# ====================== OUTPUT ======================
+teams_sorted = sorted(teams, key=lambda x: sum(avg_points[x]) / sims, reverse=True)
+
+print(f"\n{'Team':<25}{'AvgPts':<10}{'W':>5}{'D':>5}{'L':>5}{'GD':>8}  {'Auto Promo%':<12}{'Playoff%':<10}{'Promo%':<8}{'Releg%'}")
+print("-" * 104)
+
+for team in teams_sorted:
+    s = stats_tracking[team]
+    auto = auto_promotion[team] / sims * 100
+    po = playoff_qualify[team] / sims * 100
+    total_promo = total_promotion[team] / sims * 100
+    rel = releg[team] / sims * 100
+    print(
+        f"{team:<25}"
+        f"{sum(avg_points[team]) / sims:<10.2f}"
+        f"{s['W'] / sims:>5.3f}"
+        f"{s['D'] / sims:>5.3f}"
+        f"{s['L'] / sims:>5.3f}"
+        f"{s['GD'] / sims:>8.3f}  "
+        f"{auto:<10.2f}"
+        f"{po:<10.2f}"
+        f"{total_promo:<8.2f}"
+        f"{rel:.2f}"
+    )
+
+# Most likely promoted trio
+most_likely_trio = max(promoted_trios, key=lambda k: promoted_trios[k])
+combined_percent = promoted_trios[most_likely_trio] / sims * 100
+print(f"\nMost likely 3 teams to go up: {', '.join(sorted(most_likely_trio))}")
+print(f"Combined percentage: {combined_percent:.2f}%")
+
+# Most likely relegated quartet
+most_likely_relegated = max(relegated_quartets, key=lambda k: relegated_quartets[k])
+relegated_percent = relegated_quartets[most_likely_relegated] / sims * 100
+print(f"\nMost likely 4 teams to go down: {', '.join(sorted(most_likely_relegated))}")
+print(f"Combined percentage: {relegated_percent:.2f}%")
+
+
+# ====================== MOST LIKELY POSITIONS & SOLVED % ======================
+print("\n" + "=" * 80)
+print("MOST LIKELY FINISHING POSITIONS")
+print("=" * 80)
+
+team_solved = []
+
+for team, pos_counts in position_counts.items():
+    most_likely_pos = max(pos_counts.items(), key=lambda x: x[1])[0]
+    pct = pos_counts[most_likely_pos] / sims * 100
+    team_solved.append((team, most_likely_pos, pct))
+
+team_solved.sort(key=lambda x: x[2], reverse=True)
+
+for team, pos, pct in team_solved:
+    print(f"{team:<25} Most likely: {pos}th ({pct:.2f}%)")
+
+combined_solved = 1.0
+for _, _, pct in team_solved:
+    combined_solved *= (pct / 100.0)
+
+print(f"\nCombined table solved %: {combined_solved * 100:.20e}%")
+
+combined_auto = {team: auto_promotion[team] / sims * 100 for team in teams}
+combined_playoff = {team: playoff_qualify[team] / sims * 100 for team in teams}
+combined_releg = {team: releg[team] / sims * 100 for team in teams}
+
+stats_solved = {}
+
+for team in teams:
+    auto_count = sum(position_counts[team].get(pos, 0) for pos in range(1, 3))
+    playoff_count = sum(position_counts[team].get(pos, 0) for pos in range(3, 7))
+    releg_count = sum(position_counts[team].get(pos, 0) for pos in range(NUM_TEAMS - 3, NUM_TEAMS + 1))
+
+    if auto_count > 0:
+        stats_solved.setdefault("AutoPromo", []).append(combined_auto[team] / 100.0)
+
+    if playoff_count > 0:
+        stats_solved.setdefault("Playoff", []).append(combined_playoff[team] / 100.0)
+
+    if releg_count > 0:
+        stats_solved.setdefault("Releg", []).append(combined_releg[team] / 100.0)
+
+print("\nCombined stats solved %:")
+for stat_name, probs in stats_solved.items():
+    solved = 1.0
+    for p in probs:
+        solved *= p
+    print(f"  {stat_name}: {solved * 100:.20e}%")
+
+
+# ====================== HTML OUTPUT ======================
+def _row(rank, team):
+    s = stats_tracking[team]
+    auto = auto_promotion[team] / sims * 100
+    po = playoff_qualify[team] / sims * 100
+    total_promo = total_promotion[team] / sims * 100
+    rel = releg[team] / sims * 100
+    return f"""        <tr>
+            <td>{rank}</td>
+            <td>{html.escape(team)}</td>
+            <td>{sum(avg_points[team]) / sims:.2f}</td>
+            <td>{s['W'] / sims:.3f}</td>
+            <td>{s['D'] / sims:.3f}</td>
+            <td>{s['L'] / sims:.3f}</td>
+            <td>{s['GD'] / sims:+.3f}</td>
+            
+            <td>{auto:.2f}%</td>
+            <td>{po:.2f}%</td>
+            <td>{total_promo:.2f}%</td>
+            <td>{rel:.2f}%</td>
+        </tr>"""
+
+
+table_rows = "\n".join(_row(i, t) for i, t in enumerate(teams_sorted, 1))
+
+html_doc = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League One Playoff Simulation — 2026/27</title>
+    <style>
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; color: #333; }}
+        .container {{ max-width: 1100px; margin: 0 auto; }}
+        h1 {{ color: #1a1a2e; margin-bottom: 5px; }}
+        h2 {{ color: #16213e; margin-top: 30px; }}
+        .meta {{ color: #666; font-size: 0.9em; margin-bottom: 20px; }}
+        table {{ border-collapse: collapse; width: 100%; margin: 15px 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
+        th, td {{ border: 1px solid #e0e0e0; padding: 8px 12px; text-align: left; }}
+        th {{ background: #16213e; color: white; }}
+        tr:nth-child(even) {{ background: #f8f9fa; }}
+        tr:hover {{ background: #e8f0fe; }}
+        .footer {{ margin-top: 30px; color: #666; font-size: 0.85em; }}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>EFL League One Playoff Simulation</h1>
+    <div class="meta">2026/27 season · {sims:,} simulations · {total_fixtures} fixtures per sim · {NUM_TEAMS} teams</div>
+
+    <h2>Final League Table &amp; Season Stats</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Pos</th>
+                <th>Team</th>
+                <th>AvgPts</th>
+                <th>Wins</th>
+                <th>Draws</th>
+                <th>Losses</th>
+                <th>GD</th>
+                <th>Auto Promo%</th>
+                <th>Playoff%</th>
+                <th>Total Promo%</th>
+                <th>Releg%</th>
+            </tr>
+        </thead>
+        <tbody>
+{table_rows}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p><strong>Playoff structure:</strong> Semi-finals (3rd vs 6th, 4th vs 5th — two legs) → Final (single leg, neutral venue)</p>
+        <p><strong>Most likely promoted trio:</strong> {', '.join(sorted(most_likely_trio))} ({combined_percent:.2f}%)</p>
+        <p><strong>Most likely relegated quartet:</strong> {', '.join(sorted(most_likely_relegated))} ({relegated_percent:.2f}%)</p>
+    </div>
+</div>
+</body>
+</html>"""
+
+output_path = Path(__file__).parent / "league_one_results.html"
+output_path.write_text(html_doc, encoding="utf-8")
+print(f"\nHTML report written to: {output_path}")

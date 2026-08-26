@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Two Playoff Simulation — 2026/27</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; color: #333; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { color: #1a1a2e; margin-bottom: 5px; }
+        h2 { color: #16213e; margin-top: 30px; }
+        .meta { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #e0e0e0; padding: 8px 12px; text-align: left; }
+        th { background: #16213e; color: white; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        tr:hover { background: #e8f0fe; }
+        .footer { margin-top: 30px; color: #666; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>EFL League Two Playoff Simulation</h1>
+    <div class="meta">2026/27 season · 5,000 simulations · 552 fixtures per sim · 24 teams</div>
+
+    <h2>Final League Table &amp; Season Stats</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Pos</th>
+                <th>Team</th>
+                <th>AvgPts</th>
+                <th>Wins</th>
+                <th>Draws</th>
+                <th>Losses</th>
+                <th>GD</th>
+                <th>Auto Promo%</th>
+                <th>Playoff%</th>
+                <th>Total Promo%</th>
+                <th>Releg%</th>
+            </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>1</td>
+            <td>Walsall</td>
+            <td>69.95</td>
+            <td>18.244</td>
+            <td>11.221</td>
+            <td>14.535</td>
+            <td>+7.580</td>
+            
+            <td>32.96%</td>
+            <td>25.34%</td>
+            <td>41.04%</td>
+            <td>1.32%</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Fleetwood Town</td>
+            <td>69.09</td>
+            <td>18.155</td>
+            <td>11.624</td>
+            <td>15.221</td>
+            <td>+6.078</td>
+            
+            <td>28.22%</td>
+            <td>24.30%</td>
+            <td>34.90%</td>
+            <td>1.50%</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Crewe Alexandra</td>
+            <td>66.96</td>
+            <td>17.428</td>
+            <td>11.679</td>
+            <td>15.893</td>
+            <td>+3.144</td>
+            
+            <td>21.08%</td>
+            <td>23.00%</td>
+            <td>26.48%</td>
+            <td>2.74%</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>Rotherham United</td>
+            <td>66.75</td>
+            <td>18.401</td>
+            <td>11.543</td>
+            <td>15.055</td>
+            <td>+7.021</td>
+            
+            <td>21.26%</td>
+            <td>22.26%</td>
+            <td>27.76%</td>
+            <td>3.06%</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>Oldham Athletic</td>
+            <td>66.48</td>
+            <td>17.262</td>
+            <td>11.699</td>
+            <td>16.039</td>
+            <td>+2.458</td>
+            
+            <td>19.48%</td>
+            <td>22.74%</td>
+            <td>26.08%</td>
+            <td>3.60%</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>Chesterfield</td>
+            <td>66.13</td>
+            <td>17.267</td>
+            <td>11.335</td>
+            <td>15.399</td>
+            <td>+3.865</td>
+            
+            <td>17.82%</td>
+            <td>22.06%</td>
+            <td>23.04%</td>
+            <td>2.90%</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>Bristol Rovers</td>
+            <td>66.03</td>
+            <td>17.237</td>
+            <td>11.315</td>
+            <td>15.448</td>
+            <td>+3.670</td>
+            
+            <td>17.78%</td>
+            <td>21.72%</td>
+            <td>23.52%</td>
+            <td>2.98%</td>
+        </tr>
+        <tr>
+            <td>8</td>
+            <td>Barnet</td>
+            <td>65.73</td>
+            <td>17.029</td>
+            <td>11.640</td>
+            <td>16.331</td>
+            <td>+1.460</td>
+            
+            <td>17.00%</td>
+            <td>21.40%</td>
+            <td>22.06%</td>
+            <td>3.44%</td>
+        </tr>
+        <tr>
+            <td>9</td>
+            <td>Salford City</td>
+            <td>63.68</td>
+            <td>17.433</td>
+            <td>11.378</td>
+            <td>15.189</td>
+            <td>+4.780</td>
+            
+            <td>11.82%</td>
+            <td>17.90%</td>
+            <td>16.88%</td>
+            <td>5.00%</td>
+        </tr>
+        <tr>
+            <td>10</td>
+            <td>Northampton Town</td>
+            <td>63.63</td>
+            <td>16.987</td>
+            <td>11.674</td>
+            <td>16.339</td>
+            <td>+1.336</td>
+            
+            <td>11.72%</td>
+            <td>18.34%</td>
+            <td>16.32%</td>
+            <td>6.14%</td>
+        </tr>
+        <tr>
+            <td>11</td>
+            <td>Cheltenham Town</td>
+            <td>63.63</td>
+            <td>16.336</td>
+            <td>11.620</td>
+            <td>17.043</td>
+            <td>-1.598</td>
+            
+            <td>12.04%</td>
+            <td>17.66%</td>
+            <td>15.90%</td>
+            <td>6.04%</td>
+        </tr>
+        <tr>
+            <td>12</td>
+            <td>Newport County</td>
+            <td>63.06</td>
+            <td>16.216</td>
+            <td>11.418</td>
+            <td>16.366</td>
+            <td>-0.416</td>
+            
+            <td>10.24%</td>
+            <td>17.26%</td>
+            <td>14.58%</td>
+            <td>6.08%</td>
+        </tr>
+        <tr>
+            <td>13</td>
+            <td>Tranmere Rovers</td>
+            <td>62.43</td>
+            <td>15.921</td>
+            <td>11.668</td>
+            <td>17.411</td>
+            <td>-3.201</td>
+            
+            <td>9.52%</td>
+            <td>15.82%</td>
+            <td>13.08%</td>
+            <td>7.68%</td>
+        </tr>
+        <tr>
+            <td>14</td>
+            <td>Shrewsbury Town</td>
+            <td>62.33</td>
+            <td>16.870</td>
+            <td>11.719</td>
+            <td>16.411</td>
+            <td>+0.960</td>
+            
+            <td>9.34%</td>
+            <td>16.36%</td>
+            <td>12.92%</td>
+            <td>8.34%</td>
+        </tr>
+        <tr>
+            <td>15</td>
+            <td>Crawley Town</td>
+            <td>62.11</td>
+            <td>16.803</td>
+            <td>11.702</td>
+            <td>16.495</td>
+            <td>+0.517</td>
+            
+            <td>9.04%</td>
+            <td>15.12%</td>
+            <td>12.76%</td>
+            <td>8.48%</td>
+        </tr>
+        <tr>
+            <td>16</td>
+            <td>York City</td>
+            <td>61.98</td>
+            <td>15.774</td>
+            <td>11.657</td>
+            <td>17.569</td>
+            <td>-3.753</td>
+            
+            <td>8.08%</td>
+            <td>14.66%</td>
+            <td>11.06%</td>
+            <td>8.82%</td>
+        </tr>
+        <tr>
+            <td>17</td>
+            <td>Swindon Town</td>
+            <td>61.74</td>
+            <td>16.354</td>
+            <td>11.677</td>
+            <td>16.968</td>
+            <td>-1.158</td>
+            
+            <td>8.22%</td>
+            <td>14.98%</td>
+            <td>11.88%</td>
+            <td>9.24%</td>
+        </tr>
+        <tr>
+            <td>18</td>
+            <td>Exeter City</td>
+            <td>61.17</td>
+            <td>16.483</td>
+            <td>11.718</td>
+            <td>16.799</td>
+            <td>-0.510</td>
+            
+            <td>7.54%</td>
+            <td>13.44%</td>
+            <td>11.22%</td>
+            <td>10.50%</td>
+        </tr>
+        <tr>
+            <td>19</td>
+            <td>Grimsby Town</td>
+            <td>61.12</td>
+            <td>15.246</td>
+            <td>11.379</td>
+            <td>17.375</td>
+            <td>-4.380</td>
+            
+            <td>7.24%</td>
+            <td>12.64%</td>
+            <td>10.00%</td>
+            <td>10.16%</td>
+        </tr>
+        <tr>
+            <td>20</td>
+            <td>Port Vale</td>
+            <td>59.93</td>
+            <td>16.057</td>
+            <td>11.757</td>
+            <td>17.186</td>
+            <td>-2.149</td>
+            
+            <td>5.74%</td>
+            <td>12.02%</td>
+            <td>8.50%</td>
+            <td>13.26%</td>
+        </tr>
+        <tr>
+            <td>21</td>
+            <td>Gillingham</td>
+            <td>59.06</td>
+            <td>15.794</td>
+            <td>11.678</td>
+            <td>17.528</td>
+            <td>-3.611</td>
+            
+            <td>4.66%</td>
+            <td>9.74%</td>
+            <td>6.70%</td>
+            <td>15.46%</td>
+        </tr>
+        <tr>
+            <td>22</td>
+            <td>Rochdale</td>
+            <td>57.74</td>
+            <td>15.415</td>
+            <td>11.494</td>
+            <td>18.091</td>
+            <td>-5.539</td>
+            
+            <td>3.54%</td>
+            <td>7.44%</td>
+            <td>4.98%</td>
+            <td>18.54%</td>
+        </tr>
+        <tr>
+            <td>23</td>
+            <td>Accrington Stanley</td>
+            <td>56.95</td>
+            <td>14.835</td>
+            <td>11.444</td>
+            <td>18.721</td>
+            <td>-8.034</td>
+            
+            <td>2.90%</td>
+            <td>7.30%</td>
+            <td>4.32%</td>
+            <td>21.62%</td>
+        </tr>
+        <tr>
+            <td>24</td>
+            <td>Colchester United</td>
+            <td>56.56</td>
+            <td>14.694</td>
+            <td>11.478</td>
+            <td>18.828</td>
+            <td>-8.522</td>
+            
+            <td>2.76%</td>
+            <td>6.50%</td>
+            <td>4.02%</td>
+            <td>23.10%</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p><strong>Playoff structure:</strong> Semi-finals (4th vs 7th, 5th vs 6th — two legs) → Final (single leg, neutral venue)</p>
+        <p><strong>Most likely promoted quartet:</strong> Crewe Alexandra, Fleetwood Town, Oldham Athletic, Walsall (0.32%)</p>
+        <p><strong>Most likely relegated pair:</strong> Accrington Stanley, Colchester United (3.20%)</p>
+    </div>
+</div>
+</body>
+</html>
