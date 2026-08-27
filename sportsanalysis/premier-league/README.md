@@ -6,10 +6,10 @@ This Python script simulates the remaining fixtures of the 2025-26 Premier Leagu
 The simulation runs 25,000 iterations for the Premier League and 10,000 for each European competition. Key assumptions include fixed Elo ratings, home advantage, form adjustments, injury penalties, and observed win/draw/loss rates.
 
 ## Data Inputs
-- **Elo Ratings**: Base Elo scores for Premier League teams (lines 8-28), plus rating deviations (RD) for uncertainty (lines 31-52), though RD is not actively used in match simulations.
-- **Current Table**: Mid-season statistics (matches played, wins/draws/losses, goals for/against, points, remaining games) for each team (lines 54-76).
-- **Fixtures**: List of remaining matches, grouped by round (lines 78-106).
-- **European Elos**: Elo ratings for teams in Europa League (lines 109-114), Champions League (lines 117-122), and Conference League (lines 125-130).
+- **Elo Ratings**: Base Elo scores for Premier League teams (lines 80-100), plus rating deviations (RD) for uncertainty (lines 102-123), though RD is only used for Elo updates, not match simulations.
+- **Current Table**: Mid-season statistics (matches played, wins/draws/losses, goals for/against, points, remaining games) for each team (lines 125-147).
+- **Fixtures**: List of remaining matches (lines 154-177).
+- **European Elos**: Elo ratings for teams in Europa League (lines 180-185), Champions League (lines 187-192), and Conference League (lines 194-199).
 - **Form Adjustments**: Elo bonuses/penalties based on last 10 games' points differential (lines 396-417).
 - **WDL Rates**: Observed win/draw/loss probabilities per team (lines 420-441).
 - **Injury Penalties**: Elo reductions for key player absences (lines 444-466).
@@ -20,22 +20,19 @@ The simulation runs 25,000 iterations for the Premier League and 10,000 for each
 ### European Competitions (lines 187-651)
 Simulated once before the main loop to compute win probabilities.
 
-#### Europa League (lines 187-253, simulation at 596-616)
+#### Europa League (simulation at 745-752)
 - **Goal Model**: Poisson distribution with lambda based on Elo difference (home: 1.4 + diff*0.001, away: 1.1 - diff*0.001), capped at 0.6-4.0.
-- **Tie Simulation**: Two-leg format. First leg simulated, second leg based on reversed Elo. Aggregate winner advances; penalties on draw.
-- **Structure**: Quarter-finals assumed completed. Semi-finals: Aston Villa vs Nottingham Forest, Freiburg vs Sporting Braga. Final: One-leg match.
+- **Structure**: Simplified to a single-match final between Aston Villa and Freiburg.
 - **Output**: Win probabilities for each team.
 
-#### Champions League (lines 254-324, simulation at 620-629)
+#### Champions League (simulation at 756-763)
 - **Goal Model**: Similar to EL but higher base goals (home: 1.5 + diff*0.001, away: 1.2 - diff*0.001).
-- **Tie Simulation**: Two-leg. First leg scores can be fixed (e.g., PSG vs Bayern: 5-4) or simulated. Penalties on aggregate draw.
-- **Structure**: Semi-finals: Paris Saint-Germain vs Bayern Munich, Atlético Madrid vs Arsenal. Final: One-leg.
+- **Structure**: Simplified to a single-match final between Paris Saint-Germain and Arsenal.
 - **Output**: Win probabilities for each team.
 
-#### Conference League (lines 325-390, simulation at 633-651)
+#### Conference League (simulation at 767-774)
 - **Goal Model**: Matches EL (home: 1.4 + diff*0.001, away: 1.1 - diff*0.001).
-- **Tie Simulation**: Two-leg, penalties on draw.
-- **Structure**: Semi-finals: Shakhtar Donetsk vs Crystal Palace, Strasbourg vs Rayo Vallecano. Final: One-leg.
+- **Structure**: Simplified to a single-match final between Crystal Palace and Rayo Vallecano.
 - **Output**: Win probabilities for each team.
 
 ### Premier League Simulation (lines 472-754)
@@ -43,15 +40,13 @@ Simulated once before the main loop to compute win probabilities.
 #### Helper Functions
 - **Adjusted Elo (lines 472-476)**: Base Elo minus nonlinear injury penalty plus form bonus.
 
-#### Match Engine (lines 478-523)
+#### Match Engine (lines 477-521)
 - **Elo Difference**: Adjusted home Elo - adjusted away Elo + home advantage.
-- **Expected Goals (XG)**: Logistic scaling (home_xg = 0.7 + 1.8 / (1 + exp(-diff/400)), away_xg analogous).
+- **Expected Goals (XG)**: Exponential scaling (home_lambda = home_base * exp(diff / 800), away_lambda analogous).
 - **Adjustments**:
-  - WDL bias: Boost XG based on team's win-loss differential.
-  - Closeness factor: Increases draw probability for tight games.
-  - Tempo reduction: Less effect for large Elo gaps.
-  - Variance boost: From win rate.
-- **Goal Simulation**: Bivariate Poisson with shared lambda for correlated goals (draw boost).
+  - Closeness factor: Increases draw probability for tight games based on Elo difference.
+  - Dynamic Parameters: Home advantage, base lambdas, and draw rates are randomized per simulation for robustness.
+- **Goal Simulation**: Modified Poisson model with shared goals for draws.
 - **Output**: Home goals, away goals.
 
 #### Apply Result (lines 525-540)
@@ -72,7 +67,7 @@ Measures season tightness out of 10:
   - Sample European winners from pre-computed probabilities.
   - Simulate FA Cup winner (simple Elo-based knockout).
   - Assign European spots: Top 5 → CL, 6th → EL, FA Cup winner → EL (if not top 5), 7th → Conf. Adjust for European winners qualifying extra spots.
-  - Track: Titles, European qualifications, relegations (especially with 40+ points), points distributions.
+  - Track: Titles, European qualifications (including 6th place CL probability), relegations (especially with 40+ points), points distributions.
 
 ### Statistics and Output (lines 756-967)
 - **Calculations**: Average points, standard deviation, relegation probabilities with 40+ points.
@@ -80,7 +75,7 @@ Measures season tightness out of 10:
   - Team summary: Avg points, std dev, title/CL/EL/Conf/European/releg %.
   - Premier League UEFA win %.
   - European competition win probabilities.
-  - Probabilities for relegation with 40+ points, 8+ European teams, average excitement.
+  - Probabilities for relegation with 40+ points, 9+ European teams, average excitement.
   - Match probabilities for remaining fixtures (10,000 sims per match).
   - Extreme match probabilities (highest home/away win chances, most likely draw).
   - Team fixture probabilities (win/lose/draw all remaining games, average win %).
