@@ -33,28 +33,48 @@ def count_numeric_cells(file_path):
             return 0, str(e)
     return 0, "Unsupported encoding"
 
-def update_readme(readme_path: Path, total: int):
-    """Update the README.md file with the new total number of numeric cells."""
+def update_readme(readme_path: Path, total_csv: int, total_numeric: int):
+    """
+    Update README.md with total CSV files and total numeric cells.
+    """
     if not readme_path.exists():
         print(f"WARNING: {readme_path} not found – skipping update.")
         return
 
     content = readme_path.read_text(encoding='utf-8')
 
-    # Pattern: prefix + the number (with optional commas)
-    pattern = r'(\*\*Total data points \(numeric cells\):\*\*\s*)([\d,]+)'
+    # Pattern for CSV files count
+    pattern_csv = r'(-\s*\*\*Total CSV files:\*\*\s*)([\d,]+)'
+    # Pattern for numeric cells count
+    pattern_num = r'(\*\*Total data points \(numeric cells\):\*\*\s*)([\d,]+)'
 
-    def repl(match):
-        return match.group(1) + f"{total:,}"
+    def repl_csv(match):
+        return match.group(1) + f"{total_csv:,}"
 
-    new_content, count = re.subn(pattern, repl, content)
+    def repl_num(match):
+        return match.group(1) + f"{total_numeric:,}"
 
-    if count == 0:
-        # Line not found – append it
-        new_content = content.rstrip() + f"\n\n- **Total data points (numeric cells):** {total:,}\n"
-        print("INFO: 'Total data points' line not found – appended to README.")
+    # Replace both
+    new_content, count_csv = re.subn(pattern_csv, repl_csv, content)
+    new_content, count_num = re.subn(pattern_num, repl_num, new_content)
+
+    # If either line not found, append missing lines
+    lines_to_append = []
+    if count_csv == 0:
+        lines_to_append.append(f"- **Total CSV files:** {total_csv:,}")
+    if count_num == 0:
+        lines_to_append.append(f"- **Total data points (numeric cells):** {total_numeric:,}")
+
+    if lines_to_append:
+        # Add them at the end, but maybe keep the bullet list formatting
+        new_content = new_content.rstrip()
+        # Ensure there's a newline before appending
+        if not new_content.endswith('\n'):
+            new_content += '\n'
+        new_content += '\n'.join(lines_to_append) + '\n'
+        print("INFO: One or both lines not found – appended to README.")
     else:
-        print(f"INFO: Updated README with new total: {total:,}")
+        print(f"INFO: Updated README with total CSV files: {total_csv:,} and numeric cells: {total_numeric:,}")
 
     readme_path.write_text(new_content, encoding='utf-8')
 
@@ -103,7 +123,7 @@ def main():
 
     # ----- NEW: Update README.md -----
     readme_path = root_path / "README.md"
-    update_readme(readme_path, grand_total)
+    update_readme(readme_path, len(csv_files), grand_total)
     # ---------------------------------
 
     input("\nPress Enter to exit...")
