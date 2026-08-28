@@ -3,6 +3,7 @@ import ctypes
 import time
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # ============================================================
 # SETTINGS
@@ -12,10 +13,18 @@ BACKGROUND = r"C:\Users\liam\Documents\GitHub\all-of-my-code\grand-theft-auto-vi
 # Countdown target
 TARGET_DATE = datetime(2026, 11, 19, 0, 0, 0)
 
+# UK timezone
+UK_TZ = ZoneInfo("Europe/London")
+
+# Progress percentage range
+START_DATE = datetime(2023, 12, 4, 22, 0, 0, tzinfo=UK_TZ)
+END_DATE = datetime(2026, 11, 1, 0, 0, 0, tzinfo=UK_TZ)
+
 # Text
 COUNTDOWN_FONT_SIZE = 90
 LABEL_FONT_SIZE = 20
 DATE_FONT_SIZE = 32
+PERCENTAGE_FONT_SIZE = 36
 
 # Darkness over wallpaper
 OVERLAY_ALPHA = 105
@@ -125,6 +134,22 @@ def get_countdown():
     return days, hours, minutes, seconds
 
 
+def get_progress_percentage():
+
+    now = datetime.now(tz=UK_TZ)
+
+    elapsed = (now - START_DATE).total_seconds()
+    total = (END_DATE - START_DATE).total_seconds()
+
+    if elapsed <= 0:
+        return 0.0
+
+    if elapsed >= total:
+        return 100.0
+
+    return (elapsed / total) * 100.0
+
+
 # ============================================================
 # LOAD IMAGE
 # ============================================================
@@ -223,6 +248,12 @@ date_font = pygame.font.SysFont(
     bold=True
 )
 
+percentage_font = pygame.font.SysFont(
+    "Arial",
+    PERCENTAGE_FONT_SIZE,
+    bold=True
+)
+
 # ============================================================
 # DARK OVERLAY
 # ============================================================
@@ -295,45 +326,6 @@ while running:
     )
 
     # --------------------------------------------------------
-    # LABELS
-    # --------------------------------------------------------
-
-    labels = [
-        ("DAYS", days, 0),
-        ("HOURS", hours, 1),
-        ("MINUTES", minutes, 2),
-        ("SECONDS", seconds, 3)
-    ]
-
-    # Approximate positions underneath countdown
-    positions = [
-        0.26,
-        0.40,
-        0.60,
-        0.78
-    ]
-
-    for label, value, index in labels:
-
-        label_surface = label_font.render(
-            label,
-            True,
-            (230, 230, 230)
-        )
-
-        label_rect = label_surface.get_rect(
-            center=(
-                int(screen_width * positions[index]),
-                int(screen_height * 0.56)
-            )
-        )
-
-        screen.blit(
-            label_surface,
-            label_rect
-        )
-
-    # --------------------------------------------------------
     # DATE
     # --------------------------------------------------------
 
@@ -357,6 +349,32 @@ while running:
     screen.blit(
         date_surface,
         date_rect
+    )
+
+    # --------------------------------------------------------
+    # PROGRESS PERCENTAGE
+    # --------------------------------------------------------
+
+    percentage = get_progress_percentage()
+
+    percentage_text = f"{percentage:.6f}% COMPLETE"
+
+    percentage_surface = percentage_font.render(
+        percentage_text,
+        True,
+        (255, 255, 255)
+    )
+
+    percentage_rect = percentage_surface.get_rect(
+        center=(
+            screen_width // 2,
+            int(screen_height * 0.70)
+        )
+    )
+
+    screen.blit(
+        percentage_surface,
+        percentage_rect
     )
 
     pygame.display.flip()

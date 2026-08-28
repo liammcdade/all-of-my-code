@@ -1,51 +1,81 @@
-# electoral_tie_calculator.py
-# Count number of 269–269 tie scenarios using DP
-# Includes Maine and Nebraska district splits
+import csv
+import sys
+from pathlib import Path
 
-from collections import defaultdict
-import time
+def is_number(value: str) -> bool:
+    """Return True if the string can be parsed as a number."""
+    try:
+        float(value)
+        return True
+    except (ValueError, TypeError):
+        return False
 
-def calculate_ties():
-    print("--- Electoral College Tie Calculator ---")
-    start_time = time.time()
-    
-    # Electoral votes per unit (states, DC, ME districts, NE districts)
-    evs = {
-        "AL":9,"AK":3,"AZ":11,"AR":6,"CA":54,"CO":10,"CT":7,"DE":3,"DC":3,"FL":30,"GA":16,
-        "HI":4,"ID":4,"IL":19,"IN":11,"IA":6,"KS":6,"KY":8,"LA":8,
-        "ME-AL":2,"ME-1":1,"ME-2":1,
-        "MD":10,"MA":11,"MI":15,"MN":10,"MS":6,"MO":10,"MT":4,
-        "NE-AL":2,"NE-1":1,"NE-2":1,"NE-3":1,
-        "NV":6,"NH":4,"NJ":14,"NM":5,"NY":28,"NC":16,"ND":3,"OH":17,
-        "OK":7,"OR":8,"PA":19,"RI":4,"SC":9,"SD":3,"TN":11,"TX":40,
-        "UT":6,"VT":3,"VA":13,"WA":12,"WV":4,"WI":10,"WY":3
-    }
+def count_numeric_cells(file_path):
+    """
+    Try UTF-8 first; if that fails, fall back to Latin-1.
+    Returns (numeric_count, error_message) or (0, error).
+    """
+    for encoding in ('utf-8', 'latin-1'):
+        try:
+            with open(file_path, 'r', newline='', encoding=encoding) as f:
+                reader = csv.reader(f)
+                count = 0
+                for row in reader:
+                    for cell in row:
+                        stripped = cell.strip()
+                        if stripped and is_number(stripped):
+                            count += 1
+                return count, None
+        except UnicodeDecodeError:
+            continue
+        except Exception as e:
+            return 0, str(e)
+    return 0, "Unsupported encoding"
 
-    units = list(evs.items())
-    total_ev = sum(evs.values())
-    print(f"Total electoral votes (with ME/NE splits): {total_ev}")
+def main():
+    # -------- CONFIGURATION --------
+    default_dir = r"C:\Users\liam\Documents\GitHub\Footballdata"
+    # -------------------------------
 
-    target = 269
+    if len(sys.argv) > 1:
+        root_dir = sys.argv[1]
+    else:
+        root_dir = default_dir
 
-    # DP table: sum -> number of ways
-    dp = defaultdict(int)
-    dp[0] = 1
+    root_path = Path(root_dir)
 
-    checked = 0
-    print("Calculating...")
-    for i, (name, val) in enumerate(units, 1):
-        new_dp = defaultdict(int, dp)  # copy existing
-        for s, cnt in dp.items():
-            new_dp[s + val] += cnt
-        dp = new_dp
-        checked += 1
-        # if checked % 10 == 0 or checked == len(units):
-        #     print(f"Processed {checked}/{len(units)} units...")
+    if not root_path.exists():
+        print(f"ERROR: Folder not found: {root_dir}")
+        input("Press Enter to exit...")
+        return
 
-    solutions = dp[target]
+    print(f"Scanning: {root_dir}")
+    print("=" * 70)
 
-    print(f"Total tie scenarios (269-269): {solutions:,}")
-    print(f"Calculation took {time.time() - start_time:.2f} seconds")
+    # Deduplicate (important on Windows)
+    csv_files = list({p.resolve() for p in root_path.rglob("*.csv")})
+
+    if not csv_files:
+        print("No CSV files found.")
+        input("Press Enter to exit...")
+        return
+
+    print(f"Found {len(csv_files)} CSV file(s). Processing...\n")
+
+    grand_total = 0
+
+    for idx, file_path in enumerate(csv_files, 1):
+        count, error = count_numeric_cells(file_path)
+        grand_total += count
+
+        status = "OK" if error is None else f"ERROR: {error}"
+        print(f"[{idx}/{len(csv_files)}] {file_path.name:<40} -> {count:>8} numeric cells  ({status})")
+
+    print("\n" + "=" * 70)
+    print(f"GRAND TOTAL numeric cells across all CSV files: {grand_total}")
+    print("=" * 70)
+
+    input("\nPress Enter to exit...")
 
 if __name__ == "__main__":
-    calculate_ties()
+    main()

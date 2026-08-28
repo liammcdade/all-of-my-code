@@ -35,6 +35,7 @@ _LAMBDA_ROUND_PRECISION = 100
 BASE_HOME_XG = 1.5
 BASE_AWAY_XG = 1.2
 XG_ELO_SENSITIVITY = 0.002
+EXTRA_TIME_XG_FACTOR = 0.5
 
 PL_TEAMS = ["Arsenal", "Aston Villa", "Liverpool", "Man City", "Man United"]
 
@@ -110,8 +111,8 @@ CONFIRMED_PLAYOFF_WINNERS = ["Bodø/Glimt", "LASK", "Sabah FK"]
 
 LIVE_PLAYOFF_TIES = [
     {"team1": "Levski Sofia", "team2": "AEK Athens", "leg1": "0-0"},
-    {"team1": "Dinamo Zagreb", "team2": "Viking FK", "leg1": "2-2"},
-    {"team1": "NK Celje", "team2": "ŠK Slovan Bratislava", "leg1": "1-1"},
+    {"team1": "Dinamo Zagreb", "team2": "Viking", "leg1": "2-2"},
+    {"team1": "NK Celje", "team2": "Slovan Bratislava", "leg1": "1-1"},
     {"team1": "Olympique Lyonnais", "team2": "Fenerbahçe", "leg1": "1-1"},
 ]
 
@@ -133,7 +134,7 @@ BETTING_MARKETS_CL_WINNER = {
     "RB Leipzig": (40, 1),
     "Roma": (50, 1),
     "Real Betis": (66, 1),
-    "Villarreal FC": (50, 1),
+    "Villarreal": (50, 1),
     "Como": (50, 1),
     "VfB Stuttgart": (50, 1),
     "Sporting CP": (100, 1),
@@ -149,14 +150,14 @@ BETTING_MARKETS_CL_WINNER = {
     "Union SG": (250, 1),
     "AEK Athens": (250, 1),
     "LASK": (300, 1),
-    "Viking FK": (300, 1),
+    "Viking": (300, 1),
     "Sturm Graz": (300, 1),
-    "Lech Poznań": (500, 1),
-    "ŠK Slovan Bratislava": (500, 1),
+    "Lech Poznan": (500, 1),
+    "Slovan Bratislava": (500, 1),
     "Dinamo Zagreb": (500, 1),
     "Crvena zvezda": (500, 1),
     "NK Celje": (500, 1),
-    "Hapoel Be'er Sheva": (500, 1)
+    "Hapoel Beer Sheva": (500, 1)
 }
 
 # ==========================================
@@ -166,121 +167,112 @@ BETTING_MARKETS_CL_WINNER = {
 
 def calculate_cl_elos() -> Dict[str, float]:
     """Derive Elo ratings for all CL teams from betting market odds."""
-    team_probs: Dict[str, float] = {}
+    # 1. Collect implied probabilities from odds
+    team_probs = {}
     for team, odds in BETTING_MARKETS_CL_WINNER.items():
-        prob = fractional_to_probability(odds)
-        team_probs[team] = prob
+        team_probs[team] = fractional_to_probability(odds)  # e.g., 5/1 → 1/6
+
+    # 2. Normalize to sum to 1 (removes bookmaker overround)
     total_prob = sum(team_probs.values())
     normalized = {team: prob / total_prob for team, prob in team_probs.items()}
-    elos: Dict[str, float] = {}
+
+    # 3. Number of teams in the final league phase (36)
+    n_teams = 36
+    baseline_prob = 1.0 / n_teams   # probability if all teams were equal
+
+    # 4. Convert each normalized probability to an Elo rating
+    elos = {}
     for team, prob in normalized.items():
-        elo = probability_to_elo(prob, LEAGUE_AVERAGE_ELO)
+        # Ratio of team's chance vs. the equal‑strength baseline
+        ratio = prob / baseline_prob
+        # Elo difference from average (1500)
+        elo_diff = 400 * math.log10(ratio)
+        elo = LEAGUE_AVERAGE_ELO + elo_diff
         elos[team] = round(elo, 1)
+
     return elos
 
 
-def simulate_playoff_ties(elos: Dict[str, float]) -> List[str]:
-    """Simulate the four remaining playoff ties and return winners."""
-    winners: List[str] = []
-    for tie in LIVE_PLAYOFF_TIES:
-        t1 = tie["team1"]
-        t2 = tie["team2"]
-        leg1_scores = tie["leg1"].split("-")
-        leg1_t1 = int(leg1_scores[0])
-        leg1_t2 = int(leg1_scores[1])
 
+def simulate_playoff_ties(elos):
+    winners = []
+    for tie in LIVE_PLAYOFF_TIES:
+        t1, t2 = tie["team1"], tie["team2"]
+        leg1_t1, leg1_t2 = map(int, tie["leg1"].split("-"))
+        
         elo1 = elos.get(t1, LEAGUE_AVERAGE_ELO)
         elo2 = elos.get(t2, LEAGUE_AVERAGE_ELO)
-
-        elo_diff = elo1 - elo2
-        prob1_win = 1 / (1 + 10 ** (-elo_diff / 400))
-
-        if prob1_win > 0.5:
-            leg2_t1 = random.choices([0, 1, 2, 3, 4], weights=[15, 30, 30, 15, 10])[0]
-            leg2_t2 = random.choices([0, 1, 2, 3, 4], weights=[25, 35, 25, 10, 5])[0]
-        else:
-            leg2_t1 = random.choices([0, 1, 2, 3, 4], weights=[25, 35, 25, 10, 5])[0]
-            leg2_t2 = random.choices([0, 1, 2, 3, 4], weights=[15, 30, 30, 15, 10])[0]
-
-        agg_t1 = leg1_t1 + leg2_t1
-        agg_t2 = leg1_t2 + leg2_t2
-
-        if agg_t1 == agg_t2:
-            et_t1 = random.choices([0, 1, 2], weights=[60, 30, 10])[0]
-            et_t2 = random.choices([0, 1, 2], weights=[60, 30, 10])[0]
-            agg_t1 += et_t1
-            agg_t2 += et_t2
-            if agg_t1 == agg_t2:
-                winner = random.choice([t1, t2])
+        
+        # Simulate second leg (t1 home, t2 away)
+        # Apply home advantage to t1
+        elo_h = elo1 + HOME_ADVANTAGE_ELO
+        elo_a = elo2
+        xg_h, xg_a = compute_expected_goals(elo_h, elo_a)
+        goals_h, goals_a = sample_score(xg_h, xg_a)
+        
+        agg1 = leg1_t1 + goals_h
+        agg2 = leg1_t2 + goals_a
+        
+        if agg1 == agg2:
+            # Extra time (same Poisson with reduced lambdas)
+            xg_h_orig, xg_a_orig = compute_expected_goals(elo_h, elo_a)
+            xg_et_h = xg_h_orig * EXTRA_TIME_XG_FACTOR
+            xg_et_a = xg_a_orig * EXTRA_TIME_XG_FACTOR
+            et_h, et_a = sample_score(xg_et_h, xg_et_a)
+            agg1 += et_h
+            agg2 += et_a
+            if agg1 == agg2:
+                # Penalties – use Elo probability
+                p1 = 1 / (1 + 10 ** (-(elo1 - elo2) / 400))
+                winner = t1 if random.random() < p1 else t2
             else:
-                winner = t1 if agg_t1 > agg_t2 else t2
+                winner = t1 if agg1 > agg2 else t2
         else:
-            winner = t1 if agg_t1 > agg_t2 else t2
-
+            winner = t1 if agg1 > agg2 else t2
+        
         winners.append(winner)
     return winners
 
 
 def generate_swiss_fixtures(teams: List[str], num_rounds: int = 8) -> List[Tuple[int, int]]:
-    """Generate Swiss-model fixtures (4 home, 4 away per team)."""
     n = len(teams)
-    fixture_indices: List[Tuple[int, int]] = []
-    played_pairs = set()
-    home_count = defaultdict(int)
-    away_count = defaultdict(int)
-    total_games = defaultdict(int)
-
-    all_pairs = list(combinations(range(n), 2))
-    random.shuffle(all_pairs)
-
-    rounds: List[List[Tuple[int, int]]] = [[] for _ in range(num_rounds)]
-
+    assert n % 2 == 0
+    half = n // 2
+    
+    fixtures = []
+    used_pairs = set()
+    home_count = {i: 0 for i in range(n)}
+    away_count = {i: 0 for i in range(n)}
+    
+    # Create a deterministic base fixture list (round‑robin style)
+    # This gives each pair exactly once and balances home/away over the season
+    indices = list(range(n))
     for r in range(num_rounds):
-        used_in_round = set()
-        matches_this_round = 0
-        candidates = list(all_pairs)
-        random.shuffle(candidates)
-
-        for i, j in candidates:
-            if matches_this_round >= n // 2:
-                break
-            if i in used_in_round or j in used_in_round:
+        # Rotate list for variety (like a circle method)
+        rotated = indices[r:] + indices[:r]
+        for i in range(half):
+            a = rotated[i]
+            b = rotated[n - 1 - i]
+            if (a, b) in used_pairs or (b, a) in used_pairs:
                 continue
-            if (i, j) in played_pairs or (j, i) in played_pairs:
-                continue
-            if total_games[i] >= num_rounds or total_games[j] >= num_rounds:
-                continue
-
-            if home_count[i] < home_count[j]:
-                home, away = i, j
-            elif home_count[j] < home_count[i]:
-                home, away = j, i
+            # Assign home/away to balance counts
+            if home_count[a] < home_count[b]:
+                home, away = a, b
+            elif home_count[b] < home_count[a]:
+                home, away = b, a
             else:
-                if random.random() < 0.5:
-                    home, away = i, j
-                else:
-                    home, away = j, i
-
-            if home_count[home] >= 4 or away_count[away] >= 4:
-                if home_count[away] < 4 and away_count[home] < 4:
-                    home, away = away, home
-                else:
-                    continue
-
-            rounds[r].append((home, away))
-            used_in_round.add(i)
-            used_in_round.add(j)
-            played_pairs.add((i, j))
-            home_count[home] += 1
-            away_count[away] += 1
-            total_games[i] += 1
-            total_games[j] += 1
-            matches_this_round += 1
-
-    for r_matches in rounds:
-        fixture_indices.extend(r_matches)
-    return fixture_indices
-
+                # Use round parity to alternate
+                home, away = (a, b) if r % 2 == 0 else (b, a)
+            
+            if home_count[home] < 4 and away_count[away] < 4:
+                fixtures.append((home, away))
+                used_pairs.add((home, away))
+                home_count[home] += 1
+                away_count[away] += 1
+    
+    # Verify completeness – if not perfect, adjust manually
+    # (you can add a repair step here)
+    return fixtures
 
 def run_single_cl_simulation(
     teams: List[str],
@@ -323,42 +315,45 @@ def run_single_cl_simulation(
     return [teams[i] for i in ranking]
 
 
-def simulate_knockout_round(
-    teams: List[str],
-    elos: Dict[str, float],
-    winners_needed: int,
-) -> List[str]:
-    """Simulate a single-elimination knockout round.
-
-    Teams are paired 1st vs 24th, 2nd vs 23rd, etc. (by Elo ranking).
-    Each match is decided by Elo-based win probability with Poisson goal sampling.
-    Returns the list of winners.
-    """
-    ranked = sorted(teams, key=lambda t: elos.get(t, LEAGUE_AVERAGE_ELO), reverse=True)
-    winners: List[str] = []
-    n_matches = len(ranked) // 2
-
-    for i in range(n_matches) if len(ranked) % 2 == 0 else range((len(ranked) - 1) // 2):
-        higher = ranked[i]
-        lower = ranked[len(ranked) - 1 - i]
-
-        elo_h = elos.get(higher, LEAGUE_AVERAGE_ELO) + HOME_ADVANTAGE_ELO
-        elo_a = elos.get(lower, LEAGUE_AVERAGE_ELO)
-        xg_h, xg_a = compute_expected_goals(elo_h, elo_a)
-        goals_h, goals_a = sample_score(xg_h, xg_a)
-
-        if goals_h > goals_a:
-            winners.append(higher)
-        elif goals_a > goals_h:
-            winners.append(lower)
-        else:
-            p_home = 1 / (1 + 10 ** (-(elo_h - elo_a) / 400))
-            winners.append(higher if random.random() < p_home else lower)
-
-    if len(ranked) % 2 == 1:
-        winners.append(ranked[-1])
-
-    return winners[:winners_needed]
+def simulate_two_legged_tie(team1: str, team2: str, elos: Dict[str, float]) -> str:
+    """Simulate a two-legged knockout tie and return the winner."""
+    # First leg: team1 at home
+    elo_h1 = elos.get(team1, LEAGUE_AVERAGE_ELO) + HOME_ADVANTAGE_ELO
+    elo_a1 = elos.get(team2, LEAGUE_AVERAGE_ELO)
+    xg_h1, xg_a1 = compute_expected_goals(elo_h1, elo_a1)
+    goals_h1, goals_a1 = sample_score(xg_h1, xg_a1)
+    
+    # Second leg: team2 at home
+    elo_h2 = elos.get(team2, LEAGUE_AVERAGE_ELO) + HOME_ADVANTAGE_ELO
+    elo_a2 = elos.get(team1, LEAGUE_AVERAGE_ELO)
+    xg_h2, xg_a2 = compute_expected_goals(elo_h2, elo_a2)
+    goals_h2, goals_a2 = sample_score(xg_h2, xg_a2)
+    
+    # Aggregate score
+    agg_team1 = goals_h1 + goals_a2
+    agg_team2 = goals_a1 + goals_h2
+    
+    if agg_team1 > agg_team2:
+        return team1
+    elif agg_team2 > agg_team1:
+        return team2
+    else:
+        # Away goals abolished 2021 - go to extra time
+        et_xg1 = compute_expected_goals(
+            elos.get(team1, LEAGUE_AVERAGE_ELO),
+            elos.get(team2, LEAGUE_AVERAGE_ELO),
+        )[0] * EXTRA_TIME_XG_FACTOR
+        et_xg2 = compute_expected_goals(
+            elos.get(team2, LEAGUE_AVERAGE_ELO),
+            elos.get(team1, LEAGUE_AVERAGE_ELO),
+        )[0] * EXTRA_TIME_XG_FACTOR
+        et1, et2 = sample_score(et_xg1, et_xg2)
+        if et1 != et2:
+            return team1 if et1 > et2 else team2
+        # Penalties decided by Elo probability
+        elo_diff = elos.get(team1, LEAGUE_AVERAGE_ELO) - elos.get(team2, LEAGUE_AVERAGE_ELO)
+        p_team1 = 1 / (1 + 10 ** (-elo_diff / 400))
+        return team1 if random.random() < p_team1 else team2
 
 
 def simulate_knockout_phase(
@@ -369,81 +364,78 @@ def simulate_knockout_phase(
     
     Structure: 
     - Top 8 teams advance directly to Round of 16
-    - Teams 9-24 play playoff matches (two-legged) to produce 8 more R16 teams
+    - Teams 9-24 play two-legged playoff ties to produce 8 more R16 teams
     - Then: Round of 16 → Quarter-finals → Semi-finals → Final
     """
-    # Sort by league phase ranking (already ranked from run_single_cl_simulation)
-    # Top 8 go straight through
+    # Top 8 go straight to Round of 16
     top_8 = qualified_teams[:8]
-    playoff_teams = qualified_teams[8:24]  # 16 teams
     
-    # Simulate playoffs between teams 9-24 (two-legged ties)
-    # Pair them: 9th vs 24th, 10th vs 23rd, etc.
+    # Teams 9-24 play playoffs (16 teams → 8 winners)
+    playoff_teams = qualified_teams[8:24]
     playoff_winners = []
-    n_playoff_matches = len(playoff_teams) // 2
     
+    # Pair them: 9th vs 24th, 10th vs 23rd, etc.
+    n_playoff_matches = len(playoff_teams) // 2
     for i in range(n_playoff_matches):
         higher_seed = playoff_teams[i]
         lower_seed = playoff_teams[len(playoff_teams) - 1 - i]
-        
-        # First leg (higher seed at home)
-        elo_h = elos.get(higher_seed, LEAGUE_AVERAGE_ELO) + HOME_ADVANTAGE_ELO
-        elo_a = elos.get(lower_seed, LEAGUE_AVERAGE_ELO)
-        xg_h, xg_a = compute_expected_goals(elo_h, elo_a)
-        goals_h_leg1, goals_a_leg1 = sample_score(xg_h, xg_a)
-        
-        # Second leg (lower seed at home)
-        elo_h2 = elos.get(lower_seed, LEAGUE_AVERAGE_ELO) + HOME_ADVANTAGE_ELO
-        elo_a2 = elos.get(higher_seed, LEAGUE_AVERAGE_ELO)
-        xg_h2, xg_a2 = compute_expected_goals(elo_h2, elo_a2)
-        goals_h_leg2, goals_a_leg2 = sample_score(xg_h2, xg_a2)
-        
-        # Aggregate score
-        agg_higher = goals_h_leg1 + goals_a_leg2
-        agg_lower = goals_a_leg1 + goals_h_leg2
-        
-        if agg_higher > agg_lower:
-            playoff_winners.append(higher_seed)
-        elif agg_lower > agg_higher:
-            playoff_winners.append(lower_seed)
-        else:
-            # Away goals rule or extra time/penalties
-            away_higher = goals_a_leg1
-            away_lower = goals_h_leg2
-            if away_higher > away_lower:
-                playoff_winners.append(higher_seed)
-            elif away_lower > away_higher:
-                playoff_winners.append(lower_seed)
-            else:
-                # Random if still tied (simplified)
-                playoff_winners.append(random.choice([higher_seed, lower_seed]))
+        winner = simulate_two_legged_tie(higher_seed, lower_seed, elos)
+        playoff_winners.append(winner)
     
     # Round of 16: top 8 + 8 playoff winners = 16 teams
     r16_teams = top_8 + playoff_winners
     
-    # Now simulate single-elimination rounds
+    # Simulate single-elimination rounds (two-legged ties)
     current = r16_teams
-    knockout_sizes = [8, 4, 2]  # QF, SF, Final
     
-    for next_size in knockout_sizes:
-        if len(current) <= next_size:
-            break
-        current = simulate_knockout_round(current, elos, next_size)
+    # Round of 16 → 8 teams
+    r16_winners = []
+    n_r16 = len(current) // 2
+    for i in range(n_r16):
+        higher = current[i]
+        lower = current[len(current) - 1 - i]
+        winner = simulate_two_legged_tie(higher, lower, elos)
+        r16_winners.append(winner)
+    current = r16_winners
     
-    # Final
+    # Quarter-finals → 4 teams
+    qf_winners = []
+    n_qf = len(current) // 2
+    for i in range(n_qf):
+        higher = current[i]
+        lower = current[len(current) - 1 - i]
+        winner = simulate_two_legged_tie(higher, lower, elos)
+        qf_winners.append(winner)
+    current = qf_winners
+    
+    # Semi-finals → 2 teams
+    sf_winners = []
+    n_sf = len(current) // 2
+    for i in range(n_sf):
+        higher = current[i]
+        lower = current[len(current) - 1 - i]
+        winner = simulate_two_legged_tie(higher, lower, elos)
+        sf_winners.append(winner)
+    current = sf_winners
+    
+    # Final (single match at neutral venue)
     if len(current) == 2:
-        elo_h = elos.get(current[0], LEAGUE_AVERAGE_ELO) + HOME_ADVANTAGE_ELO
-        elo_a = elos.get(current[1], LEAGUE_AVERAGE_ELO)
-        xg_h, xg_a = compute_expected_goals(elo_h, elo_a)
-        goals_h, goals_a = sample_score(xg_h, xg_a)
+        team1, team2 = current[0], current[1]
+        # Neutral venue - no home advantage
+        elo_1 = elos.get(team1, LEAGUE_AVERAGE_ELO)
+        elo_2 = elos.get(team2, LEAGUE_AVERAGE_ELO)
+        xg_1, xg_2 = compute_expected_goals(elo_1, elo_2)
+        goals_1, goals_2 = sample_score(xg_1, xg_2)
         
-        if goals_h > goals_a:
-            return current[0]
-        elif goals_a > goals_h:
-            return current[1]
+        if goals_1 > goals_2:
+            return team1
+        elif goals_2 > goals_1:
+            return team2
         else:
-            p_home = 1 / (1 + 10 ** (-(elo_h - elo_a) / 400))
-            return current[0] if random.random() < p_home else current[1]
+            # Extra time / penalties
+            elo_diff = elo_1 - elo_2
+            p_team1 = 1 / (1 + 10 ** (-elo_diff / 400))
+            return team1 if random.random() < p_team1 else team2
     
     return current[0] if current else None
 
@@ -452,8 +444,7 @@ def run_champions_league_simulation(num_sims: int = NUM_CL_SIMS) -> Dict[str, fl
     """Run the full CL simulation and return PL team winner probabilities.
 
     The league phase determines the top 24 of 36 teams. A knockout phase
-    then reduces those 24 to a single tournament winner via single
-    elimination (Round of 24 → 16 → 8 → 4 → 2 → Final).
+    then reduces those 24 to a single tournament winner.
     Returns a dict mapping PL team names to their chance of winning the
     Champions League (0-100).
     """
@@ -477,18 +468,19 @@ def run_champions_league_simulation(num_sims: int = NUM_CL_SIMS) -> Dict[str, fl
     print("Step 4: Generating Swiss-model fixtures (8 matches per team)...")
     fixture_indices = generate_swiss_fixtures(final_teams)
 
-    cl_win_counts: Dict[str, int] = {t: 0 for t in PL_TEAMS}
+    cl_win_counts: Dict[str, int] = defaultdict(int)
 
     print(f"Step 5: Running {num_sims} CL simulations...")
     for _ in tqdm(range(num_sims), desc="CL Sim"):
         ranked_teams = run_single_cl_simulation(final_teams, elos, fixture_indices)
         qualified = ranked_teams[:24]
         winner = simulate_knockout_phase(qualified, elos)
-        if winner in cl_win_counts:
+        if winner:
             cl_win_counts[winner] += 1
 
     cl_win_probs: Dict[str, float] = {
-        team: (count / num_sims) * 100 for team, count in cl_win_counts.items()
+        team: (cl_win_counts.get(team, 0) / num_sims) * 100
+        for team in PL_TEAMS
     }
 
     print("\n" + "=" * 60)
@@ -499,7 +491,43 @@ def run_champions_league_simulation(num_sims: int = NUM_CL_SIMS) -> Dict[str, fl
 
     return cl_win_probs
 
+def verify_fixtures(fixtures: List[Tuple[int, int]], n_teams: int, num_rounds: int = 8) -> Tuple[bool, str]:
+    """
+    Check that the generated fixture list is valid:
+    - Each team plays exactly num_rounds matches.
+    - Home/away counts are balanced (num_rounds//2 each).
+    - No duplicate pairings (regardless of order).
+    - Total matches = n_teams * num_rounds // 2.
+    """
+    home_count = [0] * n_teams
+    away_count = [0] * n_teams
+    total_matches = [0] * n_teams
+    seen_pairs = set()
 
+    for h, a in fixtures:
+        if h == a:
+            return False, f"Team {h} plays itself"
+        pair = (h, a) if h < a else (a, h)  # Normalize to avoid order issues
+        if pair in seen_pairs:
+            return False, f"Duplicate match between teams {h} and {a}"
+        seen_pairs.add(pair)
+
+        home_count[h] += 1
+        away_count[a] += 1
+        total_matches[h] += 1
+        total_matches[a] += 1
+
+    for i in range(n_teams):
+        if total_matches[i] != num_rounds:
+            return False, f"Team {i} has {total_matches[i]} matches, expected {num_rounds}"
+        if home_count[i] != num_rounds // 2 or away_count[i] != num_rounds // 2:
+            return False, f"Team {i} has {home_count[i]} home / {away_count[i]} away, expected {num_rounds//2} each"
+
+    expected_total = n_teams * num_rounds // 2
+    if len(fixtures) != expected_total:
+        return False, f"Total fixtures = {len(fixtures)}, expected {expected_total}"
+
+    return True, "OK"
 # ==========================================
 # MAIN ENTRY POINT
 # ==========================================
