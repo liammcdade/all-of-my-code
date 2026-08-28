@@ -1,5 +1,6 @@
 import csv
 import sys
+import re
 from pathlib import Path
 
 def is_number(value: str) -> bool:
@@ -31,6 +32,31 @@ def count_numeric_cells(file_path):
         except Exception as e:
             return 0, str(e)
     return 0, "Unsupported encoding"
+
+def update_readme(readme_path: Path, total: int):
+    """Update the README.md file with the new total number of numeric cells."""
+    if not readme_path.exists():
+        print(f"WARNING: {readme_path} not found – skipping update.")
+        return
+
+    content = readme_path.read_text(encoding='utf-8')
+
+    # Pattern: prefix + the number (with optional commas)
+    pattern = r'(\*\*Total data points \(numeric cells\):\*\*\s*)([\d,]+)'
+
+    def repl(match):
+        return match.group(1) + f"{total:,}"
+
+    new_content, count = re.subn(pattern, repl, content)
+
+    if count == 0:
+        # Line not found – append it
+        new_content = content.rstrip() + f"\n\n- **Total data points (numeric cells):** {total:,}\n"
+        print("INFO: 'Total data points' line not found – appended to README.")
+    else:
+        print(f"INFO: Updated README with new total: {total:,}")
+
+    readme_path.write_text(new_content, encoding='utf-8')
 
 def main():
     # -------- CONFIGURATION --------
@@ -72,8 +98,13 @@ def main():
         print(f"[{idx}/{len(csv_files)}] {file_path.name:<40} -> {count:>8} numeric cells  ({status})")
 
     print("\n" + "=" * 70)
-    print(f"GRAND TOTAL numeric cells across all CSV files: {grand_total}")
+    print(f"GRAND TOTAL numeric cells across all CSV files: {grand_total:,}")
     print("=" * 70)
+
+    # ----- NEW: Update README.md -----
+    readme_path = root_path / "README.md"
+    update_readme(readme_path, grand_total)
+    # ---------------------------------
 
     input("\nPress Enter to exit...")
 
