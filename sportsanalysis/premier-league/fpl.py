@@ -31,13 +31,13 @@ player_profiles = {
 # Just add gameweeks here! Each list is [GW1, GW2, GW3, ...]
 # Leave empty lists [] for players who haven't played yet
 season_scores = {
-    "Alan Souter":      [62],
-    "Adam Bellew":      [48],
-    "Graham Vickers":   [33],
-    "Steven Hoehne":    [48],
-    "Miriam Head":      [41],
-    "Paul McDade":      [46],
-    "Liam McDade":      [64],
+    "Alan Souter":      [62, 63],
+    "Adam Bellew":      [48, 81],     # +81
+    "Graham Vickers":   [33, 85],     # +85
+    "Steven Hoehne":    [48, 69],     # +69
+    "Miriam Head":      [41, 72],     # +72 (note: "miriram" is a typo for Miriam)
+    "Paul McDade":      [46, 81],     # +81
+    "Liam McDade":      [64, 90],         # unchanged
 }
 
 def normal_random(mean: float, std_dev: float, min_val: int) -> int:

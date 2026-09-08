@@ -7,54 +7,53 @@ from collections import Counter, defaultdict
 
 PYTHAGOREAN_EXPONENT = 1.83  # Bill James Pythagorean expectation exponent for MLB
 HOME_ADVANTAGE_ELO = 24.0  # Standard MLB home-field advantage (equivalent to ~53.5% home win rate)
-NUM_SIMULATIONS = 1000
+NUM_SIMULATIONS = 10000
 K_FACTOR = 25  # MLB-standard Elo K-factor for regular season games
 
 # Current 2026 Regular Season Records (as of Jul 22, 2026)
 RAW_STANDINGS = {
     # AL East
-    'Tampa Bay Rays': {'w': 58, 'l': 42, 'div': 'AL East', 'league': 'AL', 'rs': 454, 'ra': 424},
-    'New York Yankees': {'w': 56, 'l': 44, 'div': 'AL East', 'league': 'AL', 'rs': 475, 'ra': 387},
-    'Boston Red Sox': {'w': 51, 'l': 48, 'div': 'AL East', 'league': 'AL', 'rs': 419, 'ra': 373},
-    'Baltimore Orioles': {'w': 49, 'l': 52, 'div': 'AL East', 'league': 'AL', 'rs': 464, 'ra': 478},
-    'Toronto Blue Jays': {'w': 46, 'l': 55, 'div': 'AL East', 'league': 'AL', 'rs': 400, 'ra': 461},
+    'Tampa Bay Rays': {'w': 84, 'l': 57, 'div': 'AL East', 'league': 'AL', 'rs': 635, 'ra': 589},
+    'New York Yankees': {'w': 80, 'l': 61, 'div': 'AL East', 'league': 'AL', 'rs': 638, 'ra': 524},
+    'Boston Red Sox': {'w': 77, 'l': 65, 'div': 'AL East', 'league': 'AL', 'rs': 634, 'ra': 555},
+    'Toronto Blue Jays': {'w': 71, 'l': 71, 'div': 'AL East', 'league': 'AL', 'rs': 575, 'ra': 609},
+    'Baltimore Orioles': {'w': 69, 'l': 73, 'div': 'AL East', 'league': 'AL', 'rs': 640, 'ra': 662},
 
     # AL Central
-    'Chicago White Sox': {'w': 53, 'l': 47, 'div': 'AL Central', 'league': 'AL', 'rs': 479, 'ra': 437},
-    'Cleveland Guardians': {'w': 54, 'l': 48, 'div': 'AL Central', 'league': 'AL', 'rs': 410, 'ra': 410},
-    'Minnesota Twins': {'w': 49, 'l': 53, 'div': 'AL Central', 'league': 'AL', 'rs': 485, 'ra': 521},
-    'Detroit Tigers': {'w': 47, 'l': 54, 'div': 'AL Central', 'league': 'AL', 'rs': 428, 'ra': 404},
-    'Kansas City Royals': {'w': 42, 'l': 60, 'div': 'AL Central', 'league': 'AL', 'rs': 433, 'ra': 530},
+    'Chicago White Sox': {'w': 74, 'l': 67, 'div': 'AL Central', 'league': 'AL', 'rs': 666, 'ra': 624},
+    'Cleveland Guardians': {'w': 72, 'l': 70, 'div': 'AL Central', 'league': 'AL', 'rs': 577, 'ra': 586},
+    'Minnesota Twins': {'w': 67, 'l': 74, 'div': 'AL Central', 'league': 'AL', 'rs': 659, 'ra': 700},
+    'Detroit Tigers': {'w': 64, 'l': 77, 'div': 'AL Central', 'league': 'AL', 'rs': 619, 'ra': 574},
+    'Kansas City Royals': {'w': 63, 'l': 79, 'div': 'AL Central', 'league': 'AL', 'rs': 608, 'ra': 700},
 
     # AL West
-    'Texas Rangers': {'w': 51, 'l': 50, 'div': 'AL West', 'league': 'AL', 'rs': 425, 'ra': 453},
-    'Seattle Mariners': {'w': 51, 'l': 51, 'div': 'AL West', 'league': 'AL', 'rs': 412, 'ra': 393},
-    'Houston Astros': {'w': 49, 'l': 54, 'div': 'AL West', 'league': 'AL', 'rs': 468, 'ra': 516},
-    'Athletics': {'w': 43, 'l': 58, 'div': 'AL West', 'league': 'AL', 'rs': 453, 'ra': 565},
-    'Los Angeles Angels': {'w': 41, 'l': 61, 'div': 'AL West', 'league': 'AL', 'rs': 442, 'ra': 499},
+    'Houston Astros': {'w': 73, 'l': 69, 'div': 'AL West', 'league': 'AL', 'rs': 642, 'ra': 678},
+    'Texas Rangers': {'w': 70, 'l': 72, 'div': 'AL West', 'league': 'AL', 'rs': 584, 'ra': 627},
+    'Seattle Mariners': {'w': 66, 'l': 76, 'div': 'AL West', 'league': 'AL', 'rs': 565, 'ra': 634},
+    'Athletics': {'w': 56, 'l': 86, 'div': 'AL West', 'league': 'AL', 'rs': 625, 'ra': 815},
+    'Los Angeles Angels': {'w': 53, 'l': 88, 'div': 'AL West', 'league': 'AL', 'rs': 571, 'ra': 652},
 
     # NL East
-    'Atlanta Braves': {'w': 58, 'l': 42, 'div': 'NL East', 'league': 'NL', 'rs': 495, 'ra': 391},
-    'Philadelphia Phillies': {'w': 56, 'l': 46, 'div': 'NL East', 'league': 'NL', 'rs': 443, 'ra': 454},
-    'Miami Marlins': {'w': 52, 'l': 50, 'div': 'NL East', 'league': 'NL', 'rs': 455, 'ra': 441},
-    'Washington Nationals': {'w': 51, 'l': 51, 'div': 'NL East', 'league': 'NL', 'rs': 559, 'ra': 541},
-    'New York Mets': {'w': 43, 'l': 59, 'div': 'NL East', 'league': 'NL', 'rs': 416, 'ra': 479},
+    'Atlanta Braves': {'w': 84, 'l': 57, 'div': 'NL East', 'league': 'NL', 'rs': 658, 'ra': 537},
+    'Philadelphia Phillies': {'w': 79, 'l': 62, 'div': 'NL East', 'league': 'NL', 'rs': 633, 'ra': 600},
+    'Miami Marlins': {'w': 71, 'l': 71, 'div': 'NL East', 'league': 'NL', 'rs': 616, 'ra': 607},
+    'Washington Nationals': {'w': 67, 'l': 76, 'div': 'NL East', 'league': 'NL', 'rs': 738, 'ra': 726},
+    'New York Mets': {'w': 64, 'l': 77, 'div': 'NL East', 'league': 'NL', 'rs': 587, 'ra': 633},
 
     # NL Central
-    'Milwaukee Brewers': {'w': 63, 'l': 38, 'div': 'NL Central', 'league': 'NL', 'rs': 510, 'ra': 378},
-    'Chicago Cubs': {'w': 57, 'l': 44, 'div': 'NL Central', 'league': 'NL', 'rs': 519, 'ra': 450},
-    'Pittsburgh Pirates': {'w': 52, 'l': 49, 'div': 'NL Central', 'league': 'NL', 'rs': 538, 'ra': 487},
-    'St. Louis Cardinals': {'w': 51, 'l': 49, 'div': 'NL Central', 'league': 'NL', 'rs': 447, 'ra': 448},
-    'Cincinnati Reds': {'w': 46, 'l': 54, 'div': 'NL Central', 'league': 'NL', 'rs': 418, 'ra': 483},
+    'Milwaukee Brewers': {'w': 88, 'l': 54, 'div': 'NL Central', 'league': 'NL', 'rs': 715, 'ra': 541},
+    'Chicago Cubs': {'w': 80, 'l': 62, 'div': 'NL Central', 'league': 'NL', 'rs': 759, 'ra': 621},
+    'St. Louis Cardinals': {'w': 71, 'l': 71, 'div': 'NL Central', 'league': 'NL', 'rs': 640, 'ra': 648},
+    'Pittsburgh Pirates': {'w': 70, 'l': 72, 'div': 'NL Central', 'league': 'NL', 'rs': 692, 'ra': 662},
+    'Cincinnati Reds': {'w': 67, 'l': 74, 'div': 'NL Central', 'league': 'NL', 'rs': 588, 'ra': 699},
 
     # NL West
-    'Los Angeles Dodgers': {'w': 64, 'l': 38, 'div': 'NL West', 'league': 'NL', 'rs': 526, 'ra': 373},
-    'Arizona Diamondbacks': {'w': 52, 'l': 49, 'div': 'NL West', 'league': 'NL', 'rs': 441, 'ra': 454},
-    'San Diego Padres': {'w': 50, 'l': 51, 'div': 'NL West', 'league': 'NL', 'rs': 415, 'ra': 443},
-    'San Francisco Giants': {'w': 42, 'l': 59, 'div': 'NL West', 'league': 'NL', 'rs': 413, 'ra': 476},
-    'Colorado Rockies': {'w': 41, 'l': 62, 'div': 'NL West', 'league': 'NL', 'rs': 495, 'ra': 588},
+    'Los Angeles Dodgers': {'w': 84, 'l': 57, 'div': 'NL West', 'league': 'NL', 'rs': 692, 'ra': 543},
+    'San Diego Padres': {'w': 74, 'l': 67, 'div': 'NL West', 'league': 'NL', 'rs': 597, 'ra': 586},
+    'Arizona Diamondbacks': {'w': 74, 'l': 68, 'div': 'NL West', 'league': 'NL', 'rs': 629, 'ra': 632},
+    'San Francisco Giants': {'w': 58, 'l': 84, 'div': 'NL West', 'league': 'NL', 'rs': 592, 'ra': 669},
+    'Colorado Rockies': {'w': 54, 'l': 87, 'div': 'NL West', 'league': 'NL', 'rs': 661, 'ra': 802},
 }
-
 
 def calculate_realistic_elo(wins: int, losses: int, runs_scored: int = None, runs_allowed: int = None) -> int:
     if runs_scored is not None and runs_allowed is not None and runs_scored > 0 and runs_allowed > 0:
@@ -139,18 +138,23 @@ def load_schedule(filepath):
         return games
 
     with open(filepath, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
+        reader = csv.reader(f)
         for row in reader:
-            away = row.get('away_team') or row.get('away_name') or row.get('away') or row.get('Away_Team')
-            home = row.get('home_team') or row.get('home_name') or row.get('home') or row.get('Home_Team')
-            
-            if away == 'Oakland Athletics': away = 'Athletics'
-            if home == 'Oakland Athletics': home = 'Athletics'
+            if len(row) < 4:
+                continue
+            # CSV columns: date, id, away_team, home_team, venue, status
+            away = row[2].strip()
+            home = row[3].strip()
+
+            # Normalize team names
+            if away == 'Oakland Athletics':
+                away = 'Athletics'
+            if home == 'Oakland Athletics':
+                home = 'Athletics'
 
             if home and away:
                 games.append({'away': away, 'home': home})
     return games
-
 
 def run_monte_carlo(schedule, num_sims=NUM_SIMULATIONS):
     make_playoffs = Counter()
