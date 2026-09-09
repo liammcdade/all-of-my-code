@@ -1,99 +1,54 @@
-# Premier League 2026-27 Season Simulation
+# Premier League 2026-27 Season Simulation Suite
 
-A comprehensive Monte Carlo simulation for predicting Premier League outcomes using ELO-based team ratings and Poisson goal modeling.
+A refactored, Monte Carlo simulation engine that predicts Premier League outcomes integrated with UEFA Champions League (UCL), UEFA Europa League (UEL), and UEFA Conference League (UECL) competition pipelines.
 
 ## Features
 
-- **ELO-Based Ratings**: Team strength ratings with adjustments for form, injuries, and win/draw/loss tendencies
-- **Realistic Match Simulation**: Uses Poisson goal modeling with home advantage and match-specific parameters
-- **Championship Playoff Simulation**: Simulates Championship playoffs to determine promotion
-- **Monte Carlo Simulations**: Runs 10,000 simulations grouped by promoted team
-- **Pre-Season Match Probabilities**: Computes probabilities for all remaining fixtures
-- **Configurable Parameters**: Adjustable constants for model tuning
-- **Progress Tracking**: Real-time progress bars for simulations
-- **Comprehensive Statistics**: Team performance metrics, fixture difficulty, and extreme outcomes
+- **Latent Elo Ratings**: Generates baseline team strength ratings derived from multi-market betting odds (Title, Top 2, Relegation) using market-efficiency weighting.
+- **Integrated European Competitions**: Dynamically simulates 36-team league phases and multi-round two-legged knockout stages for UCL, UEL, and UECL.
+- **Dynamic European Fatigue Decay**: Models team fixture congestion by applying European fatigue penalties that decay linearly across the season for active European contenders.
+- **Locked Actual Fixture Results**: Supports locking in real-world match outcomes (`ACTUAL_RESULTS`) to anchor mid-season or early-season simulations.
+- **Conditional UEFA Qualification**: Implements official UEFA qualification rules, granting additional Champions League spots to 5th place when an English club wins the UCL or UEL while finishing outside the top 4.
+- **Poisson Match Engine**: Simulates goal scoring using exponential Elo-XG modeling and Poisson probability mass functions.
 
-## Installation
+## Installation & Setup
 
-1. Clone the repository
-2. Install dependencies:
+1. Clone the repository.
+2. Install required dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install numpy tqdm pandas tabulate rich
    ```
 
 ## Usage
 
-### Basic Usage
+Run the unified simulation script:
 ```bash
 python sportsanalysis/premier-league/26-27-season.py
 ```
 
-The script runs 10,000 simulations and outputs results to the console.
-
-## Output
-
-The simulation generates console output including:
-- **Team Statistics**: Average points, standard deviation, probabilities for title, Champions League, Europa League, Conference League, European qualification, and relegation
-- **Match Probabilities**: Win/draw/loss percentages for all remaining fixtures
-- **Extreme Match Probabilities**: Most likely home wins, draws, and away wins
-- **Team Fixture Probabilities**: Probabilities of winning/losing/drawing all remaining games, and average win probability
-- **Points to Win League**: Minimum and maximum points required to win the title
-- **Additional Statistics**: Probability of relegation with 40+ points, average excitement score
+By default, the script executes 2,000 unified iterations (`NUM_PL_SIMS = 2000`) combining European competition brackets with full 380-match Premier League seasons.
 
 ## Algorithm Overview
 
-### 1. Power Ratings
-Uses ELO ratings adjusted for:
-- Form (based on current performance)
-- Injuries (penalty reduction)
-- Win/Draw/Loss rates (bias adjustments)
+### 1. Market-Derived Latent Elo
+Calculates baseline Elo ratings using centered log-probabilities from fractional betting odds across multiple markets, normalized to a baseline scale ($\text{Scale} = 400$).
 
-### 2. Match Simulation
-Uses Poisson distribution for goals with:
-- Home advantage factor
-- Team ELO difference scaling
-- Match closeness and tempo effects
-- Shared goals for draws
-- Variance and bias adjustments
+### 2. European Simulation & Fatigue Model
+Before each PL season iteration:
+- Full league phases (8 matchdays) and knockout phases (Playoffs through Final) are simulated for UCL, UEL, and UECL.
+- Active European teams incur competition-specific fatigue penalties (`UCL`: 8.0, `UEL`: 6.0, `UECL`: 5.0 Elo points) that decay linearly ($1 - \frac{\text{match\_index}}{\text{total\_matches}}$) over the season.
 
-### 3. European Qualification
-Simplified assignment based on league position:
-- Champions League: Top 4 teams
-- Europa League: 5th place
-- Conference League: 6th place
-- Relegation: Bottom 3 teams
+### 3. Match Engine
+- **Home Advantage**: +85.0 Elo points applied to the home team.
+- **Expected Goals**:
+  - $\text{xG}_{\text{home}} = 1.5 \times \exp(0.002 \times \Delta\text{Elo})$
+  - $\text{xG}_{\text{away}} = 1.2 \times \exp(-0.002 \times \Delta\text{Elo})$
+- Goals are drawn using cached Poisson PMF tables.
 
-### 4. Tiebreakers
-Uses simplified approach: Points -> Goal Difference -> Goals For
-*(Note: Real Premier League uses head-to-head records)*
-
-## Configuration
-
-Key parameters can be modified in the script constants:
-- ELO parameters (K-factor, scale)
-- Match model parameters (home advantage, XG calculations)
-- Simulation settings (number of sims)
-- Adjustment factors (form multiplier, injury scale)
-
-## Dependencies
-
-- **numpy**: Numerical computations and random number generation
-- **numba**: JIT compilation for performance optimization
-- **tqdm**: Progress bars
-- **collections, math, random**: Standard library modules
-
-## License
-
-This project is for educational and research purposes.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Submit a pull request
-
-## Disclaimer
-
-This simulation is for entertainment and educational purposes only.
-Actual football results depend on many factors not captured in this model.
+### 4. Output Statistics
+Outputs a consolidated table containing:
+- **Pos / Pts / SD**: Mean finishing position, mean points, and standard deviation.
+- **95% CI**: 95% Confidence interval for projected points.
+- **Title% / UCLQ%**: Title win probability and Champions League qualification probability.
+- **5th->UCL%**: Probability of 5th place securing Champions League entry via UCL/UEL winner qualification.
+- **UCLWin% / UELWin% / UECLWin% / AnyEuroWin%**: European trophy win probabilities for Premier League clubs.
