@@ -3,19 +3,158 @@ import random
 import sys
 from collections import defaultdict
 
+# ==============================================================================
+# 1. HARDCODED ELO DATA & CONFIGURATION
+# ==============================================================================
+
+ELO = {
+    "Spain": 2284.9262739065603, "United States": 2254.309585058014,
+    "England": 2179.5916960182017, "France": 2178.6298637210734,
+    "Germany": 2161.5333220943658, "Japan": 2119.0506637646718,
+    "Sweden": 2104.586100507047, "Brazil": 2078.5661801767096,
+    "Canada": 2003.587144027174, "Netherlands": 2001.4301233662618,
+    "Italy": 1990.4575536463165, "Denmark": 1973.935687559122,
+    "Norway": 1956.6724805801093, "Australia": 1955.1906151344554,
+    "Nigeria": 1924.4916747926336, "North Korea": 1917.1232780331454,
+    "Mexico": 1912.6880965842267, "Colombia": 1872.1102769202141,
+    "China": 1860.736158444353, "Belgium": 1846.8632779167317,
+    "South Korea": 1823.9306509978148, "South Africa": 1816.361031406711,
+    "Republic of Ireland": 1806.0844329950974, "Finland": 1799.4528423595425,
+    "Haiti": 1793.0750708754606, "Iceland": 1780.5416539162816,
+    "Portugal": 1780.1248555043198, "Jamaica": 1779.142729809712,
+    "Switzerland": 1768.374441462899, "Poland": 1755.6238384879412,
+    "Scotland": 1753.6452357253322, "Austria": 1752.4572412544048,
+    "Panama": 1743.8159691927258, "Russia": 1743.0064282341211,
+    "Ghana": 1739.5227646321755, "Argentina": 1737.2637391750538,
+    "Puerto Rico": 1722.9720114141837, "Dominican Republic": 1701.4672140972434,
+    "Costa Rica": 1699.820617885052, "Morocco": 1694.8758327766068,
+    "Cameroon": 1691.180524429991, "Algeria": 1690.7939333289646,
+    "Zambia": 1687.530729284643, "Wales": 1686.0901807306468,
+    "Taiwan": 1678.376707644798, "New Zealand": 1678.110833824586,
+    "El Salvador": 1671.106965703179, "Philippines": 1664.1915902969727,
+    "Cuba": 1663.3002158819286, "Serbia": 1662.6430311908132,
+    "Ivory Coast": 1636.88761797785, "Czech Republic": 1625.7038531384997,
+    "Vietnam": 1603.8880441374074, "Slovenia": 1600.1487267379835,
+    "Senegal": 1597.5527674285318, "Thailand": 1596.682474370542,
+    "Trinidad and Tobago": 1592.825281912848, "Myanmar": 1589.4770041356107,
+    "Guyana": 1578.891834062665, "Burkina Faso": 1577.578152613042,
+    "Ukraine": 1573.7320350355546, "Papua New Guinea": 1570.6614548838156,
+    "Zimbabwe": 1569.4388908492656, "Uzbekistan": 1563.8479144685493,
+    "Mali": 1560.513236661854, "Kenya": 1552.294348404835,
+    "Congo": 1549.3535136636406, "Chile": 1545.7068177389922,
+    "Nepal": 1541.1865458520099, "Fiji": 1537.3955240938253,
+    "Bermuda": 1536.587762036813, "Jordan": 1536.4531180932029,
+    "Venezuela": 1528.897970597349, "Guatemala": 1527.1287017252375,
+    "Tanzania": 1521.5549212562994, "Cape Verde": 1521.1714820078462,
+    "Hong Kong": 1515.400717586059, "Uruguay": 1511.0812840761191,
+    "Paraguay": 1506.5258263474266, "Turkey": 1505.9454059338248,
+    "Pakistan": 1504.2960032773576, "American Samoa": 1498.3776020747543,
+    "Lebanon": 1494.3840256633164, "Malawi": 1491.6357300114182,
+    "Cook Islands": 1488.511304641914, "Nicaragua": 1487.3988518034403,
+    "Cambodia": 1487.3479006038676, "Egypt": 1485.722167198696,
+    "Afghanistan": 1484.7419744556605, "India": 1480.1115962685199,
+    "Togo": 1479.2479173585323, "Gambia": 1477.7807598389627,
+    "Tahiti": 1476.2752272472956, "Ethiopia": 1475.9127234903237,
+    "Hungary": 1474.9136405974505, "Botswana": 1474.7808769944938,
+    "Slovakia": 1473.1678804242747, "Samoa": 1472.7214261129045,
+    "Iran": 1470.4799172690616, "Benin": 1469.6999305135014,
+    "Guinea-Bissau": 1468.1213558445036, "Northern Ireland": 1465.477825380882,
+    "Mauritania": 1461.8354219328246, "Sudan": 1460.5253244142732,
+    "Burundi": 1456.7528765133704, "Namibia": 1454.8319351893006,
+    "Tunisia": 1454.2819062399756, "Tonga": 1452.145128004699,
+    "New Caledonia": 1450.2005339917528, "Saudi Arabia": 1448.455725396761,
+    "Malaysia": 1447.940412650524, "Timor-Leste": 1446.921587813184,
+    "Belize": 1446.6259561004124, "Comoros": 1445.6048758519385,
+    "Central African Republic": 1445.1167757091232, "Vanuatu": 1444.5586025413147,
+    "DR Congo": 1443.1059506029214, "Liberia": 1441.810437110895,
+    "Mozambique": 1439.686001711027, "Rwanda": 1439.2910603252212,
+    "Belarus": 1437.9964091616578, "Solomon Islands": 1437.3636167105312,
+    "Uganda": 1432.1061725176974, "Aruba": 1428.1315830449782,
+    "Suriname": 1424.6454056776552, "Saint Kitts and Nevis": 1422.6220416335123,
+    "Bhutan": 1421.973855731539, "Curaçao": 1420.9851146513872,
+    "Bangladesh": 1417.725086956194, "Turkmenistan": 1414.465656350618,
+    "Angola": 1413.909376671671, "United Arab Emirates": 1407.6209977807707,
+    "Saint Lucia": 1407.046068169602, "Guam": 1405.9068550943039,
+    "Equatorial Guinea": 1405.0679012264566, "Romania": 1397.8840127524036,
+    "Mauritius": 1395.2979024442543, "South Sudan": 1393.2737565950579,
+    "Indonesia": 1391.679441952053, "Laos": 1391.3390674235973,
+    "Sierra Leone": 1390.0442997400735, "Ecuador": 1383.8600368225375,
+    "Gabon": 1382.3136024204543, "Niger": 1379.9453592859786,
+    "Honduras": 1372.3136848623888, "Israel": 1367.6531159880437,
+    "Lesotho": 1366.009487941098, "Sri Lanka": 1365.7773626004378,
+    "Greece": 1364.5658224312074, "Seychelles": 1364.3591225469393,
+    "Albania": 1364.025393260661, "Croatia": 1362.0546948449924,
+    "Libya": 1359.1740374955602, "Bosnia and Herzegovina": 1358.3166198533734,
+    "Kuwait": 1354.9065666318795, "Grenada": 1354.0255746127655,
+    "Djibouti": 1350.3066866385122, "Macau": 1347.5457174746114,
+    "Saint Vincent and the Grenadines": 1347.501685375893,
+    "Iraq": 1340.2849812818554, "Eritrea": 1339.4474371758984,
+    "United States Virgin Islands": 1335.4002784685401,
+    "Syria": 1327.4969363023758, "Kosovo": 1325.7668788266956,
+    "Kyrgyzstan": 1325.311275876686, "Palestine": 1318.881281874098,
+    "Singapore": 1317.0273388218473, "Guinea": 1305.6454952450242,
+    "Eswatini": 1291.3337383155517, "Barbados": 1289.8879888136405,
+    "Tajikistan": 1280.216603435321, "Bahamas": 1275.049084456468,
+    "Azerbaijan": 1274.4664763379076, "Bahrain": 1267.2194595781702,
+    "Montenegro": 1262.5326625232722, "Mongolia": 1260.347998649735,
+    "Anguilla": 1243.1909587653192, "Antigua and Barbuda": 1234.5996097184498,
+    "Lithuania": 1230.3628774187287, "Luxembourg": 1210.5043460927766,
+    "Dominica": 1208.8474047133852, "British Virgin Islands": 1205.4098168653713,
+    "Maldives": 1200.4382840365486, "Cayman Islands": 1198.0056451940468,
+    "Latvia": 1185.0186623202724, "Faroe Islands": 1179.4279758647845,
+    "Malta": 1177.842984113832, "Kazakhstan": 1165.9391469671746,
+    "Peru": 1154.9266280552565, "Estonia": 1151.9204175320128,
+    "Moldova": 1132.881945411716, "Bolivia": 1118.031811927346,
+    "Turks and Caicos Islands": 1100.3005127701151,
+    "Bulgaria": 1067.869776316505, "North Macedonia": 1056.1598756065662,
+    "Cyprus": 1041.1846726322742, "Georgia": 1038.976487981929,
+    "Liechtenstein": 982.9585504406526, "Andorra": 976.7733151502741,
+    "Armenia": 969.8234841918982, "Gibraltar": 967.5415620239187,
+}
+
+# Mapping Simulation Names -> Hardcoded CSV Names
+NAME_MAP = {
+    "USA": "United States",
+    "China PR": "China",
+    "Korea DPR": "North Korea",
+    "Korea Republic": "South Korea",
+    "Chinese Taipei": "Taiwan",
+    "Congo DR": "DR Congo",
+    "The Gambia": "Gambia",
+    "St Kitts and Nevis": "Saint Kitts and Nevis",
+    "St Vincent and the Grenadines": "Saint Vincent and the Grenadines",
+    "St Lucia": "Saint Lucia",
+    "US Virgin Islands": "United States Virgin Islands",
+}
+
+def get_elo_key(team: str) -> str:
+    return NAME_MAP.get(team, team)
+
+def get_elo(team: str) -> float:
+    key = get_elo_key(team)
+    if key in ELO:
+        return ELO[key]
+    print(f"Warning: ELO not found for {team} (mapped to {key}). Using 1500.0.")
+    return 1500.0
+
+# ==============================================================================
+# 2. CONFIGURATION & STATE
+# ==============================================================================
+
 ALREADY_QUALIFIED = {
-    "Australia", "China", "Japan", "North Korea", "Philippines", "South Korea",
-    "Argentina", "Brazil","Colombia",
+    "Brazil", "Denmark", "France", "Germany", "Spain",
+    "Australia", "China", "Japan", "North Korea", "South Korea", "Philippines",
+    "Algeria", "Cameroon", "Malawi", "Morocco",
+    "Argentina", "Colombia",
     "New Zealand",
-    "Denmark", "France", "Germany", "Spain",
 }
 
 SLOT_ALLOCATION = {
-    "AFC": {"slots": 6, "inter_conf_slots": 2, "teams": ["Australia", "China", "Japan", "North Korea", "Philippines", "South Korea"], "inter_conf_teams": ["Uzbekistan", "Chinese Taipei"], "inter_conf_mode": "preliminary_phase"},
-    "CAF": {"slots": 4, "inter_conf_slots": 2, "teams": [], "inter_conf_mode": "preliminary_phase"},
+    "AFC": {"slots": 6, "inter_conf_slots": 2, "teams": ["Australia", "China", "Japan", "North Korea", "Philippines", "South Korea"], "inter_conf_teams": ["Uzbekistan", "Chinese Taipei"]},
+    "CAF": {"slots": 4, "inter_conf_slots": 2, "teams": ["Algeria", "Cameroon", "Malawi", "Morocco"], "inter_conf_teams": ["Ghana", "South Africa"]},
     "CONCACAF": {"slots": 4, "inter_conf_slots": 2, "teams": [], "inter_conf_mode": "final_phase_bye"},
-    "CONMEBOL": {"slots": 3, "inter_conf_slots": 2, "teams": ["Argentina", "Colombia", "Brazil"], "inter_conf_teams": ["Venezuela"], "inter_conf_mode": "final_phase_bye", "preliminary_team": "Ecuador"},
-    "OFC": {"slots": 1, "inter_conf_slots": 1, "teams": ["New Zealand"], "inter_conf_team": "Papua New Guinea", "inter_conf_mode": "preliminary_phase"},
+    "CONMEBOL": {"slots": 3, "inter_conf_slots": 2, "teams": ["Argentina", "Colombia", "Brazil"], "inter_conf_teams": ["Venezuela", "Ecuador"]},
+    "OFC": {"slots": 1, "inter_conf_slots": 1, "teams": ["New Zealand"], "inter_conf_team": "Papua New Guinea"},
     "UEFA": {"slots": 11, "inter_conf_slots": 1, "teams": ["Denmark", "France", "Germany", "Spain"], "inter_conf_mode": "final_phase_seeded"},
 }
 
@@ -32,23 +171,23 @@ if RANDOM_SEED is not None:
 TEAM_CONF = {
     "Australia": "AFC", "China": "AFC", "Japan": "AFC", "North Korea": "AFC", "Philippines": "AFC", "South Korea": "AFC",
     "Uzbekistan": "AFC", "Chinese Taipei": "AFC",
-    "Morocco": "CAF", "Algeria": "CAF", "Senegal": "CAF", "Kenya": "CAF",
-    "Ivory Coast": "CAF", "Tanzania": "CAF", "South Africa": "CAF", "Burkina Faso": "CAF",
-    "Zambia": "CAF", "Malawi": "CAF", "Nigeria": "CAF", "Egypt": "CAF",
-    "Ghana": "CAF", "Cameroon": "CAF", "Mali": "CAF", "Cape Verde": "CAF",
-    "Djibouti": "CAF", "Mauritius": "CAF",
+    "Algeria": "CAF", "Cameroon": "CAF", "Malawi": "CAF", "Morocco": "CAF",
+    "Ghana": "CAF", "South Africa": "CAF", "Nigeria": "CAF", "Egypt": "CAF", "Ivory Coast": "CAF", 
+    "Senegal": "CAF", "Kenya": "CAF", "Tanzania": "CAF", "Burkina Faso": "CAF", "Zambia": "CAF", 
+    "Mali": "CAF", "Cape Verde": "CAF",
     "USA": "CONCACAF", "Canada": "CONCACAF", "Mexico": "CONCACAF", "Costa Rica": "CONCACAF",
     "Jamaica": "CONCACAF", "Panama": "CONCACAF", "Haiti": "CONCACAF", "El Salvador": "CONCACAF",
-    "Argentina": "CONMEBOL", "Brazil": "CONMEBOL", "Colombia": "CONMEBOL", "Venezuela": "CONMEBOL", "Ecuador": "CONMEBOL",
+    "Argentina": "CONMEBOL", "Brazil": "CONMEBOL", "Colombia": "CONMEBOL",
+    "Venezuela": "CONMEBOL", "Ecuador": "CONMEBOL",
     "New Zealand": "OFC", "Papua New Guinea": "OFC",
     "Spain": "UEFA", "Germany": "UEFA", "England": "UEFA", "France": "UEFA", "Netherlands": "UEFA",
     "Sweden": "UEFA", "Denmark": "UEFA", "Norway": "UEFA", "Italy": "UEFA", "Iceland": "UEFA",
     "Republic of Ireland": "UEFA", "Austria": "UEFA", "Poland": "UEFA", "Serbia": "UEFA", "Ukraine": "UEFA",
     "Portugal": "UEFA", "Switzerland": "UEFA", "Scotland": "UEFA", "Belgium": "UEFA", "Finland": "UEFA",
     "Wales": "UEFA", "Czech Republic": "UEFA", "Turkey": "UEFA", "Northern Ireland": "UEFA", "Israel": "UEFA",
-    "Slovakia": "UEFA", "Slovenia": "UEFA", "Albania": "UEFA",
-    "Lithuania": "UEFA", "Kosovo": "UEFA", "Belarus": "UEFA", "Kazakhstan": "UEFA",
-    "Hungary": "UEFA", "Greece": "UEFA", "Romania": "UEFA", "Croatia": "UEFA",
+    "Slovakia": "UEFA", "Slovenia": "UEFA", "Albania": "UEFA", "Lithuania": "UEFA", "Kosovo": "UEFA", 
+    "Belarus": "UEFA", "Kazakhstan": "UEFA", "Hungary": "UEFA", "Greece": "UEFA", "Romania": "UEFA", 
+    "Croatia": "UEFA",
 }
 
 NATIONALS_LEAGUE_RANK = {
@@ -69,97 +208,9 @@ NATIONALS_LEAGUE_RANK = {
 
 CONF_NAMES = ["AFC", "CAF", "CONCACAF", "CONMEBOL", "OFC", "UEFA"]
 
-print("ALREADY QUALIFIED TEAMS")
-print("=" * 35)
-for conf, data in SLOT_ALLOCATION.items():
-    if data["teams"]:
-        print(f"\n{conf} ({len(data['teams'])}/{data['slots']} slots):")
-        for team in sorted(data["teams"]):
-            print(f"  {team}")
-print(f"\nTotal: {len(ALREADY_QUALIFIED)} teams")
-
-print(f"\nREMAINING SLOTS")
-print("=" * 35)
-total_remaining = 32 - len(ALREADY_QUALIFIED)
-print(f"Total remaining: {total_remaining} slots to fill\n")
-for conf, data in SLOT_ALLOCATION.items():
-    remaining = data["slots"] - len(data["teams"])
-    if remaining > 0:
-        print(f"  {conf}: {remaining} slot(s) remaining")
-    else:
-        print(f"  {conf}: Full ({data['slots']} slots)")
-
-print(f"\nINTER-CONFEDERATION PLAY-OFF ALLOCATION")
-print("=" * 45)
-for conf, data in SLOT_ALLOCATION.items():
-    slots = data["inter_conf_slots"]
-    mode = data.get("inter_conf_mode", "")
-    if "inter_conf_team" in data:
-        print(f"  {conf}: {slots} slot(s) — {data['inter_conf_team']} (direct qualifier from qualifiers)")
-    elif "inter_conf_teams" in data:
-        teams_str = ", ".join(data["inter_conf_teams"])
-        print(f"  {conf}: {slots} slot(s) — {teams_str}" + (f" [{mode}]" if mode else ""))
-    else:
-        print(f"  {conf}: {slots} slot(s)")
-
-ELO = {
-    "Spain": 2105, "USA": 2058, "Germany": 2029, "England": 2027, "Japan": 1999,
-    "France": 1984, "Brazil": 1977, "Sweden": 1938, "Canada": 1937, "Netherlands": 1912,
-    "Korea DPR": 1911, "Denmark": 1910, "Italy": 1892, "Norway": 1879, "Australia": 1831,
-    "China PR": 1799, "Iceland": 1792, "Belgium": 1786, "Korea Republic": 1781, "Colombia": 1772,
-    "Republic of Ireland": 1770, "Portugal": 1751, "Austria": 1750, "Finland": 1745, "Scotland": 1743,
-    "Switzerland": 1734, "Russia": 1718, "Mexico": 1717, "Poland": 1694, "Argentina": 1683,
-    "Wales": 1669, "New Zealand": 1645, "Czech Republic": 1641, "Ukraine": 1634, "Serbia": 1634,
-    "Vietnam": 1594, "Slovenia": 1579, "Philippines": 1566, "Chinese Taipei": 1566, "Nigeria": 1564,
-    "Jamaica": 1537, "Venezuela": 1537, "Costa Rica": 1516, "Paraguay": 1511, "Hungary": 1507,
-    "Turkey": 1497, "Haiti": 1491, "Chile": 1487, "Thailand": 1485, "Northern Ireland": 1482,
-    "Uzbekistan": 1474, "Belarus": 1473, "Romania": 1472, "Slovakia": 1467, "Myanmar": 1461,
-    "Panama": 1457, "Papua New Guinea": 1450, "Ghana": 1430, "Greece": 1430, "Ecuador": 1419,
-    "Uruguay": 1419, "Morocco": 1410, "South Africa": 1407, "Croatia": 1406, "Zambia": 1392,
-    "Israel": 1383, "Albania": 1376, "IR Iran": 1370, "India": 1369, "Cameroon": 1362,
-    "Bosnia and Herzegovina": 1361, "Ivory Coast": 1355, "Peru": 1331, "Algeria": 1328, "Azerbaijan": 1318,
-    "Puerto Rico": 1309, "Jordan": 1299, "El Salvador": 1295, "Fiji": 1282, "Hong Kong, China": 1281,
-    "Senegal": 1277, "Trinidad and Tobago": 1269, "Guatemala": 1267, "Kosovo": 1263, "Mali": 1254,
-    "Montenegro": 1250, "Samoa": 1247, "Nepal": 1239, "Solomon Islands": 1234, "Equatorial Guinea": 1230,
-    "Guyana": 1217, "Malta": 1216, "Lithuania": 1208, "Dominican Republic": 1208, "Nicaragua": 1205,
-    "Cuba": 1204, "Guam": 1202, "Kazakhstan": 1199, "Estonia": 1199, "Malaysia": 1198,
-    "Tunisia": 1198, "Faroe Islands": 1187, "New Caledonia": 1184, "Latvia": 1180, "Congo DR": 1180,
-    "Indonesia": 1179, "Bangladesh": 1171, "Vanuatu": 1168, "Bulgaria": 1166, "Congo": 1161,
-    "Egypt": 1160, "Tanzania": 1160, "Bolivia": 1154, "Luxembourg": 1153, "Tonga": 1153,
-    "Burkina Faso": 1147, "Bahrain": 1147, "Laos": 1141, "Cambodia": 1140, "Moldova": 1138,
-    "American Samoa": 1130, "Cape Verde": 1130, "Tahiti": 1128, "United Arab Emirates": 1127, "Namibia": 1124,
-    "Honduras": 1115, "Zimbabwe": 1115, "Palestine": 1111, "Kenya": 1108, "Lebanon": 1101,
-    "Cook Islands": 1100, "Georgia": 1099, "Togo": 1093, "Malawi": 1087, "The Gambia": 1082,
-    "Cyprus": 1076, "North Macedonia": 1075, "Kyrgyz Republic": 1071, "Ethiopia": 1068, "Benin": 1066,
-    "Suriname": 1066, "Turkmenistan": 1064, "Eritrea": 1059, "Bermuda": 1053, "Guinea": 1049,
-    "Central African Republic": 1046, "Singapore": 1041, "Uganda": 1036, "Mongolia": 1036, "Armenia": 1030,
-    "Botswana": 1029, "Gabon": 1029, "St Kitts and Nevis": 1027, "Sierra Leone": 1021, "Pakistan": 1009,
-    "Angola": 990, "Chad": 986, "Saudi Arabia": 971, "Timor-Leste": 960, "Tajikistan": 955,
-    "Mauritania": 953, "St Vincent and the Grenadines": 947, "Bhutan": 933, "Syria": 931, "Barbados": 925,
-    "St Lucia": 923, "Sri Lanka": 916, "Iraq": 910, "Maldives": 907, "Belize": 903,
-    "Rwanda": 892, "Dominica": 885, "Afghanistan": 884, "Liberia": 882, "Grenada": 878,
-    "Mozambique": 875, "Kuwait": 870, "Qatar": 864, "Niger": 864, "Seychelles": 850,
-    "Macau": 847, "Guinea-Bissau": 839, "Lesotho": 836, "Burundi": 822, "Curaçao": 822,
-    "Andorra": 817, "Antigua and Barbuda": 807, "Aruba": 801, "Eswatini": 797, "US Virgin Islands": 790,
-    "Cayman Islands": 777, "Comoros": 745, "Libya": 740, "British Virgin Islands": 736, "Gibraltar": 734,
-    "Liechtenstein": 725, "Madagascar": 724, "Anguilla": 682, "Bahamas": 666, "Sudan": 629,
-    "South Sudan": 629, "Turks and Caicos Islands": 627,     "Djibouti": 557, "Mauritius": 434,
-}
-
-NAME_MAP = {
-    "North Korea": "Korea DPR",
-    "South Korea": "Korea Republic",
-    "China": "China PR",
-}
-
-
-def get_elo_key(team: str) -> str:
-    return NAME_MAP.get(team, team)
-
-
-def get_elo(team: str) -> int:
-    return ELO[get_elo_key(team)]
-
+# ==============================================================================
+# 3. SIMULATION FUNCTIONS
+# ==============================================================================
 
 def simulate_tie(team1, team2):
     """Two-legged tie. team1 hosts 1st leg, team2 hosts 2nd leg."""
@@ -197,8 +248,40 @@ def simulate_tie(team1, team2):
         p = 1 / (1 + 10 ** (-elo_pen / 400))
         return team2 if random.random() < p else team1
 
+
+def simulate_tie_with_first_leg(team1, team2, first_leg_goals1, first_leg_goals2):
+    """Two-legged tie with a known first-leg result.
+    team1 hosted the 1st leg, team2 hosts the 2nd leg."""
+    goals1_1 = first_leg_goals1
+    goals2_1 = first_leg_goals2
+
+    elo_diff_2 = get_elo(team2) + 60 - get_elo(team1)
+    p_home2 = 1 / (1 + 10 ** (-elo_diff_2 / 400))
+    draw_prob = 0.24
+
+    r = random.random()
+    if r < p_home2 * (1 - draw_prob):
+        goals2_2, goals1_2 = 2, 0
+    elif r < p_home2 * (1 - draw_prob) + draw_prob:
+        goals2_2, goals1_2 = 1, 1
+    else:
+        goals2_2, goals1_2 = 0, 2
+
+    agg1 = goals1_1 + goals1_2
+    agg2 = goals2_1 + goals2_2
+
+    if agg1 > agg2:
+        return team1
+    elif agg2 > agg1:
+        return team2
+    else:
+        elo_pen = get_elo(team2) + 30 - get_elo(team1)
+        p = 1 / (1 + 10 ** (-elo_pen / 400))
+        return team2 if random.random() < p else team1
+
+
 def simulate_match(team1, team2, draw_factor: float = 0.25):
-    """Single match at neutral venue. Returns winner."""
+    """Single match at neutral venue. Returns winner or None for draw."""
     elo_diff = get_elo(team1) - get_elo(team2)
     p_team1 = 1 / (1 + 10 ** (-elo_diff / 400))
     r = random.random()
@@ -224,7 +307,6 @@ def simulate_match_with_scores(team1, team2, draw_factor: float = 0.25):
 
     team1_win_prob = p_team1 * (1 - draw_factor)
     draw_prob = draw_factor
-    team2_win_prob = (1 - p_team1) * (1 - draw_factor)
 
     if r < team1_win_prob:
         return (2, 0) if random.random() < 0.6 else (1, 0)
@@ -272,8 +354,18 @@ def simulate_preliminary_phase(teams):
 def simulate_final_phase(teams):
     """Simulate final phase with 3 pathways. Returns (qualified, matchups)."""
     ranked = sorted(teams, key=lambda t: get_elo(t), reverse=True)
-    seeded = ranked[:3]
-    unseeded = ranked[3:]
+
+    seeded = []
+    used_confs = set()
+    for team in ranked:
+        conf = TEAM_CONF.get(team)
+        if conf and conf not in used_confs:
+            seeded.append(team)
+            used_confs.add(conf)
+            if len(seeded) == 3:
+                break
+
+    unseeded = [t for t in ranked if t not in seeded]
 
     best_matchups = _find_pathways(seeded, unseeded)
 
@@ -305,246 +397,280 @@ def _find_pathways(seeded, unseeded):
 
 
 def simulate_inter_conf_playoff(preliminary_teams, bye_teams):
-    """Simulate inter-confederation playoff. Returns (final_qualified, prelim_winners, prelim_stats, matchups)."""
+    """Simulate inter-confederation playoff.
+    Returns (final_qualified, prelim_winners, prelim_stats, matchups)."""
     prelim_winners, prelim_stats = simulate_preliminary_phase(preliminary_teams)
     final_teams = bye_teams + prelim_winners
     final_qualified, matchups = simulate_final_phase(final_teams)
     return final_qualified, prelim_winners, prelim_stats, matchups
 
 
-def simulate_caf_qualification():
+# ==============================================================================
+# 4. SIMULATION ENGINE  (single source of truth for CLI + dashboard)
+# ==============================================================================
+
+def run_simulation(n_sims, on_progress=None, is_running=None):
     """
-    Simulate CAF WC qualification starting directly from WAFCON 2026 QFs.
-    
-    QF1: Morocco vs South Africa (Simulated)
-    QF2: Ivory Coast 1-2 Algeria (FIXED - Aug 8 result)
-    QF3: Malawi vs Ghana (Simulated)
-    QF4: Cameroon vs Nigeria (Simulated)
-    
-    QF winners qualify directly for WC (4 slots).
-    QF losers enter play-in matches; play-in winners advance to inter-conf playoff.
+    Run the Monte Carlo qualification simulation.
+
+    on_progress : optional callable(sim_index, live_data_dict) fired ~100x per run
+    is_running  : optional callable() -> bool; return False to stop early
+
+    Returns a dict of aggregated results.
     """
-    # --- QUARTER-FINALS ---
-    # QF1: Morocco vs South Africa
-    qf1_winner = simulate_win("Morocco", "South Africa")
-    qf1_loser = "South Africa" if qf1_winner == "Morocco" else "Morocco"
+    wc_qualifiers = defaultdict(int)
+    uefa_inter_conf = defaultdict(int)
+    uefa_final_phase = defaultdict(int)
+    inter_conf_participants = defaultdict(int)
+    inter_conf_wc_qualifiers = defaultdict(int)
+    inter_conf_by_conf = defaultdict(int)
+    preliminary_winners = defaultdict(int)
+    preliminary_runners_up = defaultdict(int)
+    prelim_stats_sum = {t: {'pts': 0, 'gf': 0, 'ga': 0, 'gd': 0,
+                            'wins': 0, 'draws': 0, 'losses': 0}
+                        for t in ["Uzbekistan", "Chinese Taipei", "Ghana",
+                                  "South Africa", "Papua New Guinea", "Ecuador"]}
 
-    # QF2: FIXED RESULT - Algeria beat Ivory Coast 2-1
-    qf2_winner = "Algeria"
-    qf2_loser = "Ivory Coast"
+    update_interval = max(1, n_sims // 100)
+    last_matchups = None
 
-    # QF3: Malawi vs Ghana
-    qf3_winner = simulate_win("Malawi", "Ghana")
-    qf3_loser = "Ghana" if qf3_winner == "Malawi" else "Malawi"
+    for sim in range(n_sims):
+        if is_running is not None and not is_running():
+            break
 
-    # QF4: Cameroon vs Nigeria
-    qf4_winner = simulate_win("Cameroon", "Nigeria")
-    qf4_loser = "Nigeria" if qf4_winner == "Cameroon" else "Cameroon"
+        if on_progress is not None and sim % update_interval == 0:
+            on_progress(sim, {
+                'wc_qualifiers': dict(wc_qualifiers),
+                'uefa_inter_conf': dict(uefa_inter_conf),
+                'inter_conf_wc': dict(inter_conf_wc_qualifiers),
+            })
 
-    # Semi-finalists = Direct WC qualifiers (4 CAF slots)
-    sf_participants = [qf1_winner, qf2_winner, qf3_winner, qf4_winner]
+        # --- UEFA PLAYOFFS (ties with known 1st-leg results) ---
+        w1  = simulate_tie_with_first_leg("Lithuania", "Sweden", 0, 5)
+        w2  = simulate_tie_with_first_leg("Romania", "Norway", 0, 2)
+        w3  = simulate_tie_with_first_leg("Greece", "England", 1, 3)
+        w4  = simulate_tie_with_first_leg("Croatia", "Iceland", 0, 4)
+        w5  = simulate_tie_with_first_leg("Kazakhstan", "Republic of Ireland", 0, 8)
+        w6  = simulate_tie_with_first_leg("Kosovo", "Austria", 1, 2)
+        w7  = simulate_tie_with_first_leg("Hungary", "Netherlands", 0, 8)
+        w8  = simulate_tie_with_first_leg("Belarus", "Italy", 0, 2)
+        w9  = simulate_tie_with_first_leg("Albania", "Wales", 0, 1)
+        w10 = simulate_tie_with_first_leg("Turkey", "Slovenia", 3, 3)
+        w11 = simulate_tie_with_first_leg("Slovakia", "Ukraine", 1, 3)
+        w12 = simulate_tie_with_first_leg("Israel", "Switzerland", 3, 7)
+        w13 = simulate_tie("Belgium", "Poland")
+        w14 = simulate_tie_with_first_leg("Czech Republic", "Scotland", 0, 2)
+        w15 = simulate_tie("Northern Ireland", "Portugal")
+        w16 = simulate_tie_with_first_leg("Finland", "Serbia", 3, 1)
 
-    # Simulate semis/final for completeness (doesn't affect WC qualification)
-    sf1_winner = simulate_win(qf1_winner, qf4_winner)
-    sf2_winner = simulate_win(qf2_winner, qf3_winner)
-    simulate_win(sf1_winner, sf2_winner)  # Final
+        r2_matches = [
+            (w11, w3), (w16, w8), (w15, w4), (w9, w2),
+            (w12, w6), (w14, w1), (w13, w5), (w10, w7),
+        ]
+        r2_winners = [simulate_tie(t1, t2) for t1, t2 in r2_matches]
+        r2_sorted = sorted(r2_winners,
+                           key=lambda t: NATIONALS_LEAGUE_RANK.get(t, 999))
 
-    # --- PLAY-IN MATCHES (determine inter-confederation playoff berths) ---
-    # Play-in 1: Loser QF2 (Ivory Coast) vs Loser QF3
-    playin1 = simulate_win(qf2_loser, qf3_loser)
+        for i in range(7):
+            wc_qualifiers[r2_sorted[i]] += 1
+        uefa_inter_conf[r2_sorted[7]] += 1
 
-    # Play-in 2: Loser QF1 vs Loser QF4
-    playin2 = simulate_win(qf1_loser, qf4_loser)
+        # --- CONCACAF CHAMPIONSHIP ---
+        concacaf_d1 = simulate_win("USA", "El Salvador")
+        concacaf_d2 = simulate_win("Jamaica", "Costa Rica")
+        concacaf_d3 = simulate_win("Canada", "Panama")
+        concacaf_d4 = simulate_win("Mexico", "Haiti")
 
-    inter_conf = [playin1, playin2]
-    return sf_participants, inter_conf
+        wc_qualifiers[concacaf_d1] += 1
+        wc_qualifiers[concacaf_d2] += 1
+        wc_qualifiers[concacaf_d3] += 1
+        wc_qualifiers[concacaf_d4] += 1
+
+        all_concacaf_qf = ["USA", "El Salvador", "Jamaica", "Costa Rica",
+                           "Canada", "Panama", "Mexico", "Haiti"]
+        concacaf_losers = [t for t in all_concacaf_qf
+                           if t not in (concacaf_d1, concacaf_d2,
+                                        concacaf_d3, concacaf_d4)]
+        concacaf_p1 = simulate_win(concacaf_losers[0], concacaf_losers[1])
+        concacaf_p2 = simulate_win(concacaf_losers[2], concacaf_losers[3])
+
+        # --- INTER-CONFEDERATION PLAYOFF ---
+        preliminary_teams = ["Uzbekistan", "Chinese Taipei", "Ghana",
+                             "South Africa", "Papua New Guinea", "Ecuador"]
+        bye_teams = [concacaf_p1, concacaf_p2, r2_sorted[7], "Venezuela"]
+
+        inter_conf_wc, prelim_winners_list, prelim_stats, matchups = \
+            simulate_inter_conf_playoff(preliminary_teams, bye_teams)
+
+        for team in preliminary_teams + bye_teams:
+            inter_conf_participants[team] += 1
+        for team in inter_conf_wc:
+            inter_conf_wc_qualifiers[team] += 1
+            wc_qualifiers[team] += 1
+
+        for conf in {TEAM_CONF.get(t, "Unknown") for t in inter_conf_wc}:
+            inter_conf_by_conf[conf] += 1
+
+        uefa_final_phase[r2_sorted[7]] += 1
+        preliminary_winners[prelim_winners_list[0]] += 1
+        preliminary_runners_up[prelim_winners_list[1]] += 1
+
+        for team, stats in prelim_stats.items():
+            for key in prelim_stats_sum[team]:
+                prelim_stats_sum[team][key] += stats[key]
+
+        last_matchups = matchups
+
+    # --- Aggregate ---
+    qualification_prob = defaultdict(float)
+    for team in ALREADY_QUALIFIED:
+        qualification_prob[team] = 1.0
+    for team, count in wc_qualifiers.items():
+        qualification_prob[team] += count / n_sims
+
+    all_qualifiers = sorted(qualification_prob.items(),
+                            key=lambda x: x[1], reverse=True)
+
+    return {
+        'wc_qualifiers': dict(wc_qualifiers),
+        'qualification_prob': dict(qualification_prob),
+        'all_qualifiers': all_qualifiers,
+        'uefa_inter_conf': dict(uefa_inter_conf),
+        'uefa_final_phase': dict(uefa_final_phase),
+        'inter_conf_participants': dict(inter_conf_participants),
+        'inter_conf_wc_qualifiers': dict(inter_conf_wc_qualifiers),
+        'inter_conf_by_conf': dict(inter_conf_by_conf),
+        'preliminary_winners': dict(preliminary_winners),
+        'preliminary_runners_up': dict(preliminary_runners_up),
+        'prelim_stats_sum': prelim_stats_sum,
+        'last_matchups': last_matchups,
+        'n_sims': n_sims,
+    }
 
 
-wc_qualifiers = defaultdict(int)
-uefa_inter_conf = defaultdict(int)
-uefa_final_phase = defaultdict(int)
-inter_conf_participants = defaultdict(int)
-inter_conf_wc_qualifiers = defaultdict(int)
-inter_conf_by_conf = defaultdict(int)
-preliminary_winners = defaultdict(int)
-preliminary_runners_up = defaultdict(int)
+# ==============================================================================
+# 5. CLI ENTRY POINT
+# ==============================================================================
 
-print(f"\nRunning {N_SIMS} simulations...", file=sys.stderr)
-update_interval = max(1, N_SIMS // 100)
+def main():
+    print(f"\nRunning {N_SIMS} simulations...", file=sys.stderr)
 
-for sim in range(N_SIMS):
-    if sim % update_interval == 0:
-        pct = sim / N_SIMS * 100
-        print(f"\rProgress: {pct:.0f}%", end="", file=sys.stderr)
+    def progress(sim, _):
+        print(f"\rProgress: {sim / N_SIMS * 100:.0f}%",
+              end="", file=sys.stderr)
 
-    w1 = simulate_tie("Lithuania", "Sweden")
-    w2 = simulate_tie("Romania", "Norway")
-    w3 = simulate_tie("Greece", "England")
-    w4 = simulate_tie("Croatia", "Iceland")
-    w5 = simulate_tie("Kazakhstan", "Republic of Ireland")
-    w6 = simulate_tie("Kosovo", "Austria")
-    w7 = simulate_tie("Hungary", "Netherlands")
-    w8 = simulate_tie("Belarus", "Italy")
+    results = run_simulation(N_SIMS, on_progress=progress)
+    print(f"\rProgress: 100%", file=sys.stderr)
 
-    w9  = simulate_tie("Albania", "Wales")
-    w10 = simulate_tie("Turkey", "Slovenia")
-    w11 = simulate_tie("Slovakia", "Ukraine")
-    w12 = simulate_tie("Israel", "Switzerland")
-    w13 = simulate_tie("Belgium", "Poland")
-    w14 = simulate_tie("Czech Republic", "Scotland")
-    w15 = simulate_tie("Northern Ireland", "Portugal")
-    w16 = simulate_tie("Finland", "Serbia")
+    n = results['n_sims']
+    qualification_prob = results['qualification_prob']
+    all_qualifiers = results['all_qualifiers']
+    uefa_inter_conf = results['uefa_inter_conf']
+    inter_conf_participants = results['inter_conf_participants']
+    inter_conf_wc_qualifiers = results['inter_conf_wc_qualifiers']
+    inter_conf_by_conf = results['inter_conf_by_conf']
+    preliminary_winners = results['preliminary_winners']
+    preliminary_runners_up = results['preliminary_runners_up']
+    prelim_stats_sum = results['prelim_stats_sum']
+    last_matchups = results['last_matchups']
 
-    path1 = [w1, w2, w3, w4, w5, w6, w7, w8]
-    path2 = [w9, w10, w11, w12, w13, w14, w15, w16]
-    r2_from_path1 = [
-        simulate_tie(path1[0], path1[7]),
-        simulate_tie(path1[1], path1[6]),
-        simulate_tie(path1[2], path1[5]),
-        simulate_tie(path1[3], path1[4]),
-    ]
-    r2_from_path2 = [
-        simulate_tie(path2[0], path2[7]),
-        simulate_tie(path2[1], path2[6]),
-        simulate_tie(path2[2], path2[5]),
-        simulate_tie(path2[3], path2[4]),
-    ]
-    r2_winners = r2_from_path1 + r2_from_path2
-    r2_sorted = sorted(r2_winners, key=lambda t: NATIONALS_LEAGUE_RANK.get(t, 999))
-    for i in range(7):
-        wc_qualifiers[r2_sorted[i]] += 1
-    uefa_inter_conf[r2_sorted[7]] += 1
+    top_32 = all_qualifiers[:32]
+    certainty = sum(prob for _, prob in top_32) / 32 * 100
 
-    concacaf_d1 = simulate_win("USA", "El Salvador")
-    concacaf_d2 = simulate_win("Jamaica", "Costa Rica")
-    concacaf_d3 = simulate_win("Canada", "Panama")
-    concacaf_d4 = simulate_win("Mexico", "Haiti")
+    most_likely = max(uefa_inter_conf.items(), key=lambda x: x[1], default=(None, 0))
+    if most_likely[0]:
+        print(f"\nMOST LIKELY UEFA TEAM TO ENTER INTER-CONFEDERATION PLAY-OFF FINAL PHASE:")
+        print(f"-> {most_likely[0]} ({most_likely[1] / n * 100:.2f}%)")
 
-    wc_qualifiers[concacaf_d1] += 1
-    wc_qualifiers[concacaf_d2] += 1
-    wc_qualifiers[concacaf_d3] += 1
-    wc_qualifiers[concacaf_d4] += 1
-
-    concacaf_losers = [t for t in ["USA", "El Salvador", "Jamaica", "Costa Rica", "Canada", "Panama", "Mexico", "Haiti"] if t not in [concacaf_d1, concacaf_d2, concacaf_d3, concacaf_d4]]
-
-    concacaf_p1 = simulate_win(concacaf_losers[0], concacaf_losers[1])
-    concacaf_p2 = simulate_win(concacaf_losers[2], concacaf_losers[3])
-
-    # CAF qualification (starts directly from WAFCON QFs)
-    caf_direct, caf_inter_conf = simulate_caf_qualification()
-    for team in caf_direct:
-        wc_qualifiers[team] += 1
-
-    # Inter-confederation playoff
-    preliminary_teams = ["Uzbekistan", "Chinese Taipei"] + caf_inter_conf + ["Papua New Guinea", "Ecuador"]
-    bye_teams = [concacaf_p1, concacaf_p2, r2_sorted[7], "Venezuela"]
-
-    inter_conf_wc, prelim_winners, prelim_stats, matchups = simulate_inter_conf_playoff(preliminary_teams, bye_teams)
-
-    for team in preliminary_teams + bye_teams:
-        inter_conf_participants[team] += 1
-
-    for team in inter_conf_wc:
-        inter_conf_wc_qualifiers[team] += 1
-
-    confs_with_slot = {TEAM_CONF.get(team, "Unknown") for team in inter_conf_wc}
-    for conf in confs_with_slot:
-        inter_conf_by_conf[conf] += 1
-
-    uefa_final_phase[r2_sorted[7]] += 1
-    preliminary_winners[prelim_winners[0]] += 1
-    preliminary_runners_up[prelim_winners[1]] += 1
-    last_prelim_stats = prelim_stats
-    last_matchups = matchups
-
-qualification_prob = defaultdict(float)
-
-for team in ALREADY_QUALIFIED:
-    qualification_prob[team] = 1.0
-
-for team in wc_qualifiers:
-    qualification_prob[team] += wc_qualifiers[team] / N_SIMS
-
-for team in inter_conf_wc_qualifiers:
-    qualification_prob[team] += inter_conf_wc_qualifiers[team] / N_SIMS
-
-print(f"\rProgress: 100%", file=sys.stderr)
-
-all_qualifiers = sorted(qualification_prob.items(), key=lambda x: x[1], reverse=True)
-top_32 = all_qualifiers[:32]
-certainty = sum(prob for _, prob in top_32) / 32 * 100
-
-print(f"\nQUALIFICATION CERTAINTY: {certainty:.2f}%")
-print(f"(Average probability of the 32 most likely qualifiers)\n")
-
-print(f"\nWORLD CUP QUALIFICATION PROBABILITY BY CONFEDERATION\n")
-for conf in CONF_NAMES:
-    conf_teams = sorted(
-        [(team, prob) for team, prob in all_qualifiers if TEAM_CONF.get(team) == conf],
-    key=lambda x: x[1],
+    print(f"\n\n{'='*60}")
+    print(f"PRELIMINARY PHASE RESULTS (Average over {n} simulations)")
+    print(f"(Top 2 advance to final phase)")
+    print(f"{'='*60}")
+    print(f"{'Team':20s} {'Pld':>4s} {'W':>4s} {'D':>4s} {'L':>4s} "
+          f"{'GF':>5s} {'GA':>5s} {'GD':>6s} {'Pts':>5s}")
+    print("-" * 60)
+    for team in sorted(
+        prelim_stats_sum.keys(),
+        key=lambda t: (prelim_stats_sum[t]['pts'] / n,
+                       prelim_stats_sum[t]['gd'] / n,
+                       prelim_stats_sum[t]['gf'] / n,
+                       prelim_stats_sum[t]['wins'] / n),
         reverse=True,
+    ):
+        s = prelim_stats_sum[team]
+        pld = (s['wins'] + s['draws'] + s['losses']) / n
+        print(f"{team:20s} {pld:4.1f} {s['wins']/n:4.2f} {s['draws']/n:4.2f} "
+              f"{s['losses']/n:4.2f} {s['gf']/n:5.2f} {s['ga']/n:5.2f} "
+              f"{s['gd']/n:6.2f} {s['pts']/n:5.2f}")
+    print("-" * 60)
+    top2 = sorted(
+        prelim_stats_sum.keys(),
+        key=lambda t: (prelim_stats_sum[t]['pts'] / n,
+                       prelim_stats_sum[t]['gd'] / n,
+                       prelim_stats_sum[t]['gf'] / n,
+                       prelim_stats_sum[t]['wins'] / n),
+        reverse=True,
+    )[:2]
+    print(f"Avg top 2: {', '.join(top2)}")
+
+    print(f"\n\nPRELIMINARY PHASE - PROBABILITY OF ADVANCING")
+    print(f"(Chance of finishing in top 2)")
+    print("-" * 45)
+    print(f"{'Team':25s} {'Advance %':>12s}")
+    prelim_advance = sorted(
+        [(team, (preliminary_winners[team] + preliminary_runners_up[team]) / n)
+         for team in set(list(preliminary_winners) + list(preliminary_runners_up))],
+        key=lambda x: x[1], reverse=True,
     )
-    if not conf_teams:
-        continue
-    print(f"\n{conf}")
-    print("-" * 35)
-    for team, prob in conf_teams:
-        print(f"{team:25s}{prob*100:6.2f}%")
+    for team, prob in prelim_advance:
+        print(f"{team:25s} {prob*100:11.2f}%")
 
-most_likely_uefa_inter = max(uefa_inter_conf.items(), key=lambda x: x[1], default=(None, 0))
-if most_likely_uefa_inter[0]:
-    print(f"\nMOST LIKELY UEFA TEAM TO ENTER INTER-CONFEDERATION PLAY-OFF FINAL PHASE: {most_likely_uefa_inter[0]} ({most_likely_uefa_inter[1] / N_SIMS * 100:.2f}%)")
+    print(f"\n\nFINAL PHASE RESULTS (Last Simulation)")
+    print("-" * 65)
+    if last_matchups:
+        for seed, unseed, winner in last_matchups:
+            print(f"{seed:20s} vs {unseed:20s} -> {winner:20s} WIN")
+    print("-" * 65)
 
-print(f"\n\nPRELIMINARY PHASE RESULTS (Last Simulation)")
-print(f"(Top 2 advance to final phase)\n")
-if last_prelim_stats:
-    print("-" * 50)
-    print(f"{'Team':20s} {'Pld':>4s} {'W':>3s} {'D':>3s} {'L':>3s} {'GF':>4s} {'GA':>4s} {'GD':>5s} {'Pts':>4s}")
-    print("-" * 50)
-    for team in sorted(last_prelim_stats.keys(), key=lambda t: (last_prelim_stats[t]['pts'], last_prelim_stats[t]['gd'], last_prelim_stats[t]['gf'], last_prelim_stats[t]['wins']), reverse=True):
-        s = last_prelim_stats[team]
-        pld = s['wins'] + s['draws'] + s['losses']
-        print(f"{team:20s} {pld:4d} {s['wins']:3d} {s['draws']:3d} {s['losses']:3d} {s['gf']:4d} {s['ga']:4d} {s['gd']:5d} {s['pts']:4d}")
-    print("-" * 50)
-    top2 = sorted(last_prelim_stats.keys(), key=lambda t: (last_prelim_stats[t]['pts'], last_prelim_stats[t]['gd'], last_prelim_stats[t]['gf'], last_prelim_stats[t]['wins']), reverse=True)[:2]
-    print(f"Advancing: {', '.join(top2)}")
+    print(f"\n\nINTER-CONFEDERATION PLAY-OFF PROBABILITIES")
+    print(f"(Chance of qualifying for the World Cup through play-offs)")
+    print("-" * 70)
+    print(f"{'Team':25s} {'Reach Play-off':>15s} {'Qualify via Play-off':>20s}")
+    inter_conf_teams = sorted(
+        [(team, inter_conf_participants[team] / n,
+          inter_conf_wc_qualifiers[team] / n)
+         for team in inter_conf_participants],
+        key=lambda x: x[2], reverse=True,
+    )
+    for team, reach, qualify in inter_conf_teams:
+        print(f"{team:25s} {reach*100:13.2f}% {qualify*100:19.2f}%")
 
-print(f"\n\nPRELIMINARY PHASE - PROBABILITY OF ADVANCING\n")
-print(f"(Chance of finishing in top 2)\n")
-prelim_advance = sorted(
-    [(team, (preliminary_winners[team] + preliminary_runners_up[team]) / N_SIMS)
-     for team in preliminary_winners],
-    key=lambda x: x[1],
-    reverse=True,
-)
-print("-" * 40)
-print(f"{'Team':25s} {'Advance %':>12s}")
-for team, prob in prelim_advance:
-    print(f"{team:25s} {prob*100:11.2f}%")
+    print(f"\n\nCONFEDERATION INTER-CONFEDERATION SLOT PROBABILITY")
+    print(f"(Chance of getting at least one World Cup spot via inter-confederation playoff)")
+    print("-" * 70)
+    for conf in CONF_NAMES:
+        if conf in inter_conf_by_conf:
+            print(f"{conf:10s}: {inter_conf_by_conf[conf] / n * 100:.2f}%")
 
-print(f"\n\nFINAL PHASE RESULTS (Last Simulation)\n")
-if last_matchups:
-    print("-" * 60)
-    for seed, unseed, winner in last_matchups:
-        print(f"{seed:20s} vs {unseed:20s} -> {winner:20s} WIN")
-    print("-" * 60)
+    print(f"\n\nWORLD CUP QUALIFICATION PROBABILITY BY CONFEDERATION\n")
+    for conf in CONF_NAMES:
+        conf_teams = sorted(
+            [(t, p) for t, p in all_qualifiers if TEAM_CONF.get(t) == conf],
+            key=lambda x: x[1], reverse=True,
+        )
+        if not conf_teams:
+            continue
+        print(f"\n[{conf}]")
+        print("-" * 40)
+        for team, prob in conf_teams:
+            marker = " [Q]" if prob >= 0.99 else ""
+            print(f"{team:25s} {prob*100:6.2f}%{marker}")
 
-print(f"\n\nINTER-CONFEDERATION PLAY-OFF PROBABILITIES\n")
-print(f"(Chance of qualifying for the World Cup through play-offs)\n")
-inter_conf_teams = sorted(
-    [(team, inter_conf_participants[team] / N_SIMS, inter_conf_wc_qualifiers[team] / N_SIMS)
-     for team in inter_conf_participants],
-    key=lambda x: x[2],
-    reverse=True,
-)
-print("-" * 60)
-print(f"{'Team':25s} {'Reach Play-off':>15s} {'Qualify via Play-off':>20s}")
-for team, reach, qualify in inter_conf_teams:
-    print(f"{team:25s} {reach*100:13.2f}% {qualify*100:19.2f}%")
+    print(f"\n{'='*60}")
+    print(f"QUALIFICATION CERTAINTY: {certainty:.2f}%")
+    print(f"(Average probability of the 32 most likely qualifiers)")
+    print(f"{'='*60}\n")
 
-print(f"\n\nCONFEDERATION INTER-CONFEDERATION SLOT PROBABILITY\n")
-print(f"(Chance of getting at least one World Cup spot via inter-confederation playoff)\n")
-for conf in CONF_NAMES:
-    if conf in inter_conf_by_conf:
-        prob = inter_conf_by_conf[conf] / N_SIMS * 100
-        print(f"{conf}: {prob:.2f}%")
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,281 @@
+{
+ "word_search": {
+  "seed": 386647707,
+  "found": [
+   "ALGORITHM",
+   "BOOLEAN",
+   "COMPILER",
+   "DATABASE",
+   "FUNCTION",
+   "INTERFACE",
+   "ITERATION",
+   "NETWORK",
+   "RECURSION",
+   "VARIABLE"
+  ]
+ },
+ "crossword": {
+  "words": [
+   "CARRY",
+   "ARGUE",
+   "TRUST",
+   "CARRY",
+   "ARGUE",
+   "TRUST"
+  ],
+  "cells": {
+   "0,1": "C",
+   "0,2": "A",
+   "0,3": "T",
+   "1,0": "C",
+   "1,1": "A",
+   "1,2": "R",
+   "1,3": "R",
+   "1,4": "Y",
+   "2,0": "A",
+   "2,1": "R",
+   "2,2": "G",
+   "2,3": "U",
+   "2,4": "E",
+   "3,0": "T",
+   "3,1": "R",
+   "3,2": "U",
+   "3,3": "S",
+   "3,4": "T",
+   "4,1": "Y",
+   "4,2": "E",
+   "4,3": "T"
+  }
+ },
+ "sudoku": {
+  "solution": [
+   [
+    2,
+    6,
+    4,
+    1,
+    5,
+    3
+   ],
+   [
+    5,
+    1,
+    3,
+    6,
+    2,
+    4
+   ],
+   [
+    6,
+    3,
+    2,
+    4,
+    1,
+    5
+   ],
+   [
+    1,
+    4,
+    5,
+    3,
+    6,
+    2
+   ],
+   [
+    4,
+    2,
+    1,
+    5,
+    3,
+    6
+   ],
+   [
+    3,
+    5,
+    6,
+    2,
+    4,
+    1
+   ]
+  ],
+  "given": [
+   [
+    2,
+    0,
+    4,
+    1,
+    0,
+    3
+   ],
+   [
+    5,
+    1,
+    0,
+    0,
+    0,
+    4
+   ],
+   [
+    0,
+    0,
+    0,
+    0,
+    1,
+    0
+   ],
+   [
+    1,
+    4,
+    0,
+    3,
+    0,
+    0
+   ],
+   [
+    4,
+    0,
+    0,
+    0,
+    0,
+    6
+   ],
+   [
+    0,
+    0,
+    6,
+    0,
+    4,
+    1
+   ]
+  ],
+  "cells": {
+   "0,1": "6",
+   "0,4": "5",
+   "1,2": "3",
+   "1,3": "6",
+   "1,4": "2",
+   "2,0": "6",
+   "2,1": "3",
+   "2,2": "2",
+   "2,3": "4",
+   "2,5": "5",
+   "3,2": "5",
+   "3,4": "6",
+   "3,5": "2",
+   "4,1": "2",
+   "4,2": "1",
+   "4,3": "5",
+   "4,4": "3",
+   "5,0": "3",
+   "5,1": "5",
+   "5,3": "2"
+  }
+ },
+ "quiz": {
+  "solved": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ]
+ },
+ "anagram": {
+  "scram": {
+   "ZEPHYR": "HZYREP",
+   "QUARTZ": "ZAUTRQ",
+   "RHYTHM": "HYMRTH",
+   "MNEMONIC": "CMEIONMN",
+   "PARADOX": "RXAADOP",
+   "JUXTAPOSE": "XPTJUASEO",
+   "QUARANTINE": "TNUIENQARA",
+   "KALEIDOSCOPE": "IESCAOLPDEKO",
+   "OXYMORON": "NXYMOOOR",
+   "XYLOPHONE": "NEOYOPLHX"
+  },
+  "solved": [
+   "JUXTAPOSE",
+   "KALEIDOSCOPE",
+   "MNEMONIC",
+   "OXYMORON",
+   "PARADOX",
+   "QUARANTINE",
+   "QUARTZ",
+   "RHYTHM",
+   "XYLOPHONE",
+   "ZEPHYR"
+  ]
+ },
+ "sequence": {
+  "solved": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9
+  ]
+ },
+ "cipher": {
+  "shift": 12,
+  "answer": ""
+ },
+ "riddle": {
+  "solved": []
+ },
+ "slide": {
+  "board": [
+   0,
+   5,
+   15,
+   11,
+   7,
+   2,
+   6,
+   12,
+   3,
+   1,
+   10,
+   9,
+   4,
+   13,
+   14,
+   8
+  ],
+  "best": 0.0
+ },
+ "memory": {
+  "cards": [
+   "B",
+   "H",
+   "H",
+   "G",
+   "I",
+   "C",
+   "F",
+   "A",
+   "G",
+   "F",
+   "J",
+   "C",
+   "A",
+   "B",
+   "E",
+   "D",
+   "D",
+   "J",
+   "I",
+   "E"
+  ],
+  "matched": []
+ }
+}

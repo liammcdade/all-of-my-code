@@ -103,5 +103,5 @@ submission = pd.DataFrame({
     "id": test["id"],
     "Will_Buy_EV": proba_test
 })
-submission.to_csv("submission_final.csv", index=False)
+submission.to_csv("submission_final.csv")
 print("Submission saved to submission_final.csv")
