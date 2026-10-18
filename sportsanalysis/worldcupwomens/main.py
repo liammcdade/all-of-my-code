@@ -445,29 +445,18 @@ def run_simulation(n_sims, on_progress=None, is_running=None):
                 'inter_conf_wc': dict(inter_conf_wc_qualifiers),
             })
 
-        # --- UEFA PLAYOFFS (ties with known 1st-leg results) ---
-        w1  = simulate_tie_with_first_leg("Lithuania", "Sweden", 0, 5)
-        w2  = simulate_tie_with_first_leg("Romania", "Norway", 0, 2)
-        w3  = simulate_tie_with_first_leg("Greece", "England", 1, 3)
-        w4  = simulate_tie_with_first_leg("Croatia", "Iceland", 0, 4)
-        w5  = simulate_tie_with_first_leg("Kazakhstan", "Republic of Ireland", 0, 8)
-        w6  = simulate_tie_with_first_leg("Kosovo", "Austria", 1, 2)
-        w7  = simulate_tie_with_first_leg("Hungary", "Netherlands", 0, 8)
-        w8  = simulate_tie_with_first_leg("Belarus", "Italy", 0, 2)
-        w9  = simulate_tie_with_first_leg("Albania", "Wales", 0, 1)
-        w10 = simulate_tie_with_first_leg("Turkey", "Slovenia", 3, 3)
-        w11 = simulate_tie_with_first_leg("Slovakia", "Ukraine", 1, 3)
-        w12 = simulate_tie_with_first_leg("Israel", "Switzerland", 3, 7)
-        w13 = simulate_tie("Belgium", "Poland")
-        w14 = simulate_tie_with_first_leg("Czech Republic", "Scotland", 0, 2)
-        w15 = simulate_tie("Northern Ireland", "Portugal")
-        w16 = simulate_tie_with_first_leg("Finland", "Serbia", 3, 1)
-
-        r2_matches = [
-            (w11, w3), (w16, w8), (w15, w4), (w9, w2),
-            (w12, w6), (w14, w1), (w13, w5), (w10, w7),
+        # --- UEFA PLAYOFFS (Round 2) ---
+        r2_ties = [
+            ("Ukraine", "England"),
+            ("Finland", "Italy"),
+            ("Portugal", "Iceland"),
+            ("Wales", "Norway"),
+            ("Switzerland", "Austria"),
+            ("Scotland", "Sweden"),
+            ("Poland", "Republic of Ireland"),
+            ("Slovenia", "Netherlands"),
         ]
-        r2_winners = [simulate_tie(t1, t2) for t1, t2 in r2_matches]
+        r2_winners = [simulate_tie(t1, t2) for t1, t2 in r2_ties]
         r2_sorted = sorted(r2_winners,
                            key=lambda t: NATIONALS_LEAGUE_RANK.get(t, 999))
 

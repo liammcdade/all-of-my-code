@@ -1,133 +1,140 @@
-import random
-import math
-from collections import Counter
+import itertools
+import collections
 
-# Current Elo ratings from clubelo.com (as of April 16, 2026)
-# Update these manually from https://clubelo.com/ if needed
-elos = {
-    "Crystal Palace": 1812,
-    "Rayo Vallecano": 1689,
-    "Strasbourg": 1732,
-    "Shakhtar Donetsk": 1583,
+given_cells = {
+    (0,0): 27, (0,6): 105, (0,12): 12,
+    (2,0): 5, (2,2): 4, (2,4): 20, (2,9): 12,
+    (4,2): 32, (4,4): 92,
+    (8,8): 4,
+    (10,0): 46, (10,10): 13,
+    (12,0): 8,
+    (14,4): 8, (14,8): 28
 }
 
-# Poisson random variable generator (pure Python)
-def poisson_random(lam):
-    if lam < 0:
-        lam = 0
-    L = math.exp(-lam)
-    k = 0
-    p = 1.0
-    while True:
-        k += 1
-        p *= random.random()
-        if p <= L:
-            return k - 1
+green_numbers = [
+    112, 11, 37, 2, 9, 1, 4, 9,
+    8, 60, 4, 2, 17, 1, 15, 1,
+    2, 12, 13, 28, 7, 15, 9
+]
 
-# Expected goals for a leg (home advantage baked into base values)
-def get_expected_goals(home_elo, away_elo):
-    diff = home_elo - away_elo
-    home_lambda = 1.4 + (diff * 0.001)
-    away_lambda = 1.1 - (diff * 0.001)
-    home_lambda = max(0.6, min(4.0, home_lambda))
-    away_lambda = max(0.6, min(4.0, away_lambda))
-    return home_lambda, away_lambda
+pool_counts = collections.Counter(green_numbers)
+pool_list = sorted(pool_counts.elements())
 
-# Simulate penalties (Elo-based slight favorite)
-def simulate_penalties(team_a, team_b, elos_dict):
-    diff = elos_dict[team_a] - elos_dict[team_b]
-    prob_a = 1 / (1 + 10 ** (-diff / 400))
-    return team_a if random.random() < prob_a else team_b
+variables = []
+for r in range(15):
+    for c in range(15):
+        if (r, c) not in given_cells:
+            variables.append((r, c))
 
-# Simulate a two-legged tie (first leg home known)
-def simulate_two_leg_tie(team_a, team_b, first_leg_home_is_a, elos_dict):
-    if first_leg_home_is_a:
-        # Leg 1: team_a home
-        h_l1, a_l1 = get_expected_goals(elos_dict[team_a], elos_dict[team_b])
-        g_a1 = poisson_random(h_l1)
-        g_b1 = poisson_random(a_l1)
-        # Leg 2: team_b home
-        h_l2, a_l2 = get_expected_goals(elos_dict[team_b], elos_dict[team_a])
-        g_b2 = poisson_random(h_l2)
-        g_a2 = poisson_random(a_l2)
-    else:
-        # Swap roles
-        h_l1, a_l1 = get_expected_goals(elos_dict[team_b], elos_dict[team_a])
-        g_b1 = poisson_random(h_l1)
-        g_a1 = poisson_random(a_l1)
-        h_l2, a_l2 = get_expected_goals(elos_dict[team_a], elos_dict[team_b])
-        g_a2 = poisson_random(h_l2)
-        g_b2 = poisson_random(a_l2)
+variable_names = {}
+for i, v in enumerate(variables):
+    variable_names[v] = f"V{i}"
 
-    total_a = g_a1 + g_a2
-    total_b = g_b1 + g_b2
+equations = []
 
-    if total_a > total_b:
-        return team_a
-    elif total_a < total_b:
-        return team_b
-    else:
-        # Away goals
-        away_a = g_a2
-        away_b = g_b1
-        if away_a > away_b:
-            return team_a
-        elif away_a < away_b:
-            return team_b
-        else:
-            return simulate_penalties(team_a, team_b, elos_dict)
+equations.append(([(0,0), (2,0)], '+', (4,0)))
+equations.append(([(4,0), (6,0)], '+', (8,0)))
+equations.append(([(0,0), (0,2)], '*', (0,6)))
+equations.append(([(0,2), (2,2)], '*', (2,4)))
+equations.append(([(0,2), (2,2), (4,2)], '*', (4,4)))
+equations.append(([(0,6), (2,6)], '-', (0,8)))
+equations.append(([(0,8), (0,10)], '-', (0,12)))
+equations.append(([(0,12), (2,12)], '+', (2,10)))
+equations.append(([(2,10), (4,10)], '-', (4,10)))
+equations.append(([(4,4), (6,4)], '+', (8,4)))
+equations.append(([(4,6), (6,6)], '*', (6,8)))
+equations.append(([(6,6), (6,8)], '*', (6,10)))
+equations.append(([(6,8), (6,10)], '/', (8,10)))
+equations.append(([(8,8), (10,8)], '-', (12,8)))
+equations.append(([(10,0), (10,2)], '-', (10,4)))
+equations.append(([(10,4), (10,6)], '+', (10,8)))
+equations.append(([(10,8), (10,10)], '+', (10,12)))
+equations.append(([(10,10), (12,10)], '-', (14,10)))
+equations.append(([(12,0), (12,2)], '-', (12,4)))
+equations.append(([(12,4), (12,6)], '+', (12,8)))
+equations.append(([(12,8), (12,10)], '-', (12,12)))
+equations.append(([(14,0), (14,2)], '-', (14,4)))
+equations.append(([(14,4), (14,6)], '-', (14,8)))
+equations.append(([(14,8), (14,10)], '-', (14,12)))
 
-# Simulate single-leg final (neutral venue)
-def simulate_final(team_a, team_b, elos_dict):
-    diff = elos_dict[team_a] - elos_dict[team_b]
-    lambda_a = 1.25 + (diff * 0.001)
-    lambda_b = 1.25 - (diff * 0.001)
-    lambda_a = max(0.6, min(4.0, lambda_a))
-    lambda_b = max(0.6, min(4.0, lambda_b))
-    g_a = poisson_random(lambda_a)
-    g_b = poisson_random(lambda_b)
-    if g_a > g_b:
-        return team_a
-    elif g_a < g_b:
-        return team_b
-    else:
-        return simulate_penalties(team_a, team_b, elos_dict)
+def evaluate(vals, op):
+    if op == '+':
+        return sum(vals)
+    elif op == '-':
+        return vals[0] - vals[1]
+    elif op == '*':
+        res = 1
+        for v in vals:
+            res *= v
+        return res
+    elif op == '/':
+        return vals[0] // vals[1] if vals[1] != 0 else None
+    return None
 
-# Quarter-finals COMPLETED (April 16, 2026 results):
-# AZ 2-2 Shakhtar Donetsk (agg 2-5) -> Shakhtar Donetsk advance
-# AEK Athens 3-1 Rayo Vallecano (agg 3-4) -> Rayo Vallecano advance
-# Fiorentina 2-1 Crystal Palace (agg 2-4) -> Crystal Palace advance
-# Strasbourg 4-0 Mainz 05 (agg 4-2) -> Strasbourg advance
-
-# Semi-finals (fixed as of April 16, 2026)
-sf_teams = list(elos.keys())
-
-# Run Monte Carlo simulations
-NUM_SIMS = 50000
-champion_counts = Counter()
-
-print("Simulating Europa Conference League (SF + Final)...")
-print(f"Running {NUM_SIMS} simulations using current Elo + Poisson goals...\n")
-print("Quarter-finals completed. Semi-finalists: Crystal Palace, Rayo Vallecano, Strasbourg, Shakhtar Donetsk\n")
-
-for sim in range(NUM_SIMS):
-    # Semi-finals (two-legged, first leg home advantage)
-    # SF1: Rayo Vallecano vs Crystal Palace - Rayo Vallecano home first
-    sf1 = simulate_two_leg_tie("Rayo Vallecano", "Crystal Palace", True, elos)
+def solve():
+    var_list = list(variable_names.keys())
+    n = len(var_list)
+    assignment = {}
+    used_numbers = collections.Counter()
     
-    # SF2: Strasbourg vs Shakhtar Donetsk - Strasbourg home first
-    sf2 = simulate_two_leg_tie("Strasbourg", "Shakhtar Donetsk", True, elos)
+    def backtrack(idx):
+        if idx == n:
+            return True
+        
+        r, c = var_list[idx]
+        
+        if (r, c) in given_cells:
+            assignment[(r, c)] = given_cells[(r, c)]
+            if backtrack(idx + 1):
+                return True
+            del assignment[(r, c)]
+            return False
+        
+        for num in pool_counts.keys():
+            if used_numbers[num] < pool_counts[num]:
+                assignment[(r, c)] = num
+                used_numbers[num] += 1
+                
+                valid = True
+                for eq_vars, op, res_cell in equations:
+                    all_assigned = True
+                    for v in eq_vars:
+                        if v not in assignment and v not in given_cells:
+                            all_assigned = False
+                            break
+                    if res_cell not in assignment and res_cell not in given_cells:
+                        all_assigned = False
+                    
+                    if all_assigned:
+                        vals = []
+                        for v in eq_vars:
+                            if v in given_cells:
+                                vals.append(given_cells[v])
+                            else:
+                                vals.append(assignment[v])
+                        res_val = given_cells[res_cell] if res_cell in given_cells else assignment[res_cell]
+                        
+                        expected = evaluate(vals, op)
+                        if expected is None or expected != res_val:
+                            valid = False
+                            break
+                
+                if valid:
+                    if backtrack(idx + 1):
+                        return True
+                
+                used_numbers[num] -= 1
+                del assignment[(r, c)]
+        
+        return False
 
-    # Final (neutral)
-    champion = simulate_final(sf1, sf2, elos)
-    champion_counts[champion] += 1
+    if backtrack(0):
+        return assignment
+    return None
 
-# Results
-print("=== EUROPA CONFERENCE LEAGUE WIN PROBABILITIES ===")
-sorted_champs = sorted(champion_counts.items(), key=lambda x: x[1], reverse=True)
-for team, count in sorted_champs:
-    prob = (count / NUM_SIMS) * 100
-    print(f"{team:20} : {prob:5.1f}%  ({count} simulations)")
-
-print("\nNote: This accounts for current QF, away goals rule, and penalties.")
-print("Run again for new random outcomes. Update elos dict from clubelo.com for future accuracy.")
+solution = solve()
+if solution:
+    for (r, c), val in sorted(solution.items()):
+        print(f"Row {r}, Col {c}: {val}")
+else:
+    print("No solution found")
