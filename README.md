@@ -97,3 +97,7 @@ This project is for educational and research purposes.
 
 This simulation is for entertainment and educational purposes only.
 Actual football results depend on many factors not captured in this model.
+
+
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/liammcdade/all-of-my-code)
