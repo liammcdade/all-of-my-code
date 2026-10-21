@@ -158,7 +158,7 @@ SLOT_ALLOCATION = {
     "UEFA": {"slots": 11, "inter_conf_slots": 1, "teams": ["Denmark", "France", "Germany", "Spain"], "inter_conf_mode": "final_phase_seeded"},
 }
 
-N_SIMS = 10000
+N_SIMS = 2500
 RANDOM_SEED = None
 
 for arg in sys.argv[1:]:

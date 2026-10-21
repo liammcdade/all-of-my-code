@@ -13,7 +13,7 @@ HOME_ADVANTAGE_ELO = 40.0
 ELO_SCALE = 400.0
 LEAGUE_AVERAGE_ELO = 1500.0
 MAX_GOALS = 10
-NUM_PL_SIMS = 5000
+NUM_PL_SIMS = 2500
 PL_TOTAL_FIXTURES = 380
 PL_ELO_MAX_PULL = 1.0
 BASE_HOME_XG = 1.6644
@@ -126,67 +126,67 @@ def max_consecutive_wins(results):
 # =============================================================================
 def preset_pl_elos():
     rows = [
-        ("Man City", 1960.0), ("Arsenal", 2072.0), ("Man United", 1864.0),
-        ("Liverpool", 1881.0), ("Brighton", 1832.0), ("Brentford", 1789.0),
-        ("Aston Villa", 1922.0), ("Bournemouth", 1803.0), ("Chelsea", 1827.0),
-        ("Everton", 1750.0), ("Leeds", 1760.0), ("Newcastle", 1779.0),
-        ("Crystal Palace", 1787.0), ("Forest", 1775.0), ("Sunderland", 1716.0),
-        ("Fulham", 1724.0), ("Hull", 1611.0), ("Tottenham", 1752.0),
-        ("Ipswich", 1574.0), ("Coventry", 1500.0),
+        ("Man City", 2047.0), ("Arsenal", 2144.0), ("Man United", 1965.0),
+        ("Liverpool", 1956.0), ("Brighton", 1949.0), ("Brentford", 1900.0),
+        ("Aston Villa", 1987.0), ("Bournemouth", 1914.0), ("Chelsea", 1914.0),
+        ("Everton", 1860.0), ("Leeds", 1879.0), ("Newcastle", 1864.0),
+        ("Crystal Palace", 1868.0), ("Forest", 1862.0), ("Sunderland", 1836.0),
+        ("Fulham", 1834.0), ("Hull", 1763.0), ("Tottenham", 1838.0),
+        ("Ipswich", 1713.0), ("Coventry", 1720.0),
     ]
     return dict(rows)
 
 
 def preset_ucl_elos():
     rows = [
-        ("Arsenal", 2076.0), ("Bayern Munich", 2068.0), ("FC Barcelona", 2033.0),
-        ("Paris Saint-Germain", 2025.0), ("Man City", 1985.0), ("Real Madrid", 1966.0),
-        ("Sporting CP", 1906.0), ("Aston Villa", 1901.0), ("Inter Milan", 1892.0),
-        ("Borussia Dortmund", 1881.0), ("Atletico Madrid", 1866.0), ("Liverpool", 1856.0),
-        ("Man United", 1848.0), ("Roma", 1847.0), ("Real Betis", 1832.0),
-        ("Bodø/Glimt", 1829.0), ("Club Brugge", 1826.0), ("FC Porto", 1820.0),
-        ("Como", 1789.0), ("PSV Eindhoven", 1783.0), ("RB Leipzig", 1777.0),
-        ("VfB Stuttgart", 1776.0), ("Napoli", 1766.0), ("Villarreal FC", 1753.0),
-        ("Viking", 1752.0), ("RC Lens", 1745.0), ("AEK Athens", 1742.0),
-        ("Fenerbahçe", 1740.0), ("Lille OSC", 1730.0), ("Galatasaray", 1722.0),
-        ("Shakhtar Donetsk", 1703.0), ("Feyenoord", 1682.0), ("Slavia Prague", 1656.0),
-        ("Sabah FK", 1646.0), ("LASK", 1616.0), ("Slovan Bratislava", 1616.0),
+        ("Arsenal", 2147.0), ("Bayern Munich", 2086.0), ("FC Barcelona", 2065.0),
+        ("Paris Saint-Germain", 2082.0), ("Man City", 2047.0), ("Real Madrid", 2011.0),
+        ("Sporting CP", 1934.0), ("Aston Villa", 1987.0), ("Inter Milan", 1920.0),
+        ("Borussia Dortmund", 1888.0), ("Atletico Madrid", 1908.0), ("Liverpool", 1956.0),
+        ("Man United", 1942.0), ("Roma", 1843.0), ("Real Betis", 1856.0),
+        ("Bodø/Glimt", 1844.0), ("Club Brugge", 1850.0), ("FC Porto", 1847.0),
+        ("Como", 1792.0), ("PSV Eindhoven", 1770.0), ("RB Leipzig", 1803.0),
+        ("VfB Stuttgart", 1796.0), ("Napoli", 1776.0), ("Villarreal FC", 1777.0),
+        ("Viking", 1740.0), ("RC Lens", 1793.0), ("AEK Athens", 1694.0),
+        ("Fenerbahçe", 1738.0), ("Lille OSC", 1765.0), ("Galatasaray", 1744.0),
+        ("Shakhtar Donetsk", 1683.0), ("Feyenoord", 1702.0), ("Slavia Prague", 1621.0),
+        ("Sabah FK", 1590.0), ("LASK", 1584.0), ("Slovan Bratislava", 1542.0),
     ]
     return dict(rows)
 
 
 def preset_uel_elos():
     rows = [
-        ("Bayer Leverkusen", 1868.0), ("Benfica", 1854.0), ("Union Saint-Gilloise", 1824.0),
-        ("Juventus", 1817.0), ("Bournemouth", 1803.0), ("Milan", 1793.0),
-        ("Crystal Palace", 1787.0), ("Olympique Lyonnais", 1768.0), ("Olympiacos", 1725.0),
-        ("Rennes", 1721.0), ("Sunderland", 1716.0), ("Omonia", 1715.0),
-        ("Real Sociedad", 1698.0), ("Celta Vigo", 1696.0), ("Dinamo Zagreb", 1692.0),
-        ("Marseille", 1678.0), ("Celtic", 1676.0), ("Lech Poznań", 1676.0),
-        ("Sparta Prague", 1675.0), ("TSG Hoffenheim", 1670.0), ("Hapoel Be'er Sheva", 1669.0),
-        ("Beşiktaş", 1645.0), ("Viktoria Plzeň", 1645.0), ("Red Bull Salzburg", 1642.0),
-        ("AZ Alkmaar", 1641.0), ("Sturm Graz", 1620.0), ("Anderlecht", 1614.0),
-        ("NK Celje", 1596.0), ("Levski Sofia", 1571.0), ("Jagiellonia Białystok", 1557.0),
-        ("NEC Nijmegen", 1557.0), ("OFI Crete", 1495.0), ("Lillestrøm", 1463.0),
-        ("Torreense", 1438.0), ("Ararat-Armenia", 1514.0), ("Ferencváros", 1747.0),
+        ("Bayer Leverkusen", 1898.0), ("Benfica", 1889.0), ("Union Saint-Gilloise", 1835.0),
+        ("Juventus", 1834.0), ("Bournemouth", 1910.0), ("Milan", 1821.0),
+        ("Crystal Palace", 1846.0), ("Olympique Lyonnais", 1811.0), ("Olympiacos", 1731.0),
+        ("Rennes", 1766.0), ("Sunderland", 1832.0), ("Omonia", 1681.0),
+        ("Real Sociedad", 1733.0), ("Celta Vigo", 1708.0), ("Dinamo Zagreb", 1672.0),
+        ("Marseille", 1710.0), ("Celtic", 1635.0), ("Lech Poznań", 1641.0),
+        ("Sparta Prague", 1608.0), ("TSG Hoffenheim", 1685.0), ("Hapoel Be'er Sheva", 1592.0),
+        ("Beşiktaş", 1649.0), ("Viktoria Plzeň", 1573.0), ("Red Bull Salzburg", 1594.0),
+        ("AZ Alkmaar", 1637.0), ("Sturm Graz", 1593.0), ("Anderlecht", 1620.0),
+        ("NK Celje", 1540.0), ("Levski Sofia", 1541.0), ("Jagiellonia Białystok", 1545.0),
+        ("NEC Nijmegen", 1548.0), ("OFI Crete", 1451.0), ("Lillestrøm", 1461.0),
+        ("Torreense", 1441.0), ("Ararat-Armenia", 1474.0), ("Ferencváros", 1699.0),
     ]
     return dict(rows)
 
 
 def preset_uecl_elos():
     rows = [
-        ("Brighton", 1832.0), ("Monaco", 1799.0), ("Freiburg", 1784.0),
-        ("Atalanta", 1772.0), ("Midtjylland", 1743.0), ("Red Star Belgrade", 1735.0),
-        ("Braga", 1705.0), ("Lugano", 1679.0), ("Ajax", 1673.0),
-        ("FC Copenhagen", 1670.0), ("Panathinaikos", 1662.0), ("Getafe", 1654.0),
-        ("Twente", 1644.0), ("Gent", 1643.0), ("Hajduk Split", 1634.0),
-        ("FC Nordsjaelland", 1620.0), ("Universitatea Craiova", 1620.0), ("Trabzonspor", 1618.0),
-        ("Pafos FC", 1613.0), ("Thun", 1599.0), ("AGF", 1580.0),
-        ("Sint Truiden", 1573.0), ("Hearts", 1567.0), ("Brann", 1567.0),
-        ("FK Jablonec", 1565.0), ("FK Riga", 1546.0), ("Borac Banja Luka", 1540.0),
-        ("Mjallby", 1505.0), ("Egnatia Rrogozhine", 1496.0), ("CSKA Sofia", 1495.0),
-        ("KuPS Kuopio", 1489.0), ("Inter Club d'Escaldes", 1481.0), ("Kairat", 1469.0),
-        ("FK Kauno Zalgiris", 1465.0), ("Iberia", 1438.0), ("Lincoln Red Imps", 1408.0),
+        ("Brighton", 1942.0), ("Monaco", 1836.0), ("Freiburg", 1798.0),
+        ("Atalanta", 1784.0), ("Midtjylland", 1736.0), ("Red Star Belgrade", 1621.0),
+        ("Braga", 1699.0), ("Lugano", 1639.0), ("Ajax", 1647.0),
+        ("FC Copenhagen", 1684.0), ("Panathinaikos", 1643.0), ("Getafe", 1673.0),
+        ("Twente", 1637.0), ("Gent", 1667.0), ("Hajduk Split", 1603.0),
+        ("FC Nordsjaelland", 1617.0), ("Universitatea Craiova", 1563.0), ("Trabzonspor", 1624.0),
+        ("Pafos FC", 1554.0), ("Thun", 1545.0), ("AGF", 1578.0),
+        ("Sint Truiden", 1598.0), ("Hearts", 1522.0), ("Brann", 1556.0),
+        ("FK Jablonec", 1487.0), ("FK Riga", 1500.0), ("Borac Banja Luka", 1498.0),
+        ("Mjallby", 1441.0), ("Egnatia Rrogozhine", 1504.0), ("CSKA Sofia", 1461.0),
+        ("KuPS Kuopio", 1443.0), ("Inter Club d'Escaldes", 1438.0), ("Kairat", 1433.0),
+        ("FK Kauno Zalgiris", 1413.0), ("Iberia", 1400.0), ("Lincoln Red Imps", 1360.0),
     ]
     return dict(rows)
 
@@ -285,7 +285,7 @@ ACTUAL_RESULTS_ARR = [
     (("Fulham", "Hull"), (1, 0)), (("Man City", "Ipswich"), (3, 2)),
     (("Newcastle", "Aston Villa"), (0, 1)), (("Brighton", "Crystal Palace"), (5, 0)),
     (("Bournemouth", "Sunderland"), (2, 0)), (("Leeds", "Man United"), (0, 1)),
-    (("Forest", "Arsenal"), (0, 1)),
+    (("Forest", "Arsenal"), (0, 1)), (("Tottenham", "Coventry"), (3, 1)),
 ]
 
 CL_FIXTURES_ARR = [
@@ -362,6 +362,33 @@ CL_ACTUAL_RESULTS_ARR = [
     (("Roma", "Real Madrid"), (3, 4)), (("Bodø/Glimt", "Borussia Dortmund"), (1, 0)),
     (("Real Betis", "FC Porto"), (3, 2)), (("Shakhtar Donetsk", "AEK Athens"), (3, 1)),
     (("Slovan Bratislava", "VfB Stuttgart"), (0, 3)), (("Aston Villa", "Fenerbahçe"), (6, 0)),
+    (("AEK Athens", "LASK"), (1, 0)), (("Club Brugge", "Aston Villa"), (2, 3)),
+    (("Borussia Dortmund", "Villarreal FC"), (3, 2)), (("FC Porto", "Man City"), (0, 2)),
+    (("Lille OSC", "Real Betis"), (2, 3)), (("Real Madrid", "Inter Milan"), (2, 1)),
+    (("FC Barcelona", "Feyenoord"), (5, 1)), (("VfB Stuttgart", "Viking"), (3, 1)),
+    (("Liverpool", "Atletico Madrid"), (2, 1)), (("Paris Saint-Germain", "Slovan Bratislava"), (6, 1)),
+    (("Sporting CP", "Galatasaray"), (3, 1)), (("Napoli", "Arsenal"), (0, 1)),
+    (("Fenerbahçe", "Roma"), (1, 1)), (("PSV Eindhoven", "Shakhtar Donetsk"), (1, 1)),
+    (("Como", "RB Leipzig"), (4, 1)), (("Bayern Munich", "Bodø/Glimt"), (5, 0)),
+    (("Man United", "Sabah FK"), (4, 0)), (("Slavia Prague", "RC Lens"), (2, 3)),
+    (("RC Lens", "Sporting CP"), (0, 2)), (("Sabah FK", "Slavia Prague"), (2, 0)),
+    (("Arsenal", "Lille OSC"), (3, 0)), (("Atletico Madrid", "Man United"), (2, 0)),
+    (("Galatasaray", "FC Barcelona"), (1, 4)), (("Inter Milan", "Club Brugge"), (3, 4)),
+    (("RB Leipzig", "PSV Eindhoven"), (1, 0)), (("Viking", "Bayern Munich"), (3, 3)),
+    (("Villarreal FC", "Napoli"), (3, 1)), (("LASK", "Liverpool"), (3, 6)),
+    (("Feyenoord", "Como"), (3, 2)), (("Man City", "Paris Saint-Germain"), (2, 4)),
+    (("Roma", "Real Madrid"), (3, 4)), (("Bodø/Glimt", "Borussia Dortmund"), (1, 0)),
+    (("Real Betis", "FC Porto"), (3, 2)), (("Shakhtar Donetsk", "AEK Athens"), (3, 1)),
+    (("Slovan Bratislava", "VfB Stuttgart"), (0, 3)), (("Aston Villa", "Fenerbahçe"), (6, 0)),
+    (("Fenerbahçe", "Slavia Prague"), (2, 2)),          # PROVISIONAL - early goal, confirm FT
+    (("Sabah FK", "Borussia Dortmund"), (1, 2)),      # PROVISIONAL - HT snapshot, confirm FT
+    (("Paris Saint-Germain", "FC Barcelona"), (3, 2)),
+    (("Liverpool", "Villarreal FC"), (4, 2)),
+    (("Man City", "AEK Athens"), (5, 1)),
+    (("Roma", "Slovan Bratislava"), (4, 0)),
+    (("FC Porto", "PSV Eindhoven"), (0, 1)),
+    (("Napoli", "Bodø/Glimt"), (2, 2)),
+    (("VfB Stuttgart", "Atletico Madrid"), (2, 2)),
 ]
 
 UEL_FIXTURES_RAW = [
@@ -1324,24 +1351,41 @@ def carabao_penalty_winner(rng, a, b):
     return a if rng.float() < p else b
 
 
-def sim_carabao_match(rng, team_a, team_b, extra_time):
+def sim_carabao_match(rng, team_a, team_b, extra_time, track=()):
+    """Single-leg Carabao tie. Returns (winner, results_dict) when track given."""
+    results = {}
+    if track:
+        results = {t: None for t in track if t in (team_a, team_b)}
     ea = get_carabao_elo(team_a)
     eb = get_carabao_elo(team_b)
     hg, ag = carabao_leg_score(rng, ea + HOME_ADVANTAGE_ELO, eb)
     if hg > ag:
-        return team_a
-    if ag > hg:
-        return team_b
-    if extra_time:
-        if rng.float() < 0.20:
-            return carabao_penalty_winner(rng, team_a, team_b)
-        et_h, et_a = carabao_leg_score(rng, ea + HOME_ADVANTAGE_ELO, eb)
-        if et_h != et_a:
-            return team_a if et_h > et_a else team_b
-    return carabao_penalty_winner(rng, team_a, team_b)
+        winner = team_a
+    elif ag > hg:
+        winner = team_b
+    else:
+        if extra_time:
+            if rng.float() < 0.20:
+                winner = carabao_penalty_winner(rng, team_a, team_b)
+            else:
+                et_h, et_a = carabao_leg_score(rng, ea + HOME_ADVANTAGE_ELO, eb)
+                if et_h != et_a:
+                    winner = team_a if et_h > et_a else team_b
+                else:
+                    winner = carabao_penalty_winner(rng, team_a, team_b)
+        else:
+            winner = carabao_penalty_winner(rng, team_a, team_b)
+    if track:
+        for t in results:
+            results[t] = 'W' if t == winner else 'L'
+    return (winner, results) if track else winner
 
 
-def sim_carabao_two_legged(rng, a, b):
+def sim_carabao_two_legged(rng, a, b, track=()):
+    """Two-leg Carabao semi-final tie. Returns (winner, results_dict) when track given."""
+    results = {}
+    if track:
+        results = {t: None for t in track if t in (a, b)}
     ea = get_carabao_elo(a)
     eb = get_carabao_elo(b)
     h1, a1 = carabao_leg_score(rng, ea + HOME_ADVANTAGE_ELO, eb)
@@ -1349,13 +1393,21 @@ def sim_carabao_two_legged(rng, a, b):
     agg_a = h1 + a2
     agg_b = a1 + h2
     if agg_a > agg_b:
-        return a
-    if agg_b > agg_a:
-        return b
-    return carabao_penalty_winner(rng, a, b)
+        winner = a
+    elif agg_b > agg_a:
+        winner = b
+    else:
+        # Aggregate draw -> penalty shootout (two-legged, no extra time in this tournament)
+        winner = carabao_penalty_winner(rng, a, b)
+    if track:
+        # Treat the whole tie as a single result for tracking streak continuity
+        for t in results:
+            results[t] = 'W' if t == winner else 'L'
+    return (winner, results) if track else winner
 
 
-def run_carabao_tournament(rng):
+def run_carabao_tournament(rng, track=()):
+    """Run the Carabao Cup. Returns (winner, team_results) when track given."""
     R4 = [
         ("Bradford City", "Peterborough United"),
         ("Fleetwood Town", "Arsenal"),
@@ -1366,20 +1418,432 @@ def run_carabao_tournament(rng):
         ("Liverpool", "Chelsea"),
         ("Everton", "Newcastle United"),
     ]
-    winners = [sim_carabao_match(rng, a, b, False) for a, b in R4]
+    team_results = {t: [] for t in track} if track else None
+
+    winners = []
+    for a, b in R4:
+        if track:
+            w, r = sim_carabao_match(rng, a, b, False, track=track)
+            for t in r:
+                team_results[t].append(r[t])
+            winners.append(w)
+        else:
+            winners.append(sim_carabao_match(rng, a, b, False))
 
     rng.shuffle(winners)
     qf = []
     for i in range(0, len(winners), 2):
-        qf.append(sim_carabao_match(rng, winners[i], winners[i + 1], False))
+        if track:
+            w, r = sim_carabao_match(rng, winners[i], winners[i + 1], False, track=track)
+            for t in r:
+                team_results[t].append(r[t])
+            qf.append(w)
+        else:
+            qf.append(sim_carabao_match(rng, winners[i], winners[i + 1], False))
 
     rng.shuffle(qf)
     sf = []
     for i in range(0, len(qf), 2):
-        sf.append(sim_carabao_two_legged(rng, qf[i], qf[i + 1]))
+        if track:
+            w, r = sim_carabao_two_legged(rng, qf[i], qf[i + 1], track=track)
+            for t in r:
+                team_results[t].append(r[t])
+            sf.append(w)
+        else:
+            sf.append(sim_carabao_two_legged(rng, qf[i], qf[i + 1]))
 
     rng.shuffle(sf)
+    if track:
+        w, r = sim_carabao_match(rng, sf[0], sf[1], True, track=track)
+        for t in r:
+            team_results[t].append(r[t])
+        return w, team_results
     return sim_carabao_match(rng, sf[0], sf[1], True)
+
+
+# =============================================================================
+# FA CUP — PROPER BRACKET SIMULATION
+# =============================================================================
+
+# Hand-assigned Elos for non-league / lower-division sides that aren't in the
+# Carabao table. Rough estimates by pyramid level (Step 1–4).
+_FA_CUP_MISSING_ELOS = {
+    "Dover Athletic": 1150.0, "Wealdstone": 1190.0, "Anstey Nomads": 950.0,
+    "Chesham United": 1000.0, "Harborough Town": 990.0, "Tadley Calleva": 900.0,
+    "Plymouth Parkway": 1000.0, "Berkhamsted": 950.0, "Leatherhead": 1000.0,
+    "Gloucester City": 1100.0, "AFC Fylde": 1200.0,
+    "AFC Rushden & Diamonds": 1000.0, "Bedford Town": 1000.0,
+    "Cray Wanderers": 1000.0, "Chorley": 1150.0, "Worcester City": 950.0,
+    "Eastleigh": 1250.0, "Wimborne Town": 1000.0, "Spalding United": 950.0,
+    "Alvechurch": 1000.0, "Hornchurch": 1100.0, "Guiseley": 1050.0,
+    "Gateshead": 1250.0, "Stafford Rangers": 1000.0, "Oxford City": 1150.0,
+    "Marine": 1050.0, "Altrincham": 1250.0, "FC United of Manchester": 1050.0,
+    "Boreham Wood": 1250.0, "Salisbury": 1150.0, "Sholing": 1000.0,
+}
+
+# Full-name -> Carabao-table-key aliases.
+_FA_CUP_EXTRA_NAMES = {
+    "Sheffield Wednesday": "Sheffield Weds",
+    "Peterborough United": "Peterboro",
+    "Brighton & Hove Albion": "Brighton",
+    "Newcastle United": "Newcastle",
+    "Nottingham Forest": "Nott'm Forest",
+    "Wolverhampton Wanderers": "Wolves",
+    "West Bromwich Albion": "West Brom",
+    "Bristol Rovers": "Bristol Rvs",
+    "MK Dons": "Milton Keynes Dons",
+    "Milton Keynes Dons": "Milton Keynes Dons",
+    "Forest Green Rovers": "Forest Green",
+    "Harrogate Town": "Harrogate",
+    "Sutton United": "Sutton",
+    "Mansfield Town": "Mansfield",
+    "Huddersfield Town": "Huddersfield",
+    "Luton Town": "Luton",
+    "Exeter City": "Exeter",
+    "Wycombe Wanderers": "Wycombe",
+    "Doncaster Rovers": "Doncaster",
+    "Swindon Town": "Swindon",
+    "Tranmere Rovers": "Tranmere",
+    "York City": "York",
+    "Northampton Town": "Northampton",
+    "Oxford United": "Oxford",
+    "Crewe Alexandra": "Crewe",
+    "Cheltenham Town": "Cheltenham",
+    "Colchester United": "Colchester",
+    "Shrewsbury Town": "Shrewsbury",
+    "Grimsby Town": "Grimsby",
+    "Bradford City": "Bradford",
+    "Wigan Athletic": "Wigan",
+    "Carlisle United": "Carlisle",
+    "Salford City": "Salford",
+    "AFC Rushden & Diamonds": "Rushden & D",
+    "Manchester City": "Man City",
+    "Cambridge United": "Cambridge",
+    "Leicester City": "Leicester",
+    "Rotherham United": "Rotherham",
+    "Scunthorpe United": "Scunthorpe",
+    "Yeovil Town": "Yeovil",
+    "FC Halifax Town": "Halifax",
+    "Stockport County": "Stockport",
+    "Oldham Athletic": "Oldham",
+    "Notts County": "Notts County",
+    "Port Vale": "Port Vale",
+    "Burton Albion": "Burton",
+    "Accrington Stanley": "Accrington",
+    "Kidderminster Harriers": "Kidderminster",
+    "Plymouth Argyle": "Plymouth",
+}
+
+# 40 First Round Proper ties (drawn 19 Oct 2026).
+# A nested tuple means a 4QR play-in whose winner takes that slot.
+# 40 First Round Proper ties (drawn 19 Oct 2026).
+# 4QR play-ins (Tadley v Aldershot, Worcester v Chorley, Stafford v Gateshead,
+# Anstey v Macclesfield, Gloucester v Barrow, Alvechurch v Spalding,
+# FC United v Altrincham, Forest Green v Chesham, Harrogate v Bury,
+# Yeovil v Leatherhead) are now hardcoded to their winners — no runtime
+# simulation of the play-in leg.
+_FA_CUP_R1_TIES = [
+    ("Dover Athletic", "Wealdstone"),                     # 1
+    ("Mansfield Town", "Macclesfield"),                   # 2
+    ("Huddersfield Town", "Exeter City"),                 # 3
+    ("Luton Town", "Forest Green Rovers"),                # 4
+    ("Bristol Rovers", "Cambridge United"),               # 5
+    ("Oldham Athletic", "Sheffield Wednesday"),           # 6
+    ("Kidderminster Harriers", "Doncaster Rovers"),       # 7
+    ("Leyton Orient", "Harborough Town"),                 # 8
+    ("Accrington Stanley", "Wycombe Wanderers"),          # 9
+    ("MK Dons", "Swindon Town"),                          # 10
+    ("Newport County", "Walsall"),                        # 11
+    ("Bromley", "Rotherham United"),                      # 12
+    ("Barnet", "Tranmere Rovers"),                        # 13
+    ("Fleetwood Town", "Rochdale"),                       # 14
+    ("Barnsley", "Aldershot"),                            # 15
+    ("Plymouth Parkway", "Berkhamsted"),                  # 16
+    ("Chesterfield", "Yeovil Town"),                      # 17
+    ("Gillingham", "Barrow"),                             # 18
+    ("Bury", "AFC Fylde"),                                # 19
+    ("Crewe Alexandra", "AFC Wimbledon"),                 # 20
+    ("Oxford United", "Stevenage"),                       # 21
+    ("Burton Albion", "AFC Rushden & Diamonds"),          # 22
+    ("Cray Wanderers", "Stockport County"),               # 23
+    ("Port Vale", "Scunthorpe United"),                   # 24
+    ("Cheltenham Town", "FC Halifax Town"),               # 25
+    ("Colchester United", "Worcester City"),              # 26
+    ("Eastleigh", "Shrewsbury Town"),                     # 27
+    ("Peterborough United", "Reading"),                   # 28
+    ("Wimborne Town", "Crawley Town"),                    # 29
+    ("Plymouth Argyle", "Alvechurch"),                    # 30
+    ("Hornchurch", "Blackpool"),                          # 31
+    ("Guiseley", "Sutton United"),                        # 32
+    ("Stafford Rangers", "Grimsby Town"),                 # 33
+    ("Oxford City", "Leicester City"),                    # 34
+    ("Bradford City", "Marine"),                          # 35
+    ("York City", "Northampton Town"),                    # 36
+    ("Altrincham", "Notts County"),                       # 37
+    ("Boreham Wood", "Wigan Athletic"),                   # 38
+    ("Carlisle United", "Salford City"),                  # 39
+    ("Salisbury", "Sholing"),                             # 40
+]
+
+# 24 Championship clubs that join at the Third Round Proper.
+_FA_CUP_R3_CHAMPIONSHIP = [
+    "Wolves", "Southampton", "Burnley", "Norwich",
+    "West Brom", "Middlesbrough", "Sheffield United", "Bristol City",
+    "Millwall", "Swansea", "QPR", "Preston",
+    "Stoke", "Watford", "Blackburn", "Portsmouth",
+    "Derby", "Cardiff", "Charlton", "Wrexham",
+    "Birmingham", "Bolton", "Stockport", "Huddersfield",
+]
+
+
+def _fa_cup_elo(team, pl_elos=None, pl_teams=None):
+    """Resolve an Elo for an FA Cup entrant.
+    Priority: live PL Elo -> Carabao table (direct) -> Carabao table (mapped)
+              -> FA-Cup alias -> hand-assigned non-league Elo -> fallback."""
+    if pl_elos and pl_teams and team in pl_teams:
+        return pl_elos.get(team, LEAGUE_AVERAGE_ELO)
+    if pl_elos and team in pl_elos:
+        return pl_elos[team]
+    table = carabao_elo()
+    if team in table:
+        return table[team]
+    mapped = carabao_name_map(team)
+    if mapped in table:
+        return table[mapped]
+    alt = _FA_CUP_EXTRA_NAMES.get(team)
+    if alt and alt in table:
+        return table[alt]
+    if team in _FA_CUP_MISSING_ELOS:
+        return _FA_CUP_MISSING_ELOS[team]
+    return 1100.0
+
+
+# FA Cup-specific: compress Elo differences to reflect cup randomness / giant-killing.
+# A factor of 0.5 halves the effective Elo gap, making upsets far more likely.
+FA_CUP_ELO_COMPRESS = 0.5
+
+# Cup-specific calibration: regress both teams' Elos toward a cup mean before
+# sampling, which shrinks the lower-division gap to a realistic size.
+FA_CUP_MEAN_ELO = 1750.0
+FA_CUP_PULL = 0.30
+
+
+def _sim_fa_cup_match(rng, team_a, team_b, ea, eb, neutral=False, track=()):
+    """Single-leg knockout tie. 90' -> ET -> penalties. No replays.
+    Returns (winner, results_dict) when track is non-empty."""
+    results = {}
+    if track:
+        results = {t: None for t in track if t in (team_a, team_b)}
+    ea = FA_CUP_MEAN_ELO + (ea - FA_CUP_MEAN_ELO) * (1.0 - FA_CUP_PULL)
+    eb = FA_CUP_MEAN_ELO + (eb - FA_CUP_MEAN_ELO) * (1.0 - FA_CUP_PULL)
+    ha = 0.0 if neutral else HOME_ADVANTAGE_ELO
+    diff = (ea + ha - eb) * FA_CUP_ELO_COMPRESS
+    lh, la = expected_goals(LEAGUE_AVERAGE_ELO + diff, LEAGUE_AVERAGE_ELO)
+    hg = min(rng.poisson(lh), MAX_GOALS)
+    ag = min(rng.poisson(la), MAX_GOALS)
+    if hg > ag:
+        winner = team_a
+    elif ag > hg:
+        winner = team_b
+    else:
+        eth, eta = expected_goals(LEAGUE_AVERAGE_ELO + diff, LEAGUE_AVERAGE_ELO)
+        h2 = min(rng.poisson(eth * EXTRA_TIME_XG_FACTOR), MAX_GOALS)
+        a2 = min(rng.poisson(eta * EXTRA_TIME_XG_FACTOR), MAX_GOALS)
+        if h2 > a2:
+            winner = team_a
+        elif a2 > h2:
+            winner = team_b
+        else:
+            p = 1.0 / (1.0 + math.exp((eb - ea) * _ELO_LN_SCALE))
+            winner = team_a if rng.float() < p else team_b
+    if track:
+        for t in results:
+            results[t] = 'W' if t == winner else 'L'
+    return (winner, results) if track else winner
+
+
+def _resolve_slot(rng, slot, pl_elos, pl_teams, track=()):
+    """If slot is a ('A','B') play-in, simulate it; else return name."""
+    if isinstance(slot, str):
+        return slot
+    a, b = slot
+    if track:
+        w, r = _sim_fa_cup_match(
+            rng, a, b,
+            _fa_cup_elo(a, pl_elos, pl_teams),
+            _fa_cup_elo(b, pl_elos, pl_teams),
+            track=track)
+        return w, r
+    return _sim_fa_cup_match(
+        rng, a, b,
+        _fa_cup_elo(a, pl_elos, pl_teams),
+        _fa_cup_elo(b, pl_elos, pl_teams),
+    )
+
+
+def _draw_pairs(rng, teams):
+    """Random unseeded draw (FA Cup style) — returns list of (home, away)."""
+    if len(teams) % 2 != 0:
+        raise ValueError(f"Expected even number of teams ({len(teams)}) for FA Cup draw")
+    shuffled = list(teams)
+    rng.shuffle(shuffled)
+    return [(shuffled[i], shuffled[i + 1]) for i in range(0, len(shuffled), 2)]
+
+
+def _play_round(rng, pairs, pl_elos, pl_teams, neutral=False, track=()):
+    """Play one FA Cup round. Returns (winners, results_dict)."""
+    out = []
+    team_results = {}
+    for home, away in pairs:
+        eh = _fa_cup_elo(home, pl_elos, pl_teams)
+        ea = _fa_cup_elo(away, pl_elos, pl_teams)
+        if track:
+            w, r = _sim_fa_cup_match(rng, home, away, eh, ea, neutral=neutral, track=track)
+            out.append(w)
+            for t, v in r.items():
+                team_results.setdefault(t, []).append(v)
+        else:
+            out.append(_sim_fa_cup_match(rng, home, away, eh, ea, neutral=neutral))
+    return (out, team_results) if track else out
+
+
+def simulate_fa_cup(rng, pl_elos=None, pl_teams=None, track=()):
+    """Run the full FA Cup from R1 to the Final. Returns (winning team, team_results)."""
+    # Invariant checks (Bug 4/5 fixes)
+    if len(_FA_CUP_R1_TIES) % 2 != 0:
+        raise ValueError(
+            f"_FA_CUP_R1_TIES must have an even number of ties (has {len(_FA_CUP_R1_TIES)})"
+        )
+    for tie in _FA_CUP_R1_TIES:
+        if isinstance(tie, tuple):
+            for team in tie:
+                if team in pl_teams:
+                    raise ValueError("PL teams must not appear in FA Cup R1")
+        else:
+            for team in tie:
+                if team in pl_teams:
+                    raise ValueError("PL teams must not appear in FA Cup R1")
+    pl_teams = pl_teams or set()
+    pl_elos = pl_elos or {}
+    team_results = {t: [] for t in track} if track else None
+
+    # ---- First Round Proper (40 ties, resolve any 4QR play-ins first) ----
+    # Note: After adding FA Cup qualifying round matches, the total is now 51 ties
+    # This is acceptable as the draw function works with any even number of teams
+    r1_winners = []
+    for home_slot, away_slot in _FA_CUP_R1_TIES:
+        if isinstance(home_slot, str):
+            home = home_slot
+        elif track:
+            home, hr = _resolve_slot(rng, home_slot, pl_elos, pl_teams, track)
+            for t, v in hr.items():
+                team_results[t].append(v)
+        else:
+            home = _resolve_slot(rng, home_slot, pl_elos, pl_teams)
+        if isinstance(away_slot, str):
+            away = away_slot
+        elif track:
+            away, ar = _resolve_slot(rng, away_slot, pl_elos, pl_teams, track)
+            for t, v in ar.items():
+                team_results[t].append(v)
+        else:
+            away = _resolve_slot(rng, away_slot, pl_elos, pl_teams)
+        eh = _fa_cup_elo(home, pl_elos, pl_teams)
+        ea = _fa_cup_elo(away, pl_elos, pl_teams)
+        if track:
+            w, r = _sim_fa_cup_match(rng, home, away, eh, ea, track=track)
+            r1_winners.append(w)
+            for t, v in r.items():
+                team_results[t].append(v)
+        else:
+            r1_winners.append(_sim_fa_cup_match(rng, home, away, eh, ea))
+
+    # ---- Second Round Proper ----
+    if track:
+        r2_winners, r2_res = _play_round(rng, _draw_pairs(rng, r1_winners), pl_elos, pl_teams, track=track)
+        for t, v in r2_res.items():
+            team_results[t].extend(v)
+    else:
+        r2_winners = _play_round(rng, _draw_pairs(rng, r1_winners), pl_elos, pl_teams)
+
+    # ---- Third Round Proper: add 20 PL + 24 Championship clubs ----
+    r3_field = list(r2_winners)
+    for t in pl_teams:
+        if t not in r3_field:
+            r3_field.append(t)
+    for t in _FA_CUP_R3_CHAMPIONSHIP:
+        if t in pl_teams or t in r3_field:
+            continue
+        r3_field.append(t)
+
+    if len(r3_field) % 2 == 1:      # safety: keep the bracket even
+        raise ValueError(f"FA Cup Third Round field has odd number of teams ({len(r3_field)}), cannot form pairs")
+
+    if track:
+        # Handle odd number of teams by giving one a bye before drawing pairs
+        def prepare_for_draw(teams):
+            if len(teams) % 2 == 1:
+                # Give a bye to the last team
+                bye_team = teams.pop()
+                teams.append(bye_team)
+            return teams
+
+        # Prepare for round 3 draw
+        r3_field = prepare_for_draw(r3_field)
+        r3_winners, r3_res = _play_round(rng, _draw_pairs(rng, r3_field), pl_elos, pl_teams, track=track)
+        for t, v in r3_res.items():
+            team_results[t].extend(v)
+
+        # Prepare for round 4 draw
+        r3_winners = prepare_for_draw(r3_winners)
+        r4_winners, r4_res = _play_round(rng, _draw_pairs(rng, r3_winners), pl_elos, pl_teams, track=track)
+        for t, v in r4_res.items():
+            team_results[t].extend(v)
+
+        # Prepare for round 5 draw
+        r4_winners = prepare_for_draw(r4_winners)
+        r5_winners, r5_res = _play_round(rng, _draw_pairs(rng, r4_winners), pl_elos, pl_teams, track=track)
+        for t, v in r5_res.items():
+            team_results[t].extend(v)
+
+        # Prepare for quarter-final draw
+        r5_winners = prepare_for_draw(r5_winners)
+        qf_winners, qf_res = _play_round(rng, _draw_pairs(rng, r5_winners), pl_elos, pl_teams, track=track)
+        for t, v in qf_res.items():
+            team_results[t].extend(v)
+
+        # Prepare for semi-final draw
+        qf_winners = prepare_for_draw(qf_winners)
+        sf_winners, sf_res = _play_round(rng, _draw_pairs(rng, qf_winners), pl_elos, pl_teams, neutral=True, track=track)
+        for t, v in sf_res.items():
+            team_results[t].extend(v)
+
+        # Final has only 2 teams, so no need to handle odd number
+        final_winner, f_res = _play_round(rng, [(sf_winners[0], sf_winners[1])],
+                                          pl_elos, pl_teams, neutral=True, track=track)
+        for t, v in f_res.items():
+            team_results[t].extend(v)
+
+        return final_winner[0], team_results
+    else:
+        # Handle odd number of teams by giving one a bye before drawing pairs
+        def prepare_for_draw(teams):
+            if len(teams) % 2 == 1:
+                # Give a bye to the last team
+                bye_team = teams.pop()
+                teams.append(bye_team)
+            return teams
+
+        # Prepare for round 3 draw
+        r3_field = prepare_for_draw(r3_field)
+        r3_winners = _play_round(rng, _draw_pairs(rng, r3_field), pl_elos, pl_teams)
+        r4_winners = _play_round(rng, _draw_pairs(rng, r3_winners), pl_elos, pl_teams)
+        r5_winners = _play_round(rng, _draw_pairs(rng, r4_winners), pl_elos, pl_teams)
+        qf_winners = _play_round(rng, _draw_pairs(rng, r5_winners), pl_elos, pl_teams)
+        sf_winners = _play_round(rng, _draw_pairs(rng, qf_winners), pl_elos, pl_teams, neutral=True)
+        final_winner = _play_round(rng, [(sf_winners[0], sf_winners[1])],
+                                    pl_elos, pl_teams, neutral=True)[0]
+        return final_winner
 
 
 # =============================================================================
@@ -1483,6 +1947,41 @@ def hungarian(cost):
         if p[j] > 0:
             result[p[j] - 1] = j - 1
     return result
+
+
+def hungarian_solved_metric(position_counts, teams, total_sims):
+    """Same 'solved' logic as the PL table, applied to any league phase.
+
+    position_counts : {team: {pos: count}}  (e.g. euro_positions["UCL"])
+    teams           : list — order defines matrix rows (sort by avg pts desc
+                      so the *last* rows are the bottom of the table)
+    total_sims      : denominator for the probability matrix
+
+    Returns (avg_assigned_prob_pct, actually_solved_pct)
+    """
+    n = len(teams)
+    if n == 0:
+        return 0.0, 0.0
+
+    prob = [[0.0] * n for _ in range(n)]
+    for i, t in enumerate(teams):
+        counts = position_counts.get(t, {})
+        for pos in range(1, n + 1):
+            prob[i][pos - 1] = counts.get(pos, 0) / total_sims
+
+    cost = [[1.0 - p for p in row] for row in prob]
+    assignment = hungarian(cost)
+    assigned_probs = [prob[i][assignment[i]] for i in range(n)]
+
+    avg_solved = sum(assigned_probs) / n * 100.0
+
+    non_zero = [p for p in assigned_probs if p > 0.0]
+    last_two = non_zero[-2:] if len(non_zero) >= 2 else non_zero
+    actually_solved = 1.0
+    for p in last_two:
+        actually_solved *= p
+
+    return avg_solved, actually_solved * 100.0
 
 
 # =============================================================================
@@ -1623,14 +2122,16 @@ def main():
         ranking, points, pl_team_results = pl_sim.simulate_season(
             fatigue_info, rng, track={"Man United"})
 
-        carabao_winner = run_carabao_tournament(rng)
-        fa_cup_winner = sample_fa_cup_winner(rng)
+        carabao_winner, carabao_team_results = run_carabao_tournament(rng, track={"Man United"})
+        fa_cup_winner, fa_cup_team_results = simulate_fa_cup(rng, pl_elos, pl_teams, track={"Man United"})
 
-        # Man United streak
+        # Man United streak (PL + UCL + Carabao + FA Cup)
         if "Man United" in pl_teams:
             mr = list(pl_team_results.get("Man United", []))
             if "Man United" in ucl_res.team_results:
                 mr.extend(ucl_res.team_results["Man United"])
+            mr.extend(carabao_team_results.get("Man United", []))
+            mr.extend(fa_cup_team_results.get("Man United", []))
             s = max_consecutive_wins(mr)
             manutd_streaks.append(s)
             if s >= 5:
@@ -1801,16 +2302,21 @@ def main():
     assigned.sort(key=lambda x: x[0])
     avg_solved = solved_sum / n_teams * 100.0
 
+    # "Actually solved": multiply all assigned probabilities together,
+    # then take the last 2 non-zero values and print their product.
+    assigned_probs = [prob[i][assignment[i]] for i in range(n_teams)]
+    non_zero = [p for p in assigned_probs if p > 0.0]
+    last_two = non_zero[-2:] if len(non_zero) >= 2 else non_zero
+    actually_solved = 1.0
+    for p in last_two:
+        actually_solved *= p
+    actually_solved_pct = actually_solved * 100.0
+
     print("\n" + "=" * 80)
     print("MOST LIKELY FINAL TABLE (optimal assignment — unique rank per team)")
     print("=" * 80)
-    print("{:<4}{:<22}{:<12}{:<12}".format("Rk", "Team", "Pos Prob%", "Cumulative"))
-    print("-" * 50)
-    cum = 0.0
-    for pos, team_idx, prob_pct in assigned:
-        cum += prob_pct
-        print("{:<4}{:<22}{:<12.2f}{:<12.2f}".format(pos, teams_sorted[team_idx], prob_pct, cum))
     print("\nLeague 'solved' percentage (avg assigned position prob): {:.2f}%".format(avg_solved))
+    print("League 'actually solved' (product of last 2 non-zero assigned probs): {:.4f}%".format(actually_solved_pct))
 
     # Euro win probabilities
     print("\n" + "=" * 80)
@@ -1850,6 +2356,30 @@ def main():
                 team, team_avg_pts(team),
                 top8 / total * 100.0, mid / total * 100.0, low / total * 100.0))
 
+    # ---- NEW: unified UEFA league-phase 'solved' metrics ----
+    print("\n" + "=" * 80)
+    print("UEFA LEAGUE PHASES — 'SOLVED' METRICS")
+    print("=" * 80)
+
+    def _team_avg_pts_euro(t, pts_map):
+        v = pts_map.get(t, [])
+        return sum(v) / len(v) if v else 0.0
+
+    euro_solved = {}
+    for comp_name in ("UCL", "UEL", "UECL"):
+        pos_map = euro_positions[comp_name]
+        pts_map = euro_points[comp_name]
+        teams_in_comp = sorted(pos_map.keys(),
+                               key=lambda t: -_team_avg_pts_euro(t, pts_map))
+        avg_pct, solved_pct = hungarian_solved_metric(pos_map, teams_in_comp, total)
+        euro_solved[comp_name] = solved_pct
+
+    if all(v > 0.0 for v in euro_solved.values()):
+        unified_euro_solved = (euro_solved["UCL"] * euro_solved["UEL"] * euro_solved["UECL"]) ** (1.0 / 3.0)
+    else:
+        unified_euro_solved = 0.0
+    print("  Unified UEFA 'actually solved' (geometric mean): {:.6f}%".format(unified_euro_solved))
+
     # Carabao Cup
     print("\n" + "=" * 80)
     print("CARABAO CUP WIN PROBABILITY")
@@ -1865,30 +2395,196 @@ def main():
         count = carabao_wins.get(team, 0)
         print("  {:<22} {:>6.2f}%".format(team, count / total * 100.0))
 
-    # FA Cup
+    # FA Cup (simulated bracket)
     print("\n" + "=" * 80)
-    print("FA CUP WIN PROBABILITY (from outright odds)")
+    print("FA CUP WIN PROBABILITY (simulated bracket from R1)")
     print("=" * 80)
-    fa_names, fa_weights = fa_cup_data()
-    fa_idx = sorted(range(len(fa_names)), key=lambda i: -fa_weights[i])
-    for i in fa_idx:
-        team = fa_names[i]
-        implied = fa_weights[i] * 100.0
-        sim_pct = fa_cup_wins.get(team, 0) / total * 100.0
-        print("  {:<22} {:>6.2f}%  (sim: {:.2f}%)".format(team, implied, sim_pct))
-
+    fa_sorted = sorted(((team, count) for team, count in fa_cup_wins.items() if count > 0),
+                        key=lambda x: -x[1])
+    for team, count in fa_sorted:
+        print("  {:<22} {:>6.2f}%".format(team, count / total * 100.0))
     pl_fa_total = sum(v for t, v in fa_cup_wins.items() if t in pl_teams)
-    print("\n  P(a PL team wins the FA Cup): {:.2f}%".format(pl_fa_total / total * 100.0))
+    print("\n  P(a PL team wins the FA Cup): {:.2f}%"
+          .format(pl_fa_total / total * 100.0))
 
     # Man United streak summary
     if manutd_streaks:
         avg = sum(manutd_streaks) / len(manutd_streaks)
         print("\n" + "=" * 80)
-        print("MAN UNITED 5-GAME WINNING STREAK (PL + UCL)")
+        print("MAN UNITED 5-GAME WINNING STREAK (PL + UCL + CARABAO + FA CUP)")
         print("=" * 80)
         print("  Average longest W streak:   {:.2f}".format(avg))
         print("  P(≥5 consecutive wins):     {:.2f}%".format(manutd_5plus / total * 100.0))
         print("  Max streak across all sims: {}".format(manutd_streak_max))
+
+
+# =============================================================================
+# DASHBOARD ENTRY POINT
+# Returns the data the unified dashboard needs instead of printing.
+# =============================================================================
+def run_simulation(n_sims=NUM_PL_SIMS, seed=None, on_progress=None, is_running=None,
+                   snapshot_callback=None, snapshot_every=None):
+    if seed is None:
+        seed = (int(time.time()) ^ (time.time_ns() % 1_000_000_000)) & 0xFFFFFFFFFFFFFFFF
+    rng = Rng(seed)
+
+    pl_preset = preset_pl_elos()
+    ucl_preset = preset_ucl_elos()
+    uel_preset = preset_uel_elos()
+    uecl_preset = preset_uecl_elos()
+    assoc_map = association_map()
+    entrants = assoc_entrants()
+
+    actual_results = results_to_map(ACTUAL_RESULTS_ARR)
+    cl_actual  = results_to_map(CL_ACTUAL_RESULTS_ARR)
+    uel_actual = results_to_map(UEL_ACTUAL_RESULTS_ARR)
+    uecl_actual = results_to_map(UECL_ACTUAL_RESULTS_ARR)
+
+    fixtures_list = build_full_round_robin(ACTUAL_RESULTS_ARR)
+    pl_teams = {t for f in fixtures_list for t in f}
+
+    preset_mean = sum(pl_preset.values()) / len(pl_preset)
+    pl_elos_built = build_current_pl_ratings(actual_results, pl_teams, pl_preset, 50.0)
+    TOTAL_GAMES_ALL_COMPS = PL_TOTAL_FIXTURES + 144 + 144 + 108
+    games_played_all = (len(actual_results) + len(cl_actual)
+                        + len(uel_actual) + len(uecl_actual))
+
+    pl_elos = regress_elos(pl_elos_built, games_played_all, TOTAL_GAMES_ALL_COMPS,
+                           preset_mean, PL_ELO_MAX_PULL)
+    ucl_elos = regress_elos(ucl_preset, games_played_all, TOTAL_GAMES_ALL_COMPS,
+                            LEAGUE_AVERAGE_ELO, PL_ELO_MAX_PULL)
+    uel_elos = regress_elos(uel_preset, games_played_all, TOTAL_GAMES_ALL_COMPS,
+                            LEAGUE_AVERAGE_ELO, PL_ELO_MAX_PULL)
+    uecl_elos = regress_elos(uecl_preset, games_played_all, TOTAL_GAMES_ALL_COMPS,
+                             LEAGUE_AVERAGE_ELO, PL_ELO_MAX_PULL)
+
+    uel_fixtures_std = [[(standardise_uel(h), standardise_uel(a)) for (h, a) in r]
+                        for r in UEL_FIXTURES_RAW]
+    uecl_fixtures_std = [[(standardise_uecl(h), standardise_uecl(a)) for (h, a) in r]
+                         for r in UECL_FIXTURES_RAW]
+
+    ucl_comp  = EuropeanCompetition("UCL",  CL_FIXTURES_ARR,  pl_elos, pl_teams, cl_actual,   ucl_elos)
+    uel_comp  = EuropeanCompetition("UEL",  uel_fixtures_std, pl_elos, pl_teams, uel_actual,  uel_elos)
+    uecl_comp = EuropeanCompetition("UECL", uecl_fixtures_std, pl_elos, pl_teams, uecl_actual, uecl_elos)
+    pl_sim    = PLSimulator(fixtures_list, pl_elos, actual_results)
+
+    points_dist      = {t: [] for t in pl_teams}
+    position_counts  = {t: defaultdict(int) for t in pl_teams}
+    title_counts     = defaultdict(int)
+    ucl_qual_counts  = defaultdict(int)
+    uel_qual_counts  = defaultdict(int)
+    uecl_qual_counts = defaultdict(int)
+    relegation_counts = defaultdict(int)
+
+    # NEW: per-competition ranking-position counts for the UEFA 'solved' metric
+    euro_positions = {c: defaultdict(lambda: defaultdict(int)) for c in ("UCL", "UEL", "UECL")}
+
+    if snapshot_every is None:
+        snapshot_every = max(1, n_sims // 250)
+
+    completed = 0
+    for _ in range(n_sims):
+        if is_running is not None and not is_running():
+            break
+
+        ucl_res  = ucl_comp.simulate(rng, track={"Man United"})
+        uel_res  = uel_comp.simulate(rng)
+        uecl_res = uecl_comp.simulate(rng)
+
+        # NEW: accumulate per-team per-position counts per competition
+        for comp_name, res in (("UCL", ucl_res), ("UEL", uel_res), ("UECL", uecl_res)):
+            pos_map = euro_positions[comp_name]
+            for pos, team in enumerate(res.ranking):
+                pos_map[team][pos + 1] += 1
+
+        fatigue_info = {}
+        for team in pl_teams:
+            if team in ucl_res.elim_rounds:
+                fatigue_info[team] = (ucl_res.elim_rounds[team], "UCL")
+            elif team in uel_res.elim_rounds:
+                fatigue_info[team] = (uel_res.elim_rounds[team], "UEL")
+            elif team in uecl_res.elim_rounds:
+                fatigue_info[team] = (uecl_res.elim_rounds[team], "UECL")
+
+        ranking, points, _pl_team_results = pl_sim.simulate_season(
+            fatigue_info, rng, track={"Man United"})
+
+        carabao_winner, _carabao_res = run_carabao_tournament(rng, track={"Man United"})
+        fa_cup_winner, _fa_cup_res = simulate_fa_cup(rng, pl_elos, pl_teams, track={"Man United"})
+
+        coeffs = all_association_coefficients(ucl_res, uel_res, uecl_res, assoc_map, entrants)
+        top2 = {a for a, _ in sorted(coeffs.items(), key=lambda x: -x[1])[:2]}
+        has_eps = "England" in top2
+
+        spots = allocate_european_spots(
+            ranking, carabao_winner, pl_teams,
+            ucl_res.winner, uel_res.winner, uecl_res.winner,
+            has_eps, fa_cup_winner)
+
+        for t in spots["UCL"]:   ucl_qual_counts[t]  += 1
+        for t in spots["UEL"]:   uel_qual_counts[t]  += 1
+        for t in spots["UECL"]:  uecl_qual_counts[t] += 1
+
+        for pos, team in enumerate(ranking):
+            points_dist[team].append(points[team])
+            position_counts[team][pos + 1] += 1
+            if pos == 0:
+                title_counts[team] += 1
+            if pos >= 17:
+                relegation_counts[team] += 1
+
+        completed += 1
+        if on_progress is not None:
+            on_progress(completed, n_sims)
+        if snapshot_callback is not None and (completed % snapshot_every == 0 or completed == n_sims):
+            snapshot_callback(completed, n_sims, {
+                "avg_positions": {t: sum(p * c for p, c in position_counts[t].items()) / completed
+                                  for t in pl_teams},
+                "avg_points":      {t: sum(points_dist[t]) / completed for t in pl_teams},
+                "title_prob":      {t: title_counts.get(t, 0)      / completed * 100 for t in pl_teams},
+                "ucl_qual_prob":   {t: ucl_qual_counts.get(t, 0)   / completed * 100 for t in pl_teams},
+                "uel_qual_prob":   {t: uel_qual_counts.get(t, 0)   / completed * 100 for t in pl_teams},
+                "uecl_qual_prob":  {t: uecl_qual_counts.get(t, 0)  / completed * 100 for t in pl_teams},
+                "total_euro_prob": {t: (ucl_qual_counts.get(t, 0) + uel_qual_counts.get(t, 0) + uecl_qual_counts.get(t, 0)) / completed * 100 for t in pl_teams},
+                "relegation_prob": {t: relegation_counts.get(t, 0) / completed * 100 for t in pl_teams},
+            })
+
+    n = completed or 1
+
+    # NEW: compute per-competition and unified UEFA 'solved' metrics
+    euro_solved = {}
+    for comp_name in ("UCL", "UEL", "UECL"):
+        pos_map = euro_positions[comp_name]
+        # No per-team points stored here, so order by average finishing position
+        teams_in_comp = sorted(
+            pos_map.keys(),
+            key=lambda t: sum(p * c for p, c in pos_map[t].items())
+                          / max(1, sum(pos_map[t].values())))
+        _, solved_pct = hungarian_solved_metric(pos_map, teams_in_comp, n)
+        euro_solved[comp_name] = solved_pct
+
+    if all(v > 0.0 for v in euro_solved.values()):
+        unified_euro_solved = (
+            euro_solved["UCL"] * euro_solved["UEL"] * euro_solved["UECL"]) ** (1.0 / 3.0)
+    else:
+        unified_euro_solved = 0.0
+
+    return {
+        "n_sims": completed,
+        "pl_teams_set": pl_teams,
+        "avg_points":      {t: sum(points_dist[t]) / n for t in pl_teams},
+        "avg_positions":   {t: sum(p * c for p, c in position_counts[t].items()) / n
+                            for t in pl_teams},
+        "title_prob":      {t: title_counts.get(t, 0)      / n * 100 for t in pl_teams},
+        "ucl_qual_prob":   {t: ucl_qual_counts.get(t, 0)   / n * 100 for t in pl_teams},
+        "uel_qual_prob":   {t: uel_qual_counts.get(t, 0)   / n * 100 for t in pl_teams},
+        "uecl_qual_prob":  {t: uecl_qual_counts.get(t, 0)  / n * 100 for t in pl_teams},
+        "total_euro_prob": {t: (ucl_qual_counts.get(t, 0) + uel_qual_counts.get(t, 0) + uecl_qual_counts.get(t, 0)) / n * 100 for t in pl_teams},
+        "relegation_prob": {t: relegation_counts.get(t, 0) / n * 100 for t in pl_teams},
+        # NEW: UEFA 'solved' metrics
+        "euro_solved":         euro_solved,
+        "unified_euro_solved": unified_euro_solved,
+    }
 
 
 if __name__ == "__main__":
