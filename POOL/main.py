@@ -1,1191 +1,1702 @@
+#!/usr/bin/env python3
+"""
+CV Studio — a dashboard that builds CVs in 25 different styles and exports PDFs.
+
+Install dependency:
+    pip install reportlab
+
+Run:
+    python cv_studio.py
+"""
+
+import os
 import tkinter as tk
-from tkinter import ttk
-import math
-import time
-import random
+from tkinter import ttk, filedialog, messagebox
+from dataclasses import dataclass, field
 
-class PoolGame:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Pool Game")
-        self.root.geometry("1200x800")
-        self.root.resizable(False, False)
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+from reportlab.lib.utils import simpleSplit
 
-        # Game constants
-        self.TABLE_WIDTH = 800
-        self.TABLE_HEIGHT = 400
-        self.BALL_RADIUS = 10
-        self.POCKET_RADIUS = 55
-        self.FRICTION = 0.97
-        self.CUSHION_BOUNCE = 0.85
 
-        # Pockets positions
-        self.POCKETS = [
-            {'x': 30, 'y': 30},
-            {'x': self.TABLE_WIDTH / 2, 'y': 25},
-            {'x': self.TABLE_WIDTH - 30, 'y': 30},
-            {'x': 30, 'y': self.TABLE_HEIGHT - 30},
-            {'x': self.TABLE_WIDTH / 2, 'y': self.TABLE_HEIGHT - 25},
-            {'x': self.TABLE_WIDTH - 30, 'y': self.TABLE_HEIGHT - 30}
-        ]
+# =============================================================================
+#  DATA MODEL
+# =============================================================================
 
-        # Game state
-        self.game_mode = 'menu'
-        self.balls = []
-        self.cue_position = {'x': 0, 'y': 0}
-        self.aim_angle = 0
-        self.power = 0
-        self.is_dragging = False
-        self.drag_start = {'x': 0, 'y': 0}
-        self.locked_angle = None
-        self.cue_grabbed = False
-        self.cue_pull_distance = 0
-        self.current_player = 1
-        self.player1_balls = []
-        self.player2_balls = []
-        self.balls_assigned = False
-        self.win_probability = {'p1': 50, 'p2': 50}
-        self.animation_id = None
-        self.current_ai_shot = None
+@dataclass
+class CVData:
+    name: str = ""
+    title: str = ""
+    email: str = ""
+    phone: str = ""
+    location: str = ""
+    website: str = ""
+    summary: str = ""
+    skills: list = field(default_factory=list)
+    languages: list = field(default_factory=list)
+    certifications: list = field(default_factory=list)
+    experience: list = field(default_factory=list)   # {role, company, dates, description}
+    education: list = field(default_factory=list)    # {degree, level, school, year, details}
 
-        # GUI elements
-        self.setup_gui()
-        self.show_menu()
 
-    def setup_gui(self):
-        # Main frame
-        self.main_frame = ttk.Frame(self.root)
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
+# =============================================================================
+#  FONTS + 25 STYLE DEFINITIONS
+# =============================================================================
 
-        # Top control panel
-        self.control_frame = ttk.Frame(self.main_frame)
-        self.control_frame.pack(fill=tk.X, padx=10, pady=5)
+FONT_SETS = {
+    "sans":  {"regular": "Helvetica", "bold": "Helvetica-Bold",
+              "italic": "Helvetica-Oblique", "bolditalic": "Helvetica-BoldOblique"},
+    "serif": {"regular": "Times-Roman", "bold": "Times-Bold",
+              "italic": "Times-Italic", "bolditalic": "Times-BoldItalic"},
+}
 
-        # Canvas for the pool table
-        self.canvas = tk.Canvas(self.main_frame, width=self.TABLE_WIDTH,
-                               height=self.TABLE_HEIGHT, bg='#1a5f1a',
-                               cursor='crosshair')
-        self.canvas.pack(pady=10)
 
-        # Info frame for game status
-        self.info_frame = ttk.Frame(self.main_frame)
-        self.info_frame.pack(fill=tk.X, padx=10, pady=5)
+def S(name, layout, font, accent, heading="rule", sidebar=None,
+      sidebar_text="#FFFFFF", sidebar_muted="#C9D3E0",
+      text="#222222", muted="#5A6675"):
+    return dict(name=name, layout=layout, font=font, accent=accent,
+                heading=heading,
+                sidebar=sidebar or accent,
+                sidebar_text=sidebar_text, sidebar_muted=sidebar_muted,
+                text=text, muted=muted)
 
-        # Bind mouse events
-        self.canvas.bind('<Motion>', self.handle_mouse_move)
-        self.canvas.bind('<Button-1>', self.handle_mouse_down)
-        self.canvas.bind('<ButtonRelease-1>', self.handle_mouse_up)
 
-    def show_menu(self):
-        self.game_mode = 'menu'
+STYLES = [
+    S("Classic Navy",      "classic",      "sans",  "#1F3A5F", "rule"),
+    S("Classic Burgundy",  "classic",      "serif", "#7B1E28", "rule"),
+    S("Classic Forest",    "classic",      "serif", "#1E4620", "rule"),
+    S("Classic Cyan",      "classic",      "sans",  "#00707F", "rule"),
 
-        # Clear existing widgets
-        for widget in self.control_frame.winfo_children():
-            widget.destroy()
-        for widget in self.info_frame.winfo_children():
-            widget.destroy()
+    S("Minimal Black",     "minimal",      "sans",  "#111111", "plain"),
+    S("Minimal Stone",     "minimal",      "serif", "#4E4E4E", "plain"),
+    S("Minimal Gold",      "minimal",      "serif", "#8A6D1F", "plain"),
 
-        # Menu frame
-        menu_frame = ttk.Frame(self.main_frame)
-        menu_frame.place(relx=0.5, rely=0.5, anchor='center')
+    S("Azure Sidebar",     "sidebar_left", "sans",  "#1565C0", "rule", "#1565C0"),
+    S("Charcoal Sidebar",  "sidebar_left", "sans",  "#2E3440", "rule", "#2E3440"),
+    S("Emerald Sidebar",   "sidebar_left", "serif", "#0B6E4F", "rule", "#0B6E4F"),
+    S("Graphite Sidebar",  "sidebar_left", "serif", "#212121", "rule", "#212121"),
 
-        title_label = ttk.Label(menu_frame, text="Pool Game",
-                               font=('Arial', 36, 'bold'))
-        title_label.pack(pady=20)
+    S("Plum Sidebar",      "sidebar_right","sans",  "#5E2B6B", "rule", "#5E2B6B"),
+    S("Slate Sidebar",     "sidebar_right","sans",  "#37474F", "rule", "#37474F"),
+    S("Crimson Sidebar",   "sidebar_right","serif", "#A31E2A", "rule", "#A31E2A"),
 
-        button_frame = ttk.Frame(menu_frame)
-        button_frame.pack(pady=20)
+    S("Ocean Header",      "header_band",  "sans",  "#0277BD", "leftbar"),
+    S("Amber Header",      "header_band",  "sans",  "#D35400", "leftbar"),
+    S("Teal Header",       "header_band",  "serif", "#00695C", "leftbar"),
+    S("Indigo Header",     "header_band",  "sans",  "#283593", "leftbar"),
+    S("Midnight Header",   "header_band",  "serif", "#1A237E", "leftbar"),
 
-        eight_ball_btn = ttk.Button(button_frame, text="8-Ball",
-                                   command=self.start_eight_ball,
-                                   style='Game.TButton')
-        eight_ball_btn.pack(pady=10, ipadx=20, ipady=10)
+    S("Timeline Blue",     "timeline",     "sans",  "#1565C0", "leftbar"),
+    S("Timeline Olive",    "timeline",     "serif", "#5B7F2A", "leftbar"),
+    S("Timeline Rose",     "timeline",     "sans",  "#AD1457", "leftbar"),
 
-        nine_ball_btn = ttk.Button(button_frame, text="9-Ball",
-                                  command=self.start_nine_ball,
-                                  style='Game.TButton')
-        nine_ball_btn.pack(pady=10, ipadx=20, ipady=10)
+    S("Blocks Indigo",     "blocks",       "sans",  "#303F9F", "bar"),
+    S("Blocks Coral",      "blocks",       "sans",  "#C0392B", "bar"),
+    S("Blocks Sage",       "blocks",       "serif", "#4E7A5A", "bar"),
+]
 
-        ai_btn = ttk.Button(button_frame, text="AI vs AI",
-                           command=self.start_ai_game,
-                           style='Game.TButton')
-        ai_btn.pack(pady=10, ipadx=20, ipady=10)
+assert len(STYLES) == 25
 
-        # Style for game buttons
-        style = ttk.Style()
-        style.configure('Game.TButton', font=('Arial', 16))
 
-    def start_eight_ball(self):
-        self.game_mode = '8ball'
-        self.init_eight_ball()
-        self.setup_game_ui()
+# =============================================================================
+#  PDF DRAWING HELPERS
+# =============================================================================
 
-    def start_nine_ball(self):
-        self.game_mode = '9ball'
-        self.init_nine_ball()
-        self.setup_game_ui()
+class Flow:
+    """A vertical writing cursor inside a rectangular column."""
 
-    def start_ai_game(self):
-        self.game_mode = 'ai'
-        self.init_eight_ball()  # Use 8-ball rules for AI
-        self.setup_ai_game_ui()
-        # Start AI gameplay
-        self.ai_take_turn()
+    def __init__(self, cv, x, w, top, bottom, newpage=None, accent="#000000"):
+        self.cv = cv
+        self.c = cv.c
+        self.x = x
+        self.w = w
+        self.top = top
+        self.bottom = bottom
+        self.y = top
+        self.newpage = newpage
+        self.accent = accent
 
-    def setup_game_ui(self):
-        # Clear menu
-        for widget in self.main_frame.winfo_children():
-            if hasattr(widget, 'place_info') and widget.place_info():
-                widget.destroy()
+    def need(self, h):
+        if self.y - h < self.bottom and self.newpage:
+            self.newpage(self)
 
-        # Control buttons
-        back_btn = ttk.Button(self.control_frame, text="Back to Menu",
-                             command=self.show_menu)
-        back_btn.pack(side=tk.LEFT, padx=5)
 
-        self.player_label = ttk.Label(self.control_frame,
-                                     text=f"Player {self.current_player}'s Turn",
-                                     font=('Arial', 14))
-        self.player_label.pack(side=tk.LEFT, padx=20)
+def f_text(flow, text, font, size, color, leading=None, align="left",
+           indent=0, gap=0):
+    """Draw a wrapped paragraph (supports \n). Returns the new y."""
+    if not text:
+        return flow.y
+    lead = leading or size * 1.38
+    x = flow.x + indent
+    w = flow.w - indent
+    c = flow.c
+    for para in str(text).split("\n"):
+        lines = simpleSplit(para, font, size, w) or [""]
+        for ln in lines:
+            flow.need(lead)
+            c.setFont(font, size)
+            c.setFillColor(HexColor(color))
+            if align == "center":
+                c.drawCentredString(x + w / 2, flow.y, ln)
+            elif align == "right":
+                c.drawRightString(x + w, flow.y, ln)
+            else:
+                c.drawString(x, flow.y, ln)
+            flow.y -= lead
+    flow.y -= gap
+    return flow.y
 
-        self.instructions_label = ttk.Label(self.control_frame,
-                                           text="Click & hold anywhere to aim • Drag to set power • Release to shoot",
-                                           font=('Arial', 10))
-        self.instructions_label.pack(side=tk.LEFT, padx=20)
 
-        self.power_label = ttk.Label(self.control_frame,
-                                    text="Power: 0%",
-                                    font=('Arial', 12))
-        self.power_label.pack(side=tk.RIGHT, padx=5)
+def f_bullets(flow, items, color, size=9.5, leading=None, bullet="•"):
+    lead = leading or size * 1.4
+    c = flow.c
+    font = flow.cv.f["regular"]
+    for it in items:
+        it = str(it).strip()
+        if not it:
+            continue
+        lines = simpleSplit(it, font, size, flow.w - 13) or [""]
+        first = True
+        for ln in lines:
+            flow.need(lead)
+            if first:
+                c.setFont(font, size)
+                c.setFillColor(HexColor(flow.accent))
+                c.drawString(flow.x, flow.y, bullet)
+                first = False
+            c.setFont(font, size)
+            c.setFillColor(HexColor(color))
+            c.drawString(flow.x + 13, flow.y, ln)
+            flow.y -= lead
+        flow.y -= 1.5
 
-        # Game-specific UI
-        if self.game_mode == '8ball':
-            self.setup_eight_ball_ui()
-        elif self.game_mode == '9ball':
-            self.setup_nine_ball_ui()
 
-        # Start animation
-        self.animate()
+def f_heading(flow, title, kind="rule", size=10.5, gap_before=16, gap_after=8):
+    cv, c = flow.cv, flow.c
+    bold = cv.f["bold"]
+    accent = flow.accent
+    flow.y -= gap_before
+    flow.need(size + 18)
+    t = title.upper()
 
-    def setup_eight_ball_ui(self):
-        # Player info panels
-        self.p1_frame = ttk.LabelFrame(self.info_frame, text="Player 1",
-                                      padding=10)
-        self.p1_frame.pack(side=tk.LEFT, padx=10, fill=tk.Y)
+    if kind == "bar":
+        c.setFillColor(HexColor(accent))
+        c.rect(flow.x, flow.y - 5, flow.w, 18, stroke=0, fill=1)
+        c.setFillColor(HexColor("#FFFFFF"))
+        c.setFont(bold, size)
+        c.drawString(flow.x + 8, flow.y, t)
+        flow.y -= 23
+    elif kind == "leftbar":
+        c.setFillColor(HexColor(accent))
+        c.rect(flow.x, flow.y - 4, 3.2, 14, stroke=0, fill=1)
+        c.setFillColor(HexColor(accent))
+        c.setFont(bold, size)
+        c.drawString(flow.x + 11, flow.y, t)
+        flow.y -= gap_after + 9
+    elif kind == "rule":
+        c.setFillColor(HexColor(accent))
+        c.setFont(bold, size)
+        c.drawString(flow.x, flow.y, t)
+        flow.y -= 5
+        c.setStrokeColor(HexColor(accent))
+        c.setLineWidth(0.9)
+        c.line(flow.x, flow.y, flow.x + flow.w, flow.y)
+        flow.y -= gap_after + 5
+    else:  # plain
+        c.setFillColor(HexColor(accent))
+        c.setFont(bold, size)
+        c.drawString(flow.x, flow.y, t)
+        flow.y -= gap_after + 7
 
-        self.p1_type_label = ttk.Label(self.p1_frame,
-                                      text="Not assigned")
-        self.p1_type_label.pack()
 
-        self.p1_balls_frame = ttk.Frame(self.p1_frame)
-        self.p1_balls_frame.pack(pady=5)
+def contact_parts(d):
+    return [p for p in (d.email, d.phone, d.location, d.website) if p]
 
-        self.p1_prob_label = ttk.Label(self.p1_frame,
-                                      text="Win Probability: 50%")
-        self.p1_prob_label.pack(pady=5)
 
-        self.p1_prob_bar = ttk.Progressbar(self.p1_frame, orient=tk.HORIZONTAL,
-                                          length=200, mode='determinate',
-                                          value=50)
-        self.p1_prob_bar.pack()
+def job_description(job):
+    raw = job.get("description", "")
+    out = []
+    for line in str(raw).split("\n"):
+        line = line.strip().lstrip("-•* ").strip()
+        if line:
+            out.append(line)
+    return out
 
-        self.p2_frame = ttk.LabelFrame(self.info_frame, text="Player 2",
-                                      padding=10)
-        self.p2_frame.pack(side=tk.RIGHT, padx=10, fill=tk.Y)
 
-        self.p2_type_label = ttk.Label(self.p2_frame,
-                                      text="Not assigned")
-        self.p2_type_label.pack()
+# =============================================================================
+#  PDF BUILDER
+# =============================================================================
 
-        self.p2_balls_frame = ttk.Frame(self.p2_frame)
-        self.p2_balls_frame.pack(pady=5)
+class CVPdf:
+    def __init__(self, path, data: CVData, style: dict):
+        self.c = canvas.Canvas(path, pagesize=A4)
+        self.W, self.H = A4
+        self.c.setTitle("CV - %s" % (data.name or "Untitled"))
+        self.c.setAuthor(data.name or "")
+        self.data = data
+        self.st = style
+        self.f = FONT_SETS[style["font"]]
 
-        self.p2_prob_label = ttk.Label(self.p2_frame,
-                                      text="Win Probability: 50%")
-        self.p2_prob_label.pack(pady=5)
-
-        self.p2_prob_bar = ttk.Progressbar(self.p2_frame, orient=tk.HORIZONTAL,
-                                          length=200, mode='determinate',
-                                          value=50)
-        self.p2_prob_bar.pack()
-
-    def setup_nine_ball_ui(self):
-        # Nine ball remaining balls display
-        balls_frame = ttk.LabelFrame(self.info_frame, text="Balls Remaining",
-                                    padding=10)
-        balls_frame.pack(pady=10)
-
-        self.nine_balls_frame = ttk.Frame(balls_frame)
-        self.nine_balls_frame.pack()
-
-        self.next_ball_label = ttk.Label(balls_frame,
-                                        text="Next ball to hit: 1")
-        self.next_ball_label.pack(pady=5)
-
-    def setup_ai_game_ui(self):
-        # Clear menu
-        for widget in self.main_frame.winfo_children():
-            if hasattr(widget, 'place_info') and widget.place_info():
-                widget.destroy()
-
-        # Control buttons
-        back_btn = ttk.Button(self.control_frame, text="Back to Menu",
-                             command=self.show_menu)
-        back_btn.pack(side=tk.LEFT, padx=5)
-
-        self.player_label = ttk.Label(self.control_frame,
-                                     text=f"AI Player {self.current_player}'s Turn",
-                                     font=('Arial', 14))
-        self.player_label.pack(side=tk.LEFT, padx=20)
-
-        self.ai_status_label = ttk.Label(self.control_frame,
-                                        text="AI thinking...",
-                                        font=('Arial', 12))
-        self.ai_status_label.pack(side=tk.RIGHT, padx=5)
-
-        # AI-specific UI
-        self.setup_eight_ball_ui()
-
-        # Disable mouse interaction for AI mode
-        self.canvas.unbind('<Motion>')
-        self.canvas.unbind('<Button-1>')
-        self.canvas.unbind('<ButtonRelease-1>')
-
-        # Start animation
-        self.animate()
-
-    def ai_take_turn(self):
-        if self.game_mode != 'ai':
-            return
-
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if not cue_ball:
-            return
-
-        self.ai_status_label.config(text=f"AI Player {self.current_player} thinking...")
-
-        # Simple AI logic: find best shot
-        best_shot = self.find_best_ai_shot()
-
-        if best_shot:
-            # Store the shot for visualization and execute after delay
-            self.current_ai_shot = best_shot
-            self.root.after(1000, lambda: self.execute_ai_shot(best_shot))
+    # -- public ------------------------------------------------------------
+    def build(self):
+        layout = self.st["layout"]
+        if layout == "classic":
+            self._classic()
+        elif layout == "minimal":
+            self._minimal()
+        elif layout == "blocks":
+            self._blocks()
+        elif layout == "timeline":
+            self._timeline()
+        elif layout == "sidebar_left":
+            self._sidebar("left")
+        elif layout == "sidebar_right":
+            self._sidebar("right")
+        elif layout == "header_band":
+            self._header_band()
         else:
-            # No good shot found, make a random shot
-            self.root.after(1000, self.make_random_ai_shot)
+            self._classic()
+        self.c.save()
 
-    def find_best_ai_shot(self):
-        """Advanced mathematical AI: calculate precise shots for pocketing balls"""
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if not cue_ball:
-            return None
+    # -- shared blocks -----------------------------------------------------
+    def _exp_block(self, flow, size=9.6, bold_dates=True, show_company=True):
+        st = self.st
+        for job in self.data.experience:
+            role = job.get("role", "").strip()
+            comp = job.get("company", "").strip()
+            dates = job.get("dates", "").strip()
+            if not (role or comp):
+                continue
+            flow.y -= 4
+            flow.need(34)
+            c = self.c
+            c.setFillColor(HexColor(st["text"]))
+            c.setFont(self.f["bold"], size + 1.2)
+            c.drawString(flow.x, flow.y, role or comp)
+            if dates:
+                c.setFont(self.f["regular"], size - 0.4)
+                c.setFillColor(HexColor(st["muted"]))
+                c.drawRightString(flow.x + flow.w, flow.y, dates)
+            flow.y -= size * 1.45
+            if show_company and role and comp:
+                c.setFont(self.f["italic"], size - 0.2)
+                c.setFillColor(HexColor(st["accent"]))
+                c.drawString(flow.x, flow.y, comp)
+                flow.y -= size * 1.4
+            desc = job_description(job)
+            if desc:
+                f_bullets(flow, desc, st["text"], size=size - 0.4)
+            flow.y -= 6
 
-        best_shot = None
-        best_score = -1
+    def _edu_block(self, flow, size=9.6):
+        st = self.st
+        for ed in self.data.education:
+            deg = ed.get("Subject", "").strip()
+            lvl = ed.get("level", "").strip()
+            sch = ed.get("school", "").strip()
+            yr = ed.get("year", "").strip()
+            det = ed.get("details", "").strip()
+            if not (deg or sch):
+                continue
+            flow.y -= 4
+            flow.need(30)
+            c = self.c
+            c.setFillColor(HexColor(st["text"]))
+            c.setFont(self.f["bold"], size + 0.8)
+            label = deg
+            if lvl:
+                label = "%s (%s)" % (deg, lvl) if deg else lvl
+            c.drawString(flow.x, flow.y, label or sch)
+            if yr:
+                c.setFont(self.f["regular"], size - 0.4)
+                c.setFillColor(HexColor(st["muted"]))
+                c.drawRightString(flow.x + flow.w, flow.y, yr)
+            flow.y -= size * 1.45
+            if deg and sch:
+                c.setFont(self.f["italic"], size - 0.2)
+                c.setFillColor(HexColor(st["accent"]))
+                c.drawString(flow.x, flow.y, sch)
+                flow.y -= size * 1.4
+            if det:
+                f_text(flow, det, self.f["regular"], size - 0.4, st["muted"],
+                       leading=(size - 0.4) * 1.35)
+            flow.y -= 6
 
-        # Get target balls for current player
-        target_balls = []
-        if self.game_mode == 'ai' and self.balls_assigned:
-            target_type = self.player1_balls[0] if self.current_player == 1 else self.player2_balls[0]
-            target_balls = [b for b in self.balls if b['type'] == target_type and not b['pocketed']
-                           and b['number'] != 8]  # Don't aim for 8-ball unless it's the only choice
+    def _plain_list(self, flow, items, size=9.6, columns=1):
+        st = self.st
+        if columns > 1:
+            half = (len(items) + 1) // 2
+            col_w = (flow.w - 14) / 2
+            start_y = flow.y
+            for i, chunk in enumerate((items[:half], items[half:])):
+                f = Flow(self, flow.x + i * (col_w + 14), col_w,
+                         start_y, flow.bottom, flow.newpage, st["accent"])
+                f_bullets(f, chunk, st["text"], size=size - 0.4)
+                flow.y = min(flow.y, f.y)
         else:
-            # Early game: target any visible ball
-            target_balls = [b for b in self.balls if b['number'] > 0 and not b['pocketed']]
-
-        for target_ball in target_balls:
-            # Calculate precise shot for this ball
-            shot = self.calculate_precise_shot(cue_ball, target_ball)
-            if shot and shot['score'] > best_score:
-                best_score = shot['score']
-                best_shot = shot
-
-        return best_shot
-
-    def calculate_precise_shot(self, cue_ball, target_ball):
-        """Calculate the mathematically precise shot to pocket a ball"""
-        best_shot = None
-        best_score = 0
-
-        # Try each pocket to see which one gives the best shot
-        for pocket in self.POCKETS:
-            shot = self.calculate_shot_to_pocket(cue_ball, target_ball, pocket)
-            if shot and shot['score'] > best_score:
-                best_score = shot['score']
-                best_shot = shot
-
-        return best_shot
-
-    def calculate_shot_to_pocket(self, cue_ball, target_ball, pocket):
-        """Calculate the exact shot needed to send target_ball into pocket"""
-        # Vector from target ball to pocket
-        pocket_dx = pocket['x'] - target_ball['x']
-        pocket_dy = pocket['y'] - target_ball['y']
-        pocket_distance = math.sqrt(pocket_dx**2 + pocket_dy**2)
-
-        # Skip if ball is too far from pocket
-        if pocket_distance > 180:
-            return None
-
-        # The target ball needs to hit the pocket, so we need to aim for where
-        # the ball should be hit to go toward the pocket
-        pocket_angle = math.atan2(pocket_dy, pocket_dx)
-
-        # For straight-in shots, we need to account for the ball's radius
-        # The cue ball should hit the target ball at the correct contact point
-        contact_offset = self.BALL_RADIUS * 1.1  # Slightly more than ball radius for realistic contact
-
-        # Calculate where to aim on the target ball to send it toward the pocket
-        aim_x = target_ball['x'] - math.cos(pocket_angle) * contact_offset
-        aim_y = target_ball['y'] - math.sin(pocket_angle) * contact_offset
-
-        # Check if this aim point is accessible (not blocked)
-        if not self.is_aim_point_clear(cue_ball, aim_x, aim_y):
-            return None
-
-        # Calculate the angle from cue ball to aim point
-        aim_dx = aim_x - cue_ball['x']
-        aim_dy = aim_y - cue_ball['y']
-        shot_distance = math.sqrt(aim_dx**2 + aim_dy**2)
-        shot_angle = math.atan2(aim_dy, aim_dx)
-
-        # Check if the shot path is clear
-        if self.is_shot_path_blocked(cue_ball, aim_x, aim_y):
-            return None
-
-        # Calculate required power based on distance and physics
-        power = self.calculate_precise_power(shot_distance, pocket_distance)
-
-        # Calculate shot quality score
-        score = self.evaluate_shot_quality(cue_ball, target_ball, pocket, shot_distance, pocket_distance)
-
-        return {
-            'angle': shot_angle,
-            'power': power,
-            'target': target_ball,
-            'pocket': pocket,
-            'score': score,
-            'aim_x': aim_x,
-            'aim_y': aim_y
-        }
-
-    def is_aim_point_clear(self, cue_ball, aim_x, aim_y):
-        """Check if the line from cue ball to aim point is clear"""
-        return not self.is_shot_path_blocked(cue_ball, aim_x, aim_y)
-
-    def is_shot_path_blocked(self, start_x, start_y, end_x, end_y):
-        """Check if any balls block the path between two points"""
-        if isinstance(start_x, dict):  # If passed ball objects
-            start_pos = start_x
-            end_pos = start_y
-            start_x, start_y = start_pos['x'], start_pos['y']
-            end_x, end_y = end_pos['x'], end_pos['y']
-
-        # Check each ball to see if it intersects the line
-        for ball in self.balls:
-            if ball['pocketed'] or ball['number'] == 0:  # Skip pocketed balls and cue ball
-                continue
-
-            # Calculate distance from ball center to line
-            dx = end_x - start_x
-            dy = end_y - start_y
-            length = math.sqrt(dx**2 + dy**2)
-
-            if length == 0:
-                continue
-
-            # Vector from start to ball
-            ball_dx = ball['x'] - start_x
-            ball_dy = ball['y'] - start_y
-
-            # Project onto line
-            dot = (ball_dx * dx + ball_dy * dy) / (length ** 2)
-            dot = max(0, min(1, dot))  # Clamp to line segment
-
-            # Closest point on line
-            closest_x = start_x + dot * dx
-            closest_y = start_y + dot * dy
-
-            # Distance from ball to closest point
-            dist_dx = ball['x'] - closest_x
-            dist_dy = ball['y'] - closest_y
-            distance = math.sqrt(dist_dx**2 + dist_dy**2)
-
-            # If ball is too close to the line, it's blocked
-            if distance < self.BALL_RADIUS * 1.8:  # Allow some tolerance
-                return True
-
-        return False
-
-    def calculate_precise_power(self, shot_distance, pocket_distance):
-        """Calculate precise power needed for the shot"""
-        # Base power depends on shot distance
-        base_power = shot_distance * 0.3  # Rough approximation
-
-        # Adjust for pocket distance (farther pockets need more power)
-        pocket_factor = pocket_distance / 100.0
-        power = base_power * (0.8 + pocket_factor * 0.4)
-
-        # Add some safety margin and clamp to reasonable range
-        power = power * 1.1  # 10% safety margin
-        return max(40, min(95, power))
-
-    def evaluate_shot_quality(self, cue_ball, target_ball, pocket, shot_distance, pocket_distance):
-        """Evaluate the quality of a potential shot"""
-        score = 100  # Start with perfect score
-
-        # Distance penalty (closer shots are better)
-        distance_penalty = shot_distance / 200.0  # Normalize
-        score -= distance_penalty * 20
-
-        # Pocket distance bonus (balls closer to pockets are easier)
-        if pocket_distance < 80:
-            score += 15  # Bonus for balls very close to pockets
-        elif pocket_distance < 120:
-            score += 10
-
-        # Angle quality (prefer straight-in shots over cuts)
-        pocket_dx = pocket['x'] - target_ball['x']
-        pocket_dy = pocket['y'] - target_ball['y']
-        pocket_angle = math.atan2(pocket_dy, pocket_dx)
-
-        shot_dx = target_ball['x'] - cue_ball['x']
-        shot_dy = target_ball['y'] - cue_ball['y']
-        shot_angle = math.atan2(shot_dy, shot_dx)
-
-        angle_diff = abs(self.normalize_angle(pocket_angle - shot_angle))
-        angle_diff = min(angle_diff, 2*math.pi - angle_diff)
-
-        # Heavy penalty for extreme cut shots
-        if angle_diff > math.pi/3:  # More than 60 degrees
-            score -= 40
-        elif angle_diff > math.pi/6:  # More than 30 degrees
-            score -= 20
-
-        # Bonus for straight-in shots
-        if angle_diff < math.pi/12:  # Less than 15 degrees
-            score += 10
-
-        # Position quality (balls in the center are generally better positioned)
-        table_center_x = self.TABLE_WIDTH / 2
-        table_center_y = self.TABLE_HEIGHT / 2
-        ball_center_dist = math.sqrt((target_ball['x'] - table_center_x)**2 +
-                                   (target_ball['y'] - table_center_y)**2)
-
-        # Slight bonus for balls near center (easier to get good shots)
-        center_bonus = max(0, (200 - ball_center_dist) / 200 * 10)
-        score += center_bonus
-
-        return max(0, score)
-
-    def is_shot_blocked(self, cue_ball, target):
-        """Check if there's a ball blocking the shot"""
-        for ball in self.balls:
-            if ball['number'] == 0 or ball['number'] == target['number'] or ball['pocketed']:
-                continue
-
-            # Check if ball is on the line between cue and target
-            # Simple check: if ball is within a narrow corridor
-            dx = ball['x'] - cue_ball['x']
-            dy = ball['y'] - cue_ball['y']
-            target_dx = target['x'] - cue_ball['x']
-            target_dy = target['y'] - cue_ball['y']
-
-            # Normalize target direction
-            target_dist = math.sqrt(target_dx*target_dx + target_dy*target_dy)
-            if target_dist == 0:
-                continue
-            target_nx = target_dx / target_dist
-            target_ny = target_dy / target_dist
-
-            # Project ball onto target line
-            dot_product = dx * target_nx + dy * target_ny
-            if dot_product < 0 or dot_product > target_dist:
-                continue  # Ball is not between cue and target
-
-            # Check perpendicular distance
-            perp_dist = abs(dy * target_nx - dx * target_ny)
-            if perp_dist < self.BALL_RADIUS * 2.5:  # Within blocking distance
-                return True
-
-        return False
-
-    def execute_ai_shot(self, shot):
-        """Execute the AI's chosen shot"""
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if cue_ball and shot:
-            speed = shot['power'] * 0.15
-            cue_ball['vx'] = math.cos(shot['angle']) * speed
-            cue_ball['vy'] = math.sin(shot['angle']) * speed
-
-            self.ai_status_label.config(text=f"AI Player {self.current_player} shot!")
-
-            # Check for balls stopping after a delay
-            self.root.after(3000, self.check_ai_turn_end)
-
-    def make_random_ai_shot(self):
-        """Make a random shot when no good shot is found"""
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if cue_ball:
-            # Random angle and power
-            angle = math.pi * 2 * (0.5 - random.random())  # Random angle
-            power = 30 + random.random() * 40  # Random power between 30-70
-            speed = power * 0.15
-
-            cue_ball['vx'] = math.cos(angle) * speed
-            cue_ball['vy'] = math.sin(angle) * speed
-
-            self.ai_status_label.config(text=f"AI Player {self.current_player} shot randomly!")
-
-            self.root.after(3000, self.check_ai_turn_end)
-
-    def check_ai_turn_end(self):
-        """Check if balls have stopped and switch to next AI player"""
-        if not self.balls_moving():
-            # Switch to next player
-            self.current_player = 2 if self.current_player == 1 else 1
-            self.player_label.config(text=f"AI Player {self.current_player}'s Turn")
-            self.current_ai_shot = None  # Clear visualization
-
-            # Take next AI turn
-            self.root.after(1000, self.ai_take_turn)
-
-    def get_ball_color(self, num):
-        colors = {
-            1: '#FFFF00', 2: '#0000FF', 3: '#FF0000', 4: '#800080',
-            5: '#FFA500', 6: '#006400', 7: '#8B0000', 8: '#000000',
-            9: '#FFFF00', 10: '#0000FF', 11: '#FF0000', 12: '#800080',
-            13: '#FFA500', 14: '#006400', 15: '#8B0000'
-        }
-        return colors.get(num, '#FFFFFF')
-
-    def init_eight_ball(self):
-        rack_x = self.TABLE_WIDTH * 0.7
-        rack_y = self.TABLE_HEIGHT / 2
-        ball_order = [1, 9, 2, 10, 8, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15]
-
-        self.balls = [
-            {
-                'id': 0,
-                'x': self.TABLE_WIDTH * 0.25,
-                'y': self.TABLE_HEIGHT / 2,
-                'vx': 0,
-                'vy': 0,
-                'color': '#FFFFFF',
-                'number': 0,
-                'type': 'cue',
-                'pocketed': False
-            }
-        ]
-
-        ball_index = 0
-        for row in range(5):
-            for col in range(row + 1):
-                if ball_index >= 15:
-                    break
-                x = rack_x + row * self.BALL_RADIUS * 1.73
-                y = rack_y + (col - row / 2) * self.BALL_RADIUS * 2
-                ball_num = ball_order[ball_index]
-                self.balls.append({
-                    'id': ball_num,
-                    'x': x,
-                    'y': y,
-                    'vx': 0,
-                    'vy': 0,
-                    'color': self.get_ball_color(ball_num),
-                    'number': ball_num,
-                    'type': 'eight' if ball_num == 8 else ('solid' if ball_num <= 7 else 'stripe'),
-                    'pocketed': False
-                })
-                ball_index += 1
-
-        self.current_player = 1
-        self.player1_balls = []
-        self.player2_balls = []
-        self.balls_assigned = False
-
-    def init_nine_ball(self):
-        rack_x = self.TABLE_WIDTH * 0.7
-        rack_y = self.TABLE_HEIGHT / 2
-        diamond_order = [1, 2, 3, 4, 9, 5, 6, 7, 8]
-
-        self.balls = [
-            {
-                'id': 0,
-                'x': self.TABLE_WIDTH * 0.25,
-                'y': self.TABLE_HEIGHT / 2,
-                'vx': 0,
-                'vy': 0,
-                'color': '#FFFFFF',
-                'number': 0,
-                'type': 'cue',
-                'pocketed': False
-            }
-        ]
-
-        ball_index = 0
-        for row in range(5):
-            balls_in_row = row + 1 if row < 3 else 5 - row
-            for col in range(balls_in_row):
-                if ball_index >= 9:
-                    break
-                x = rack_x + row * self.BALL_RADIUS * 1.73
-                y = rack_y + (col - (balls_in_row - 1) / 2) * self.BALL_RADIUS * 2
-                ball_num = diamond_order[ball_index]
-                self.balls.append({
-                    'id': ball_num,
-                    'x': x,
-                    'y': y,
-                    'vx': 0,
-                    'vy': 0,
-                    'color': self.get_ball_color(ball_num),
-                    'number': ball_num,
-                    'type': 'numbered',
-                    'pocketed': False
-                })
-                ball_index += 1
-
-        self.current_player = 1
-
-    def calculate_win_probability(self):
-        if not self.balls_assigned or self.game_mode != '8ball':
-            self.win_probability = {'p1': 50, 'p2': 50}
-            return
-
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if not cue_ball:
-            self.win_probability = {'p1': 50, 'p2': 50}
-            return
-
-        p1_type = self.player1_balls[0] if self.player1_balls else None
-        p2_type = self.player2_balls[0] if self.player2_balls else None
-
-        p1_balls_left = [b for b in self.balls if b['type'] == p1_type and not b['pocketed']]
-        p2_balls_left = [b for b in self.balls if b['type'] == p2_type and not b['pocketed']]
-
-        # Simplified win probability calculation
-        p1_ball_count = len(p1_balls_left)
-        p2_ball_count = len(p2_balls_left)
-
-        if p1_ball_count + p2_ball_count == 0:
-            self.win_probability = {'p1': 50, 'p2': 50}
-        else:
-            total = p1_ball_count + p2_ball_count
-            self.win_probability = {
-                'p1': int((p1_ball_count / total) * 100),
-                'p2': int((p2_ball_count / total) * 100)
-            }
-
-    def animate(self):
-        self.update_balls()
-        self.draw_table()
-        self.draw_balls()
-        self.draw_cue()
-        self.update_ui()
-
-        self.animation_id = self.root.after(16, self.animate)  # ~60 FPS
-
-    def draw_table(self):
-        self.canvas.delete('table')
-
-        # Table felt
-        self.canvas.create_rectangle(0, 0, self.TABLE_WIDTH, self.TABLE_HEIGHT,
-                                   fill='#1a5f1a', tags='table')
-
-        # Table border
-        self.canvas.create_rectangle(15, 15, self.TABLE_WIDTH - 15, self.TABLE_HEIGHT - 15,
-                                   outline='#8B4513', width=30, tags='table')
-
-        # Pockets
-        for pocket in self.POCKETS:
-            self.canvas.create_oval(pocket['x'] - self.POCKET_RADIUS,
-                                   pocket['y'] - self.POCKET_RADIUS,
-                                   pocket['x'] + self.POCKET_RADIUS,
-                                   pocket['y'] + self.POCKET_RADIUS,
-                                   fill='#000000', tags='table')
-
-        # Center line
-        self.canvas.create_line(self.TABLE_WIDTH * 0.25, 40,
-                               self.TABLE_WIDTH * 0.25, self.TABLE_HEIGHT - 40,
-                               fill='#FFFFFF', width=2, dash=(5, 5), tags='table')
-
-    def draw_balls(self):
-        self.canvas.delete('balls')
-
-        # Debug: print ball count
-        visible_balls = [b for b in self.balls if not b['pocketed']]
-        print(f"Drawing {len(visible_balls)} visible balls out of {len(self.balls)} total")
-
-        for ball in self.balls:
-            if ball['pocketed']:
-                continue
-
-            x, y = ball['x'], ball['y']
-
-            # Ball shadow/highlight effect (simplified)
-            self.canvas.create_oval(x - self.BALL_RADIUS, y - self.BALL_RADIUS,
-                                   x + self.BALL_RADIUS, y + self.BALL_RADIUS,
-                                   fill=ball['color'], outline='#000000',
-                                   width=1, tags='balls')
-
-            # Stripe for striped balls
-            if ball['type'] == 'stripe' and ball['number'] > 8:
-                self.canvas.create_oval(x - self.BALL_RADIUS, y - self.BALL_RADIUS * 0.6,
-                                       x + self.BALL_RADIUS, y + self.BALL_RADIUS * 0.6,
-                                       fill='#FFFFFF', outline='', tags='balls')
-
-            # Ball number
-            text_color = '#FFFFFF' if ball['number'] <= 8 else '#000000'
-            if ball['number'] == 8:
-                text_color = '#FFFFFF'
-            self.canvas.create_text(x, y, text=str(ball['number']),
-                                   fill=text_color, font=('Arial', 10, 'bold'),
-                                   tags='balls')
-
-    def draw_cue(self):
-        self.canvas.delete('cue')
-
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if not cue_ball or self.balls_moving():
-            return
-
-        current_angle = self.locked_angle if self.locked_angle is not None else self.aim_angle
-        cue_length = 200
-
-        # Fixed cue position (doesn't move during dragging)
-        cue_offset = 30
-        end_x = cue_ball['x'] - math.cos(current_angle) * (self.BALL_RADIUS + cue_offset)
-        end_y = cue_ball['y'] - math.sin(current_angle) * (self.BALL_RADIUS + cue_offset)
-        start_x = end_x - math.cos(current_angle) * cue_length
-        start_y = end_y - math.sin(current_angle) * cue_length
-
-        # Cue stick with gradient colors
-        gradient_stops = 10
-        for i in range(gradient_stops):
-            ratio = i / (gradient_stops - 1)
-            x1 = start_x + (end_x - start_x) * ratio
-            y1 = start_y + (end_y - start_y) * ratio
-            x2 = start_x + (end_x - start_x) * (ratio + 1/gradient_stops)
-            y2 = start_y + (end_y - start_y) * (ratio + 1/gradient_stops)
-
-            # Create gradient from dark brown to light brown
-            r = int(139 + (245 - 139) * ratio)
-            g = int(69 + (222 - 69) * ratio)
-            b = int(19 + (179 - 19) * ratio)
-            color = f'#{r:02x}{g:02x}{b:02x}'
-
-            self.canvas.create_line(x1, y1, x2, y2, fill=color, width=8, tags='cue')
-
-        # Cue tip
-        tip_x = end_x
-        tip_y = end_y
-        tip_size = 6
-        tip_color = '#FFD700'
-        self.canvas.create_oval(tip_x - tip_size, tip_y - tip_size,
-                               tip_x + tip_size, tip_y + tip_size,
-                               fill=tip_color, outline='#8B4513', width=2, tags='cue')
-
-        # Power indicator when dragging
-        if self.is_dragging and self.power > 0:
-            # Show power bar next to cue ball
-            bar_width = 100
-            bar_height = 8
-            bar_x = cue_ball['x'] + 50
-            bar_y = cue_ball['y'] - 20
-
-            # Background bar
-            self.canvas.create_rectangle(bar_x, bar_y, bar_x + bar_width, bar_y + bar_height,
-                                       fill='#333333', outline='#FFFFFF', width=1, tags='cue')
-
-            # Power fill
-            fill_width = (self.power / 100) * bar_width
-            self.canvas.create_rectangle(bar_x, bar_y, bar_x + fill_width, bar_y + bar_height,
-                                       fill='#FFD700', outline='', tags='cue')
-
-            # Power text
-            self.canvas.create_text(bar_x + bar_width/2, bar_y - 10,
-                                   text=f"Power: {int(self.power)}%",
-                                   fill='#FFD700', font=('Arial', 10, 'bold'), tags='cue')
-
-            # Show drag line from drag start to current mouse position
-            self.canvas.create_line(self.drag_start['x'], self.drag_start['y'],
-                                   self.cue_position['x'], self.cue_position['y'],
-                                   fill='#FF6B6B', width=2, dash=(5, 5), tags='cue')
-
-            # Show drag start point
-            self.canvas.create_oval(self.drag_start['x'] - 5, self.drag_start['y'] - 5,
-                                   self.drag_start['x'] + 5, self.drag_start['y'] + 5,
-                                   fill='#FF6B6B', outline='#FFFFFF', width=2, tags='cue')
-
-        # Trajectory prediction (only when not dragging)
-        if not self.is_dragging:
-            # Show aiming line
-            aim_x = cue_ball['x'] + math.cos(current_angle) * 150
-            aim_y = cue_ball['y'] + math.sin(current_angle) * 150
-            self.canvas.create_line(cue_ball['x'], cue_ball['y'], aim_x, aim_y,
-                                   fill='#FFFFFF', width=2, dash=(5, 5), tags='cue')
-
-            # Show predicted path with bounces
-            self.draw_trajectory(cue_ball, current_angle)
-
-        # In AI mode, show the calculated aim point (for debugging)
-        elif self.game_mode == 'ai' and hasattr(self, 'current_ai_shot') and self.current_ai_shot:
-            shot = self.current_ai_shot
-            if 'aim_x' in shot and 'aim_y' in shot:
-                # Draw line from cue ball to aim point
-                self.canvas.create_line(cue_ball['x'], cue_ball['y'], shot['aim_x'], shot['aim_y'],
-                                       fill='#00FF00', width=3, tags='cue')
-                # Draw aim point
-                self.canvas.create_oval(shot['aim_x'] - 5, shot['aim_y'] - 5,
-                                       shot['aim_x'] + 5, shot['aim_y'] + 5,
-                                       fill='#00FF00', outline='#FFFFFF', width=2, tags='cue')
-
-    def draw_trajectory(self, cue_ball, angle):
-        """Draw the predicted ball trajectory with cushion bounces"""
-        current_x = cue_ball['x']
-        current_y = cue_ball['y']
-        dir_x = math.cos(angle)
-        dir_y = math.sin(angle)
-        bounces = 0
-        max_bounces = 3
-        max_distance = 1000
-        traveled_distance = 0
-        margin = 35
-
-        self.canvas.create_oval(current_x - 3, current_y - 3, current_x + 3, current_y + 3,
-                               fill='#FFD700', outline='#FFFFFF', width=1, tags='cue')
-
-        while bounces < max_bounces and traveled_distance < max_distance:
-            next_x = current_x + dir_x * 10
-            next_y = current_y + dir_y * 10
-
-            # Check for cushion collisions
-            hit_wall = False
-            if next_x - self.BALL_RADIUS < margin:
-                next_x = margin + self.BALL_RADIUS
-                dir_x = -dir_x
-                hit_wall = True
-                bounces += 1
-            elif next_x + self.BALL_RADIUS > self.TABLE_WIDTH - margin:
-                next_x = self.TABLE_WIDTH - margin - self.BALL_RADIUS
-                dir_x = -dir_x
-                hit_wall = True
-                bounces += 1
-
-            if next_y - self.BALL_RADIUS < margin:
-                next_y = margin + self.BALL_RADIUS
-                dir_y = -dir_y
-                hit_wall = True
-                bounces += 1
-            elif next_y + self.BALL_RADIUS > self.TABLE_HEIGHT - margin:
-                next_y = self.TABLE_HEIGHT - margin - self.BALL_RADIUS
-                dir_y = -dir_y
-                hit_wall = True
-                bounces += 1
-
-            # Check for pocket hits
-            near_pocket = False
-            for pocket in self.POCKETS:
-                dx = next_x - pocket['x']
-                dy = next_y - pocket['y']
-                if math.sqrt(dx*dx + dy*dy) < self.POCKET_RADIUS:
-                    self.canvas.create_line(current_x, current_y, pocket['x'], pocket['y'],
-                                           fill='#FF6B6B', width=2, dash=(3, 3), tags='cue')
-                    near_pocket = True
-                    break
-
-            if near_pocket:
-                break
-
-            self.canvas.create_line(current_x, current_y, next_x, next_y,
-                                   fill='#FFD700', width=2, tags='cue')
-
-            if hit_wall:
-                self.canvas.create_oval(next_x - 4, next_y - 4, next_x + 4, next_y + 4,
-                                       fill='#FF6B6B', outline='#FFFFFF', width=1, tags='cue')
-
-            current_x, current_y = next_x, next_y
-            traveled_distance += 10
-
-    def update_balls(self):
-        # Update ball positions and handle physics
-        for ball in self.balls:
-            if ball['pocketed']:
-                continue
-
-            # Apply friction
-            ball['vx'] *= self.FRICTION
-            ball['vy'] *= self.FRICTION
-
-            # Stop very slow balls
-            if abs(ball['vx']) < 0.01:
-                ball['vx'] = 0
-            if abs(ball['vy']) < 0.01:
-                ball['vy'] = 0
-
-            # Update position
-            ball['x'] += ball['vx']
-            ball['y'] += ball['vy']
-
-            # Handle cushion bounces
-            margin = 35
-            if ball['x'] - self.BALL_RADIUS < margin:
-                ball['x'] = margin + self.BALL_RADIUS
-                ball['vx'] = -ball['vx'] * self.CUSHION_BOUNCE
-            elif ball['x'] + self.BALL_RADIUS > self.TABLE_WIDTH - margin:
-                ball['x'] = self.TABLE_WIDTH - margin - self.BALL_RADIUS
-                ball['vx'] = -ball['vx'] * self.CUSHION_BOUNCE
-
-            if ball['y'] - self.BALL_RADIUS < margin:
-                ball['y'] = margin + self.BALL_RADIUS
-                ball['vy'] = -ball['vy'] * self.CUSHION_BOUNCE
-            elif ball['y'] + self.BALL_RADIUS > self.TABLE_HEIGHT - margin:
-                ball['y'] = self.TABLE_HEIGHT - margin - self.BALL_RADIUS
-                ball['vy'] = -ball['vy'] * self.CUSHION_BOUNCE
-
-        # Handle ball-to-ball collisions
-        for i in range(len(self.balls)):
-            for j in range(i + 1, len(self.balls)):
-                ball1 = self.balls[i]
-                ball2 = self.balls[j]
-
-                if ball1['pocketed'] or ball2['pocketed']:
+            f_bullets(flow, items, st["text"], size=size - 0.4)
+
+    # =====================================================================
+    #  LAYOUT: CLASSIC  (centered header + ruled sections)
+    # =====================================================================
+    def _classic(self):
+        st, c, d = self.st, self.c, self.data
+        W, H = self.W, self.H
+        m = 56
+
+        y = H - 62
+        c.setFillColor(HexColor(st["accent"]))
+        c.setFont(self.f["bold"], 25)
+        c.drawCentredString(W / 2, y, (d.name or "Your Name").upper())
+        y -= 20
+        if d.title:
+            c.setFillColor(HexColor(st["muted"]))
+            c.setFont(self.f["regular"], 12)
+            c.drawCentredString(W / 2, y, d.title)
+            y -= 16
+        parts = contact_parts(d)
+        if parts:
+            c.setFillColor(HexColor("#6B7280"))
+            c.setFont(self.f["regular"], 8.8)
+            c.drawCentredString(W / 2, y, "   •   ".join(parts))
+            y -= 13
+        y -= 6
+        c.setStrokeColor(HexColor(st["accent"]))
+        c.setLineWidth(1.6)
+        c.line(m, y, W - m, y)
+        y -= 20
+
+        def newpage(flow):
+            c.showPage()
+            flow.y = H - 60
+
+        flow = Flow(self, m, W - 2 * m, y, 50, newpage, st["accent"])
+
+        if d.summary:
+            f_heading(flow, "Profile", st["heading"], gap_before=0)
+            f_text(flow, d.summary, self.f["regular"], 9.7, st["text"])
+        if d.experience:
+            f_heading(flow, "Experience", st["heading"])
+            self._exp_block(flow)
+        if d.education:
+            f_heading(flow, "Education", st["heading"])
+            self._edu_block(flow)
+        if d.skills:
+            f_heading(flow, "Skills", st["heading"])
+            self._plain_list(flow, d.skills, columns=2)
+        if d.languages:
+            f_heading(flow, "Languages", st["heading"])
+            f_text(flow, "   •   ".join(d.languages), self.f["regular"],
+                   9.6, st["text"])
+        if d.certifications:
+            f_heading(flow, "Certifications", st["heading"])
+            f_bullets(flow, d.certifications, st["text"], size=9.3)
+
+    # =====================================================================
+    #  LAYOUT: MINIMAL  (airy, left aligned, thin rules)
+    # =====================================================================
+    def _minimal(self):
+        st, c, d = self.st, self.c, self.data
+        W, H = self.W, self.H
+        m = 62
+
+        y = H - 72
+        c.setFillColor(HexColor(st["text"]))
+        c.setFont(self.f["bold"], 22)
+        c.drawString(m, y, d.name or "Your Name")
+        y -= 18
+        if d.title:
+            c.setFillColor(HexColor(st["muted"]))
+            c.setFont(self.f["regular"], 10.5)
+            c.drawString(m, y, d.title)
+            y -= 14
+        parts = contact_parts(d)
+        if parts:
+            c.setFillColor(HexColor("#8A8F98"))
+            c.setFont(self.f["regular"], 8.6)
+            c.drawString(m, y, "  /  ".join(parts))
+            y -= 10
+        y -= 8
+        c.setStrokeColor(HexColor("#DADDE2"))
+        c.setLineWidth(0.7)
+        c.line(m, y, W - m, y)
+        y -= 18
+
+        def newpage(flow):
+            c.showPage()
+            flow.y = H - 60
+
+        flow = Flow(self, m, W - 2 * m, y, 52, newpage, st["accent"])
+
+        if d.summary:
+            f_heading(flow, "About", "plain", gap_before=0, gap_after=4)
+            f_text(flow, d.summary, self.f["regular"], 9.8, st["text"])
+        if d.experience:
+            f_heading(flow, "Experience", "plain", gap_after=4)
+            self._exp_block(flow)
+        if d.education:
+            f_heading(flow, "Education", "plain", gap_after=4)
+            self._edu_block(flow)
+        if d.skills:
+            f_heading(flow, "Skills", "plain", gap_after=4)
+            f_text(flow, "   ·   ".join(d.skills), self.f["regular"],
+                   9.6, st["text"])
+        if d.languages:
+            f_heading(flow, "Languages", "plain", gap_after=4)
+            f_text(flow, "   ·   ".join(d.languages), self.f["regular"],
+                   9.6, st["text"])
+        if d.certifications:
+            f_heading(flow, "Certifications", "plain", gap_after=4)
+            f_bullets(flow, d.certifications, st["text"], size=9.3,
+                      bullet="–")
+
+    # =====================================================================
+    #  LAYOUT: BLOCKS  (filled section bars)
+    # =====================================================================
+    def _blocks(self):
+        st, c, d = self.st, self.c, self.data
+        W, H = self.W, self.H
+        m = 50
+
+        c.setFillColor(HexColor(st["accent"]))
+        c.rect(0, H - 96, W, 96, stroke=0, fill=1)
+        c.setFillColor(HexColor("#FFFFFF"))
+        c.setFont(self.f["bold"], 24)
+        c.drawString(m, H - 52, d.name or "Your Name")
+        if d.title:
+            c.setFont(self.f["regular"], 11)
+            c.setFillColor(HexColor("#EAF0FF"))
+            c.drawString(m, H - 70, d.title)
+        parts = contact_parts(d)
+        if parts:
+            c.setFont(self.f["regular"], 8.6)
+            c.setFillColor(HexColor("#EAF0FF"))
+            c.drawRightString(W - m, H - 40, parts[0])
+            if len(parts) > 1:
+                c.drawRightString(W - m, H - 54, "  |  ".join(parts[1:]))
+
+        def newpage(flow):
+            c.showPage()
+            c.setFillColor(HexColor(st["accent"]))
+            c.rect(0, H - 14, W, 14, stroke=0, fill=1)
+            flow.y = H - 50
+
+        flow = Flow(self, m, W - 2 * m, H - 126, 50, newpage, st["accent"])
+
+        if d.summary:
+            f_heading(flow, "Profile", "bar", gap_before=0)
+            f_text(flow, d.summary, self.f["regular"], 9.7, st["text"])
+        if d.experience:
+            f_heading(flow, "Experience", "bar")
+            self._exp_block(flow)
+        if d.education:
+            f_heading(flow, "Education", "bar")
+            self._edu_block(flow)
+        if d.skills:
+            f_heading(flow, "Skills", "bar")
+            self._plain_list(flow, d.skills, columns=2)
+        if d.languages:
+            f_heading(flow, "Languages", "bar")
+            f_text(flow, "   •   ".join(d.languages), self.f["regular"],
+                   9.6, st["text"])
+        if d.certifications:
+            f_heading(flow, "Certifications", "bar")
+            f_bullets(flow, d.certifications, st["text"], size=9.3)
+
+    # =====================================================================
+    #  LAYOUT: TIMELINE  (vertical rail with dots)
+    # =====================================================================
+    def _timeline(self):
+        st, c, d = self.st, self.c, self.data
+        W, H = self.W, self.H
+        m = 58
+        rail_x = m + 6
+
+        y = H - 64
+        c.setFillColor(HexColor(st["accent"]))
+        c.setFont(self.f["bold"], 24)
+        c.drawString(m, y, d.name or "Your Name")
+        y -= 19
+        if d.title:
+            c.setFillColor(HexColor(st["muted"]))
+            c.setFont(self.f["regular"], 11.5)
+            c.drawString(m, y, d.title)
+            y -= 15
+        parts = contact_parts(d)
+        if parts:
+            c.setFillColor(HexColor("#6B7280"))
+            c.setFont(self.f["regular"], 8.6)
+            c.drawString(m, y, "   •   ".join(parts))
+            y -= 12
+        y -= 8
+        c.setStrokeColor(HexColor(st["accent"]))
+        c.setLineWidth(0.8)
+        c.line(m, y, W - m, y)
+        y -= 18
+
+        def newpage(flow):
+            c.showPage()
+            flow.y = H - 60
+
+        flow = Flow(self, m + 22, W - 2 * m - 22, y, 52, newpage, st["accent"])
+        rail_left = m + 6
+
+        if d.summary:
+            f_heading(flow, "Profile", st["heading"], gap_before=0)
+            f_text(flow, d.summary, self.f["regular"], 9.7, st["text"])
+
+        if d.experience:
+            f_heading(flow, "Experience", st["heading"])
+            for job in d.experience:
+                role = job.get("role", "").strip()
+                comp = job.get("company", "").strip()
+                dates = job.get("dates", "").strip()
+                if not (role or comp):
                     continue
+                page_before = c.getPageNumber()
+                top_y = flow.y - 2
+                flow.y -= 2
+                flow.need(30)
+                c.setFillColor(HexColor(st["text"]))
+                c.setFont(self.f["bold"], 10.8)
+                c.drawString(flow.x, flow.y, role or comp)
+                if dates:
+                    c.setFont(self.f["regular"], 9)
+                    c.setFillColor(HexColor(st["muted"]))
+                    c.drawRightString(flow.x + flow.w, flow.y, dates)
+                flow.y -= 13
+                if role and comp:
+                    c.setFont(self.f["italic"], 9.4)
+                    c.setFillColor(HexColor(st["accent"]))
+                    c.drawString(flow.x, flow.y, comp)
+                    flow.y -= 13
+                desc = job_description(job)
+                if desc:
+                    f_bullets(flow, desc, st["text"], size=9.2)
+                flow.y -= 8
+                if c.getPageNumber() == page_before:
+                    c.setStrokeColor(HexColor(st["accent"]))
+                    c.setLineWidth(1.2)
+                    c.line(rail_left, top_y + 3, rail_left, flow.y + 12)
+                    c.setFillColor(HexColor(st["accent"]))
+                    c.circle(rail_left, top_y + 3, 3.4, stroke=0, fill=1)
 
-                dx = ball2['x'] - ball1['x']
-                dy = ball2['y'] - ball1['y']
-                distance = math.sqrt(dx * dx + dy * dy)
+        if d.education:
+            f_heading(flow, "Education", st["heading"])
+            self._edu_block(flow)
+        if d.skills:
+            f_heading(flow, "Skills", st["heading"])
+            self._plain_list(flow, d.skills, columns=2)
+        if d.languages:
+            f_heading(flow, "Languages", st["heading"])
+            f_text(flow, "   •   ".join(d.languages), self.f["regular"],
+                   9.6, st["text"])
+        if d.certifications:
+            f_heading(flow, "Certifications", st["heading"])
+            f_bullets(flow, d.certifications, st["text"], size=9.3)
 
-                if distance < self.BALL_RADIUS * 2:
-                    # Collision response
-                    angle = math.atan2(dy, dx)
-                    sin_angle = math.sin(angle)
-                    cos_angle = math.cos(angle)
+    # =====================================================================
+    #  LAYOUT: SIDEBAR (left or right)
+    # =====================================================================
+    def _sidebar(self, side="left"):
+        st, c, d = self.st, self.c, self.data
+        W, H = self.W, self.H
+        SBW = 198
 
-                    # Rotate velocities
-                    vx1 = ball1['vx'] * cos_angle + ball1['vy'] * sin_angle
-                    vy1 = ball1['vy'] * cos_angle - ball1['vx'] * sin_angle
-                    vx2 = ball2['vx'] * cos_angle + ball2['vy'] * sin_angle
-                    vy2 = ball2['vy'] * cos_angle - ball2['vx'] * sin_angle
+        # page-1 sidebar panel
+        c.setFillColor(HexColor(st["sidebar"]))
+        if side == "left":
+            c.rect(0, 0, SBW, H, stroke=0, fill=1)
+            sx = 24
+        else:
+            c.rect(W - SBW, 0, SBW, H, stroke=0, fill=1)
+            sx = W - SBW + 24
+        sw = SBW - 48
 
-                    # Exchange x velocities
-                    final_vx1 = vx2
-                    final_vx2 = vx1
+        sf = Flow(self, sx, sw, H - 62, 34, None, st["sidebar_text"])
 
-                    # Rotate back
-                    ball1['vx'] = final_vx1 * cos_angle - vy1 * sin_angle
-                    ball1['vy'] = vy1 * cos_angle + final_vx1 * sin_angle
-                    ball2['vx'] = final_vx2 * cos_angle - vy2 * sin_angle
-                    ball2['vy'] = vy2 * cos_angle + final_vx2 * sin_angle
+        # --- name / title
+        c.setFillColor(HexColor(st["sidebar_text"]))
+        c.setFont(self.f["bold"], 20)
+        for ln in simpleSplit(d.name or "Your Name", self.f["bold"], 20, sw):
+            c.drawString(sx, sf.y, ln)
+            sf.y -= 23
+        if d.title:
+            c.setFillColor(HexColor(st["sidebar_muted"]))
+            c.setFont(self.f["regular"], 10)
+            for ln in simpleSplit(d.title, self.f["regular"], 10, sw):
+                c.drawString(sx, sf.y, ln)
+                sf.y -= 13
+        sf.y -= 10
+        c.setStrokeColor(HexColor(st["sidebar_muted"]))
+        c.setLineWidth(0.6)
+        c.line(sx, sf.y, sx + sw, sf.y)
+        sf.y -= 16
 
-                    # Separate balls
-                    overlap = self.BALL_RADIUS * 2 - distance
-                    separation_x = (overlap / 2) * cos_angle
-                    separation_y = (overlap / 2) * sin_angle
-                    ball1['x'] -= separation_x
-                    ball1['y'] -= separation_y
-                    ball2['x'] += separation_x
-                    ball2['y'] += separation_y
+        def sb_head(text):
+            c.setFillColor(HexColor(st["sidebar_text"]))
+            c.setFont(self.f["bold"], 9.2)
+            c.drawString(sx, sf.y, text.upper())
+            sf.y -= 5
+            c.setStrokeColor(HexColor(st["sidebar_muted"]))
+            c.setLineWidth(0.5)
+            c.line(sx, sf.y, sx + sw, sf.y)
+            sf.y -= 13
 
-        # Check for pocketing
-        for ball in self.balls:
-            if ball['pocketed']:
-                continue
+        def sb_lines(text, size=8.8, color=None):
+            c.setFont(self.f["regular"], size)
+            c.setFillColor(HexColor(color or st["sidebar_text"]))
+            for para in str(text).split("\n"):
+                for ln in simpleSplit(para, self.f["regular"], size, sw) or [""]:
+                    c.drawString(sx, sf.y, ln)
+                    sf.y -= size * 1.42
 
-            for pocket in self.POCKETS:
-                dx = ball['x'] - pocket['x']
-                dy = ball['y'] - pocket['y']
-                distance = math.sqrt(dx * dx + dy * dy)
+        # --- contact
+        parts = contact_parts(d)
+        if parts:
+            sb_head("Contact")
+            for p in parts:
+                sb_lines(p)
+            sf.y -= 6
 
-                if distance < self.POCKET_RADIUS - self.BALL_RADIUS / 2:
-                    if ball['number'] == 0:  # Cue ball
-                        # Return cue ball to center of table
-                        ball['x'] = self.TABLE_WIDTH / 2
-                        ball['y'] = self.TABLE_HEIGHT / 2
-                        ball['vx'] = 0
-                        ball['vy'] = 0
-                        # Switch turns as penalty for pocketing cue ball
-                        self.current_player = 2 if self.current_player == 1 else 1
-                    else:
-                        ball['pocketed'] = True
-                        ball['vx'] = 0
-                        ball['vy'] = 0
+        # --- skills
+        if d.skills:
+            sb_head("Skills")
+            for s in d.skills:
+                sb_lines("• " + str(s))
+            sf.y -= 6
 
-                        # Handle ball assignment in 8-ball
-                        if self.game_mode == '8ball' and not self.balls_assigned:
-                            if ball['type'] == 'solid':
-                                self.player1_balls = ['solid']
-                                self.player2_balls = ['stripe']
-                            elif ball['type'] == 'stripe':
-                                self.player1_balls = ['stripe']
-                                self.player2_balls = ['solid']
-                            self.balls_assigned = True
-                    break
+        # --- languages
+        if d.languages:
+            sb_head("Languages")
+            for s in d.languages:
+                sb_lines("• " + str(s))
+            sf.y -= 6
 
-    def balls_moving(self):
-        return any(not b['pocketed'] and (abs(b['vx']) > 0.01 or abs(b['vy']) > 0.01)
-                  for b in self.balls)
+        # --- certifications
+        if d.certifications:
+            sb_head("Certifications")
+            for s in d.certifications:
+                sb_lines("• " + str(s))
 
-    def handle_mouse_move(self, event):
-        self.cue_position = {'x': event.x, 'y': event.y}
+        # --- main column
+        def newpage(flow):
+            c.showPage()
+            c.setFillColor(HexColor(st["accent"]))
+            c.rect(0, H - 12, W, 12, stroke=0, fill=1)
+            flow.y = H - 48
 
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if cue_ball and not self.balls_moving():
-            if not self.is_dragging:
-                # Always set aiming angle based on mouse position relative to cue ball
-                dx = event.x - cue_ball['x']
-                dy = event.y - cue_ball['y']
-                self.aim_angle = math.atan2(dy, dx)
+        if side == "left":
+            mx = SBW + 28
+            mw = W - SBW - 60
+        else:
+            mx = 40
+            mw = W - SBW - 60
 
-            elif self.is_dragging:
-                # When dragging, calculate power based on distance from drag start
-                dx = event.x - self.drag_start['x']
-                dy = event.y - self.drag_start['y']
-                drag_distance = math.sqrt(dx * dx + dy * dy)
+        flow = Flow(self, mx, mw, H - 62, 50, newpage, st["accent"])
 
-                # Power increases as you drag away from the starting point
-                self.power = min(100, drag_distance * 0.5)
-                self.cue_pull_distance = 30 + self.power * 2
-                self.power_label.config(text=f"Power: {int(self.power)}%")
+        if d.summary:
+            f_heading(flow, "Profile", st["heading"], gap_before=0)
+            f_text(flow, d.summary, self.f["regular"], 9.7, st["text"])
+        if d.experience:
+            f_heading(flow, "Experience", st["heading"])
+            self._exp_block(flow)
+        if d.education:
+            f_heading(flow, "Education", st["heading"])
+            self._edu_block(flow)
 
-    def handle_mouse_down(self, event):
-        if self.balls_moving():
-            return
+    # =====================================================================
+    #  LAYOUT: HEADER BAND (full-width band + 2 column body)
+    # =====================================================================
+    def _header_band(self):
+        st, c, d = self.st, self.c, self.data
+        W, H = self.W, self.H
+        band_h = 112
 
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if not cue_ball:
-            return
+        c.setFillColor(HexColor(st["accent"]))
+        c.rect(0, H - band_h, W, band_h, stroke=0, fill=1)
 
-        # Allow clicking anywhere on the table to start aiming
-        self.is_dragging = True
-        self.drag_start = {'x': event.x, 'y': event.y}
-        self.locked_angle = self.aim_angle  # Lock the current aiming angle
-        self.cue_pull_distance = 30
-        self.power = 0
-        self.canvas.config(cursor='crosshair')
-        self.power_label.config(text="Power: 0%")
+        c.setFillColor(HexColor("#FFFFFF"))
+        c.setFont(self.f["bold"], 25)
+        c.drawString(46, H - 52, d.name or "Your Name")
+        if d.title:
+            c.setFont(self.f["regular"], 11.5)
+            c.setFillColor(HexColor("#E9EFFF"))
+            c.drawString(46, H - 71, d.title)
+        parts = contact_parts(d)
+        if parts:
+            c.setFont(self.f["regular"], 8.7)
+            c.setFillColor(HexColor("#E9EFFF"))
+            yy = H - 40
+            for p in parts[:4]:
+                c.drawRightString(W - 46, yy, p)
+                yy -= 13
 
-    def handle_mouse_up(self, event):
-        if not self.is_dragging or self.balls_moving():
-            return
+        body_top = H - band_h - 28
+        left_x = 46
+        left_w = (W - 92) * 0.62 - 12
+        right_x = left_x + left_w + 26
+        right_w = W - 92 - left_w - 26
 
-        cue_ball = next((b for b in self.balls if b['number'] == 0 and not b['pocketed']), None)
-        if cue_ball and self.power > 1:  # Lower threshold for shooting
-            speed = self.power * 0.15  # Adjusted speed multiplier
-            cue_ball['vx'] = math.cos(self.locked_angle) * speed
-            cue_ball['vy'] = math.sin(self.locked_angle) * speed
+        def newpage(flow):
+            c.showPage()
+            c.setFillColor(HexColor(st["accent"]))
+            c.rect(0, H - 14, W, 14, stroke=0, fill=1)
+            flow.y = H - 50
 
-        self.is_dragging = False
-        self.locked_angle = None
-        self.cue_pull_distance = 0
-        self.power = 0
-        self.power_label.config(text="Power: 0%")
-        self.canvas.config(cursor='crosshair')
+        left = Flow(self, left_x, left_w, body_top, 50, newpage, st["accent"])
+        right = Flow(self, right_x, right_w, body_top, 50, None, st["accent"])
 
-    def update_ui(self):
-        # Update player turn
-        player_text = f"Player {self.current_player}'s Turn"
-        if self.game_mode == 'ai':
-            player_text = f"AI Player {self.current_player}'s Turn"
-        elif self.balls_assigned and self.game_mode == '8ball':
-            ball_type = self.player1_balls[0] if self.current_player == 1 else self.player2_balls[0]
-            player_text += f" ({ball_type})"
+        # --- right column (short static lists)
+        if d.skills:
+            f_heading(right, "Skills", st["heading"], gap_before=0)
+            f_bullets(right, d.skills, st["text"], size=9.2)
+        if d.languages:
+            f_heading(right, "Languages", st["heading"])
+            f_bullets(right, d.languages, st["text"], size=9.2)
+        if d.certifications:
+            f_heading(right, "Certifications", st["heading"])
+            f_bullets(right, d.certifications, st["text"], size=9.2)
 
+        # --- left column (long, paginated)
+        if d.summary:
+            f_heading(left, "Profile", st["heading"], gap_before=0)
+            f_text(left, d.summary, self.f["regular"], 9.7, st["text"])
+        if d.experience:
+            f_heading(left, "Experience", st["heading"])
+            self._exp_block(left)
+        if d.education:
+            f_heading(left, "Education", st["heading"])
+            self._edu_block(left)
+
+
+# =============================================================================
+#  PREVIEW RENDERER  (Tkinter schematic of the selected style)
+# =============================================================================
+
+def draw_preview(cnv, st, data, W, H):
+    cnv.delete("all")
+    if W < 60 or H < 60:
+        return
+
+    margin = 12
+    ph = H - 2 * margin
+    pw = ph * 595.0 / 842.0
+    if pw > W - 2 * margin:
+        pw = W - 2 * margin
+        ph = pw * 842.0 / 595.0
+    ox = (W - pw) / 2
+    oy = (H - ph) / 2
+    s = pw / 595.0
+
+    def R(x, y, w, h, fill, outline=""):
+        cnv.create_rectangle(ox + x * s, oy + y * s,
+                             ox + (x + w) * s, oy + (y + h) * s,
+                             fill=fill, outline=outline)
+
+    def T(x, y, txt, size, color, bold=False, anchor="nw"):
+        px = max(5, int(size * s))
+        fam = "Times" if st["font"] == "serif" else "Helvetica"
+        cnv.create_text(ox + x * s, oy + y * s, text=txt, fill=color,
+                        anchor=anchor,
+                        font=(fam, -px, "bold" if bold else "normal"))
+
+    def lines(x, y, w, n, color="#C9CFD8", gap=11, h=3.2, widths=None):
+        for i in range(n):
+            ww = w if not widths else widths[i % len(widths)]
+            R(x, y + i * gap, ww, h, color)
+
+    # page shadow + paper
+    cnv.create_rectangle(ox + 4, oy + 4, ox + pw + 4, oy + ph + 4,
+                         fill="#D3D9E2", outline="")
+    R(0, 0, 595, 842, "#FFFFFF", "#C3CAD6")
+
+    name = data.name or "Your Name"
+    title = data.title or "Professional Title"
+    accent = st["accent"]
+    muted = st["muted"]
+    layout = st["layout"]
+
+    if layout in ("sidebar_left", "sidebar_right"):
+        SBW = 198
+        if layout == "sidebar_left":
+            R(0, 0, SBW, 842, st["sidebar"])
+            sx = 22
+            mx = SBW + 26
+        else:
+            R(595 - SBW, 0, SBW, 842, st["sidebar"])
+            sx = 595 - SBW + 22
+            mx = 38
+        mw = 595 - SBW - 58
+        T(sx, 42, name, 19, st["sidebar_text"], bold=True)
+        T(sx, 68, title, 9, st["sidebar_muted"])
+        R(sx, 88, SBW - 44, 0.8, st["sidebar_muted"])
+        for i, lab in enumerate(["CONTACT", "SKILLS", "LANGUAGES"]):
+            yy = 108 + i * 88
+            T(sx, yy, lab, 7.5, st["sidebar_text"], bold=True)
+            R(sx, yy + 12, SBW - 44, 0.6, st["sidebar_muted"])
+            lines(sx, yy + 22, SBW - 44, 4 if lab != "SKILLS" else 5,
+                  st["sidebar_muted"], gap=10,
+                  widths=[SBW - 44, SBW - 70, SBW - 55, SBW - 80])
+        # main
+        for i, lab in enumerate(["PROFILE", "EXPERIENCE", "EDUCATION"]):
+            yy = 40 + i * 168
+            T(mx, yy, lab, 8.5, accent, bold=True)
+            R(mx, yy + 14, mw, 0.9, accent)
+            if lab == "EXPERIENCE":
+                lines(mx, yy + 28, mw, 8, "#C9CFD8", gap=12,
+                      widths=[mw, mw - 60, mw * 0.8, mw - 30,
+                              mw * 0.9, mw - 70, mw * 0.7, mw * 0.5])
+            else:
+                lines(mx, yy + 28, mw, 5, "#C9CFD8", gap=12,
+                      widths=[mw, mw - 40, mw * 0.85, mw - 90, mw * 0.6])
+
+    elif layout == "header_band":
+        R(0, 0, 595, 112, accent)
+        T(44, 32, name, 23, "#FFFFFF", bold=True)
+        T(44, 62, title, 9.5, "#E9EFFF")
+        for i in range(3):
+            T(551, 30 + i * 15, ["email@mail.com", "+00 000 000", "City"],
+              7.5, "#E9EFFF", anchor="ne")
+        # right column
+        for i, lab in enumerate(["SKILLS", "LANGUAGES", "CERTS"]):
+            yy = 142 + i * 150
+            R(378, yy, 3, 11, accent)
+            T(388, yy - 1, lab, 7.5, accent, bold=True)
+            lines(378, yy + 18, 175, 5, "#C9CFD8", gap=11,
+                  widths=[175, 150, 165, 120, 140])
+        # left column
+        for i, lab in enumerate(["PROFILE", "EXPERIENCE", "EDUCATION"]):
+            yy = 142 + i * 200
+            R(44, yy, 3, 11, accent)
+            T(54, yy - 1, lab, 7.5, accent, bold=True)
+            if lab == "EXPERIENCE":
+                lines(44, yy + 20, 310, 9, "#C9CFD8", gap=11,
+                      widths=[310, 250, 290, 200, 300, 260, 180, 240, 150])
+            else:
+                lines(44, yy + 20, 310, 5, "#C9CFD8", gap=11,
+                      widths=[310, 260, 300, 230, 170])
+
+    elif layout == "blocks":
+        R(0, 0, 595, 96, accent)
+        T(46, 26, name, 22, "#FFFFFF", bold=True)
+        T(46, 58, title, 9.5, "#EAF0FF")
+        T(549, 30, "email@mail.com", 7.5, "#EAF0FF", anchor="ne")
+        for i, lab in enumerate(["PROFILE", "EXPERIENCE", "EDUCATION",
+                                 "SKILLS"]):
+            yy = 126 + i * 165
+            R(46, yy, 503, 17, accent)
+            T(54, yy + 4, lab, 7.5, "#FFFFFF", bold=True)
+            if lab == "EXPERIENCE":
+                lines(46, yy + 28, 503, 8, "#C9CFD8", gap=12,
+                      widths=[503, 430, 470, 360, 500, 400, 300, 260])
+            elif lab == "SKILLS":
+                lines(46, yy + 28, 240, 5, "#C9CFD8", gap=11,
+                      widths=[240, 200, 230, 170, 210])
+                lines(309, yy + 28, 240, 5, "#C9CFD8", gap=11,
+                      widths=[240, 200, 230, 170, 210])
+            else:
+                lines(46, yy + 28, 503, 5, "#C9CFD8", gap=12,
+                      widths=[503, 440, 480, 380, 300])
+
+    elif layout == "timeline":
+        T(56, 34, name, 22, accent, bold=True)
+        T(56, 62, title, 9.5, muted)
+        R(56, 84, 483, 0.9, accent)
+        rail = 62
+        for i, lab in enumerate(["PROFILE", "EXPERIENCE"]):
+            yy = 110 + i * 190
+            R(56, yy, 3, 11, accent)
+            T(66, yy - 1, lab, 7.5, accent, bold=True)
+            if lab == "EXPERIENCE":
+                for k in range(3):
+                    ey = yy + 28 + k * 58
+                    cnv.create_oval(ox + (rail - 3.2) * s, oy + (ey - 3.2) * s,
+                                    ox + (rail + 3.2) * s, oy + (ey + 3.2) * s,
+                                    fill=accent, outline="")
+                    if k < 2:
+                        R(rail - 0.6, ey + 4, 1.2, 50, accent)
+                    lines(80, ey, 440, 3, "#C9CFD8", gap=11,
+                          widths=[300, 440, 380])
+            else:
+                lines(80, yy + 24, 440, 5, "#C9CFD8", gap=12,
+                      widths=[440, 380, 420, 300, 240])
+
+    else:  # classic / minimal
+        centered = layout == "classic"
+        if centered:
+            T(297, 40, name.upper(), 21, accent, bold=True, anchor="n")
+            T(297, 70, title, 9.5, muted, anchor="n")
+            T(297, 88, "email  •  phone  •  city", 7.5, "#6B7280", anchor="n")
+            R(56, 106, 483, 1.3, accent)
+        else:
+            T(60, 40, name, 20, "#111111" if st["font"] == "sans" else muted,
+              bold=True)
+            T(60, 68, title, 9.5, muted)
+            T(60, 86, "email  /  phone  /  city", 7.5, "#8A8F98")
+            R(60, 104, 475, 0.7, "#DADDE2")
+
+        for i, lab in enumerate(["PROFILE", "EXPERIENCE", "EDUCATION",
+                                 "SKILLS"]):
+            yy = 132 + i * 168
+            if st["heading"] == "rule":
+                T(60, yy, lab, 7.5, accent, bold=True)
+                R(60, yy + 13, 475, 0.9, accent)
+            else:
+                T(60, yy, lab, 7.5, accent, bold=True)
+            if lab == "EXPERIENCE":
+                lines(60, yy + 26, 475, 9, "#C9CFD8", gap=12,
+                      widths=[475, 400, 450, 330, 470, 380, 280, 240, 160])
+            elif lab == "SKILLS":
+                lines(60, yy + 26, 225, 5, "#C9CFD8", gap=11,
+                      widths=[225, 190, 215, 160, 200])
+                lines(310, yy + 26, 225, 5, "#C9CFD8", gap=11,
+                      widths=[225, 190, 215, 160, 200])
+            else:
+                lines(60, yy + 26, 475, 5, "#C9CFD8", gap=12,
+                      widths=[475, 410, 450, 350, 260])
+
+
+# =============================================================================
+#  GUI
+# =============================================================================
+
+BG        = "#EEF2F7"
+PANEL     = "#FFFFFF"
+ACCENT    = "#2563EB"
+ACCENT_DK = "#1D4ED8"
+TEXT      = "#1F2937"
+MUTED     = "#6B7280"
+BORDER    = "#D7DEE8"
+
+
+class ScrollFrame(ttk.Frame):
+    """A vertically scrollable container."""
+
+    def __init__(self, parent, bg=PANEL):
+        super().__init__(parent, style="Panel.TFrame")
+        self.canvas = tk.Canvas(self, highlightthickness=0, bg=bg, bd=0)
+        self.vsb = ttk.Scrollbar(self, orient="vertical",
+                                 command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+        self.vsb.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        self.inner = tk.Frame(self.canvas, bg=bg)
+        self._win = self.canvas.create_window((0, 0), window=self.inner,
+                                              anchor="nw")
+        self.inner.bind("<Configure>", self._on_inner)
+        self.canvas.bind("<Configure>", self._on_canvas)
+        self.canvas.bind("<Enter>", self._bind_wheel)
+        self.canvas.bind("<Leave>", self._unbind_wheel)
+
+    def _on_inner(self, _e=None):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _on_canvas(self, e):
+        self.canvas.itemconfigure(self._win, width=e.width)
+
+    def _bind_wheel(self, _e=None):
+        self.canvas.bind_all("<MouseWheel>", self._wheel)
+        self.canvas.bind_all("<Button-4>", self._wheel)
+        self.canvas.bind_all("<Button-5>", self._wheel)
+
+    def _unbind_wheel(self, _e=None):
+        self.canvas.unbind_all("<MouseWheel>")
+        self.canvas.unbind_all("<Button-4>")
+        self.canvas.unbind_all("<Button-5>")
+
+    def _wheel(self, e):
+        if e.num == 4:
+            delta = -1
+        elif e.num == 5:
+            delta = 1
+        else:
+            delta = -1 if e.delta > 0 else 1
+        self.canvas.yview_scroll(delta, "units")
+
+
+class Card(tk.Frame):
+    """A white rounded-ish panel."""
+
+    def __init__(self, parent, **kw):
+        super().__init__(parent, bg=PANEL, highlightbackground=BORDER,
+                         highlightthickness=1, bd=0, **kw)
+
+
+def field_label(parent, text):
+    return tk.Label(parent, text=text.upper(), bg=PANEL, fg=MUTED,
+                    font=("Segoe UI", 7, "bold"), anchor="w")
+
+
+def entry(parent, textvariable=None):
+    e = tk.Entry(parent, textvariable=textvariable, bg="#F7F9FC", fg=TEXT,
+                 relief="flat", highlightthickness=1,
+                 highlightbackground=BORDER, highlightcolor=ACCENT,
+                 insertbackground=TEXT, font=("Segoe UI", 10))
+    return e
+
+
+def text_area(parent, height=4):
+    t = tk.Text(parent, height=height, bg="#F7F9FC", fg=TEXT, relief="flat",
+                highlightthickness=1, highlightbackground=BORDER,
+                highlightcolor=ACCENT, insertbackground=TEXT, wrap="word",
+                font=("Segoe UI", 10), padx=6, pady=4)
+    return t
+
+
+# ---------------------------------------------------------------- entry rows
+
+class ExperienceRow(Card):
+    def __init__(self, parent, on_remove):
+        super().__init__(parent)
+        self.on_remove = on_remove
+        pad = tk.Frame(self, bg=PANEL)
+        pad.pack(fill="x", padx=8, pady=8)
+
+        top = tk.Frame(pad, bg=PANEL)
+        top.pack(fill="x")
+        self.v_role = tk.StringVar()
+        self.v_company = tk.StringVar()
+        self.v_dates = tk.StringVar()
+
+        c1 = tk.Frame(top, bg=PANEL); c1.pack(side="left", fill="x", expand=True)
+        field_label(c1, "Role / Title").pack(fill="x")
+        entry(c1, self.v_role).pack(fill="x", pady=(2, 0))
+
+        c2 = tk.Frame(top, bg=PANEL); c2.pack(side="left", fill="x",
+                                              expand=True, padx=(6, 0))
+        field_label(c2, "Company").pack(fill="x")
+        entry(c2, self.v_company).pack(fill="x", pady=(2, 0))
+
+        c3 = tk.Frame(top, bg=PANEL); c3.pack(side="left", fill="x",
+                                              expand=True, padx=(6, 0))
+        field_label(c3, "Dates").pack(fill="x")
+        entry(c3, self.v_dates).pack(fill="x", pady=(2, 0))
+
+        field_label(pad, "Achievements (one per line)").pack(fill="x",
+                                                             pady=(8, 2))
+        self.txt = text_area(pad, 3)
+        self.txt.pack(fill="x")
+
+        btns = tk.Frame(pad, bg=PANEL)
+        btns.pack(fill="x", pady=(6, 0))
+        tk.Button(btns, text="Remove", command=self._remove, relief="flat",
+                  bg="#FDECEC", fg="#B91C1C", activebackground="#FBD5D5",
+                  font=("Segoe UI", 8), cursor="hand2", bd=0,
+                  padx=10, pady=2).pack(side="right")
+
+    def _remove(self):
+        self.on_remove(self)
+
+    def get(self):
+        return {
+            "role": self.v_role.get().strip(),
+            "company": self.v_company.get().strip(),
+            "dates": self.v_dates.get().strip(),
+            "description": self.txt.get("1.0", "end").strip(),
+        }
+
+    def is_empty(self):
+        g = self.get()
+        return not (g["role"] or g["company"] or g["description"])
+
+
+class EducationRow(Card):
+    LEVELS = [
+        ("", "—"),
+        ("PhD", "PhD / Doctorate"),
+        ("Masters", "Masters"),
+        ("Bachelors", "Bachelors"),
+        ("Associates", "Associates"),
+        ("A Levels", "A Levels"),
+        ("GCSE", "GCSE"),
+        ("Diploma", "Diploma"),
+        ("Certificate", "Certificate"),
+        ("High School", "High School"),
+    ]
+
+    def __init__(self, parent, on_remove):
+        super().__init__(parent)
+        self.on_remove = on_remove
+        pad = tk.Frame(self, bg=PANEL)
+        pad.pack(fill="x", padx=8, pady=8)
+
+        self.v_degree = tk.StringVar()
+        self.v_school = tk.StringVar()
+        self.v_year = tk.StringVar()
+        self.v_details = tk.StringVar()
+        self.v_level = tk.StringVar()
+
+        top = tk.Frame(pad, bg=PANEL); top.pack(fill="x")
+        c1 = tk.Frame(top, bg=PANEL); c1.pack(side="left", fill="x", expand=True)
+        field_label(c1, "Degree").pack(fill="x")
+        entry(c1, self.v_degree).pack(fill="x", pady=(2, 0))
+
+        c2 = tk.Frame(top, bg=PANEL); c2.pack(side="left", fill="x",
+                                               expand=True, padx=(6, 0))
+        field_label(c2, "Level").pack(fill="x")
+        self.combo_level = ttk.Combobox(c2, textvariable=self.v_level,
+                                        values=[l for _, l in self.LEVELS],
+                                        state="readonly", font=("Segoe UI", 10))
+        self.combo_level.pack(fill="x", pady=(2, 0))
+
+        c3 = tk.Frame(top, bg=PANEL); c3.pack(side="left", fill="x",
+                                               expand=True, padx=(6, 0))
+        field_label(c3, "School").pack(fill="x")
+        entry(c3, self.v_school).pack(fill="x", pady=(2, 0))
+
+        c4 = tk.Frame(top, bg=PANEL); c4.pack(side="left", fill="x",
+                                               expand=True, padx=(6, 0))
+        field_label(c4, "Year").pack(fill="x")
+        entry(c4, self.v_year).pack(fill="x", pady=(2, 0))
+
+        field_label(pad, "Details").pack(fill="x", pady=(8, 2))
+        entry(pad, self.v_details).pack(fill="x")
+
+        btns = tk.Frame(pad, bg=PANEL)
+        btns.pack(fill="x", pady=(6, 0))
+        tk.Button(btns, text="Remove", command=lambda: self.on_remove(self),
+                  relief="flat", bg="#FDECEC", fg="#B91C1C",
+                  activebackground="#FBD5D5", font=("Segoe UI", 8),
+                  cursor="hand2", bd=0, padx=10, pady=2).pack(side="right")
+
+    def get(self):
+        return {
+            "degree": self.v_degree.get().strip(),
+            "level": self.v_level.get().strip(),
+            "school": self.v_school.get().strip(),
+            "year": self.v_year.get().strip(),
+            "details": self.v_details.get().strip(),
+        }
+
+    def is_empty(self):
+        g = self.get()
+        return not (g["degree"] or g["school"] or g["details"])
+
+
+class StyleTile(tk.Frame):
+    def __init__(self, parent, style, index, on_select):
+        super().__init__(parent, bg=PANEL, cursor="hand2",
+                         highlightthickness=2, highlightbackground=PANEL)
+        self.style = style
+        self.index = index
+        self.on_select = on_select
+        self.selected = False
+
+        swatch = tk.Canvas(self, width=52, height=34, bg=PANEL,
+                           highlightthickness=0)
+        swatch.pack(side="left", padx=(6, 8), pady=6)
+        self._draw_swatch(swatch, style)
+
+        right = tk.Frame(self, bg=PANEL)
+        right.pack(side="left", fill="both", expand=True, pady=6)
+        self.lbl = tk.Label(right, text="%02d  %s" % (index + 1, style["name"]),
+                            bg=PANEL, fg=TEXT, font=("Segoe UI", 9),
+                            anchor="w")
+        self.lbl.pack(fill="x")
+        self.sub = tk.Label(right, text=style["layout"].replace("_", " "),
+                            bg=PANEL, fg=MUTED, font=("Segoe UI", 7),
+                            anchor="w")
+        self.sub.pack(fill="x")
+
+        for w in (self, swatch, right, self.lbl, self.sub):
+            w.bind("<Button-1>", lambda e: self.on_select(self.index))
+
+    @staticmethod
+    def _draw_swatch(cnv, style):
+        cnv.create_rectangle(1, 1, 51, 33, outline=BORDER, fill="#FFFFFF")
+        lay = style["layout"]
+        ac = style["accent"]
+        sb = style["sidebar"]
+        if lay == "sidebar_left":
+            cnv.create_rectangle(1, 1, 16, 33, fill=sb, outline="")
+            cnv.create_rectangle(20, 6, 47, 8, fill=ac, outline="")
+            for i in range(3):
+                cnv.create_rectangle(20, 13 + i * 6, 47, 14 + i * 6,
+                                     fill="#C9CFD8", outline="")
+        elif lay == "sidebar_right":
+            cnv.create_rectangle(37, 1, 51, 33, fill=sb, outline="")
+            cnv.create_rectangle(5, 6, 32, 8, fill=ac, outline="")
+            for i in range(3):
+                cnv.create_rectangle(5, 13 + i * 6, 32, 14 + i * 6,
+                                     fill="#C9CFD8", outline="")
+        elif lay == "header_band":
+            cnv.create_rectangle(1, 1, 51, 11, fill=ac, outline="")
+            for i in range(3):
+                cnv.create_rectangle(5, 16 + i * 6, 27, 17 + i * 6,
+                                     fill="#C9CFD8", outline="")
+                cnv.create_rectangle(31, 16 + i * 6, 47, 17 + i * 6,
+                                     fill="#C9CFD8", outline="")
+        elif lay == "blocks":
+            cnv.create_rectangle(1, 1, 51, 9, fill=ac, outline="")
+            for i in range(3):
+                cnv.create_rectangle(5, 14 + i * 7, 47, 18 + i * 7,
+                                     fill=ac, outline="")
+        elif lay == "timeline":
+            cnv.create_rectangle(9, 6, 10, 30, fill=ac, outline="")
+            for i in range(4):
+                cnv.create_oval(7, 6 + i * 7, 12, 11 + i * 7,
+                                fill=ac, outline="")
+                cnv.create_rectangle(16, 7 + i * 7, 47, 9 + i * 7,
+                                     fill="#C9CFD8", outline="")
+        elif lay == "minimal":
+            cnv.create_rectangle(5, 6, 34, 9, fill="#333333", outline="")
+            for i in range(4):
+                cnv.create_rectangle(5, 14 + i * 5, 47, 15 + i * 5,
+                                     fill="#DADDE2", outline="")
+        else:  # classic
+            cnv.create_rectangle(15, 6, 37, 8, fill=ac, outline="")
+            cnv.create_rectangle(5, 12, 47, 13, fill=ac, outline="")
+            for i in range(3):
+                cnv.create_rectangle(5, 17 + i * 5, 47, 18 + i * 5,
+                                     fill="#C9CFD8", outline="")
+
+    def set_selected(self, flag):
+        self.selected = flag
+        self.configure(highlightbackground=ACCENT if flag else PANEL,
+                       bg="#EEF4FF" if flag else PANEL)
+        for w in self.winfo_children():
+            try:
+                w.configure(bg="#EEF4FF" if flag else PANEL)
+            except tk.TclError:
+                pass
+            for c in w.winfo_children():
+                try:
+                    c.configure(bg="#EEF4FF" if flag else PANEL)
+                except tk.TclError:
+                    pass
+
+
+# ---------------------------------------------------------------- main app
+
+class CVStudio(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("CV Studio — 25 Templates, PDF Export")
+        self.geometry("1480x920")
+        self.minsize(1200, 760)
+        self.configure(bg=BG)
+
+        self._setup_style()
+
+        self.exp_rows = []
+        self.edu_rows = []
+        self.tiles = []
+        self.selected = 0
+
+        self._build_header()
+        self._build_body()
+        self._build_footer()
+
+        self._add_experience()
+        self._add_education()
+        self._select_style(0)
+
+    # ------------------------------------------------------------ styling
+    def _setup_style(self):
+        st = ttk.Style(self)
         try:
-            if hasattr(self, 'player_label') and self.player_label.winfo_exists():
-                self.player_label.config(text=player_text)
-        except:
-            pass  # Label doesn't exist yet or was destroyed
+            st.theme_use("clam")
+        except tk.TclError:
+            pass
+        st.configure("Panel.TFrame", background=PANEL)
+        st.configure("Bg.TFrame", background=BG)
+        st.configure("Vertical.TScrollbar", background="#D7DEE8",
+                     troughcolor=PANEL, bordercolor=PANEL, arrowcolor=MUTED)
+        st.configure("TCombobox", fieldbackground="#F7F9FC")
 
-        if self.game_mode == '8ball':
-            self.calculate_win_probability()
+    # ------------------------------------------------------------ header
+    def _build_header(self):
+        bar = tk.Frame(self, bg="#0F172A", height=64)
+        bar.pack(fill="x", side="top")
+        bar.pack_propagate(False)
 
-            # Update player 1 info
-            p1_type = "Not assigned"
-            if self.balls_assigned:
-                p1_type = "Solids (1-7)" if self.player1_balls[0] == 'solid' else "Stripes (9-15)"
+        tk.Label(bar, text="CV STUDIO", bg="#0F172A", fg="#FFFFFF",
+                 font=("Segoe UI", 16, "bold")).pack(side="left", padx=22)
+        tk.Label(bar, text="25 templates · live preview · PDF export",
+                 bg="#0F172A", fg="#8FA3BF",
+                 font=("Segoe UI", 9)).pack(side="left")
 
-            self.p1_type_label.config(text=p1_type)
+        tk.Button(bar, text="Export all 25 styles…", command=self.export_all,
+                  relief="flat", bg="#1E293B", fg="#E2E8F0",
+                  activebackground="#334155", activeforeground="#FFFFFF",
+                  font=("Segoe UI", 9), cursor="hand2", bd=0,
+                  padx=14, pady=6).pack(side="right", padx=(0, 16), pady=14)
 
-            # Clear and redraw player 1 balls
-            for widget in self.p1_balls_frame.winfo_children():
-                widget.destroy()
+        tk.Button(bar, text="Generate PDF", command=self.export_current,
+                  relief="flat", bg=ACCENT, fg="#FFFFFF",
+                  activebackground=ACCENT_DK, activeforeground="#FFFFFF",
+                  font=("Segoe UI", 10, "bold"), cursor="hand2", bd=0,
+                  padx=18, pady=6).pack(side="right", padx=(0, 10), pady=14)
 
-            if self.balls_assigned:
-                balls_to_show = [b for b in self.balls if
-                               ((self.player1_balls[0] == 'solid' and b['type'] == 'solid') or
-                                (self.player1_balls[0] == 'stripe' and b['type'] == 'stripe')) and
-                               not b['pocketed']]
+    # ------------------------------------------------------------ body
+    def _build_body(self):
+        body = tk.Frame(self, bg=BG)
+        body.pack(fill="both", expand=True, padx=14, pady=12)
+        body.columnconfigure(0, weight=0, minsize=430)
+        body.columnconfigure(1, weight=0, minsize=300)
+        body.columnconfigure(2, weight=1)
+        body.rowconfigure(0, weight=1)
 
-                for ball in balls_to_show:
-                    ball_canvas = tk.Canvas(self.p1_balls_frame, width=24, height=24,
-                                          highlightthickness=0)
-                    ball_canvas.pack(side=tk.LEFT, padx=1)
-                    ball_canvas.create_oval(2, 2, 22, 22, fill=ball['color'],
-                                          outline='#FFFFFF', width=1)
-                    text_color = '#FFFFFF' if ball['number'] <= 8 else '#000000'
-                    ball_canvas.create_text(12, 12, text=str(ball['number']),
-                                          fill=text_color, font=('Arial', 8, 'bold'))
+        self._build_form(body)
+        self._build_gallery(body)
+        self._build_preview(body)
 
-            self.p1_prob_label.config(text=f"Win Probability: {self.win_probability['p1']}%")
-            self.p1_prob_bar.config(value=self.win_probability['p1'])
+    # -------- left: form
+    def _build_form(self, parent):
+        wrap = tk.Frame(parent, bg=BG)
+        wrap.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
+        wrap.rowconfigure(1, weight=1)
+        wrap.columnconfigure(0, weight=1)
 
-            # Update player 2 info
-            p2_type = "Not assigned"
-            if self.balls_assigned:
-                p2_type = "Solids (1-7)" if self.player2_balls[0] == 'solid' else "Stripes (9-15)"
+        head = tk.Frame(wrap, bg=BG)
+        head.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        tk.Label(head, text="Your details", bg=BG, fg=TEXT,
+                 font=("Segoe UI", 12, "bold")).pack(side="left")
+        tk.Button(head, text="Load sample", command=self.load_sample,
+                  relief="flat", bg=BG, fg=ACCENT, font=("Segoe UI", 9),
+                  cursor="hand2", bd=0).pack(side="right")
 
-            self.p2_type_label.config(text=p2_type)
+        sf = ScrollFrame(wrap, bg=PANEL)
+        sf.grid(row=1, column=0, sticky="nsew")
+        root = sf.inner
+        root.configure(padx=14, pady=14)
 
-            # Clear and redraw player 2 balls
-            for widget in self.p2_balls_frame.winfo_children():
-                widget.destroy()
+        # variables
+        self.v_name = tk.StringVar()
+        self.v_title = tk.StringVar()
+        self.v_email = tk.StringVar()
+        self.v_phone = tk.StringVar()
+        self.v_location = tk.StringVar()
+        self.v_website = tk.StringVar()
+        self.v_skills = tk.StringVar()
+        self.v_languages = tk.StringVar()
+        self.v_certs = tk.StringVar()
 
-            if self.balls_assigned:
-                balls_to_show = [b for b in self.balls if
-                               ((self.player2_balls[0] == 'solid' and b['type'] == 'solid') or
-                                (self.player2_balls[0] == 'stripe' and b['type'] == 'stripe')) and
-                               not b['pocketed']]
+        self.v_name.trace_add("write", lambda *a: self._refresh_preview())
 
-                for ball in balls_to_show:
-                    ball_canvas = tk.Canvas(self.p2_balls_frame, width=24, height=24,
-                                          highlightthickness=0)
-                    ball_canvas.pack(side=tk.LEFT, padx=1)
-                    ball_canvas.create_oval(2, 2, 22, 22, fill=ball['color'],
-                                          outline='#FFFFFF', width=1)
-                    text_color = '#FFFFFF' if ball['number'] <= 8 else '#000000'
-                    ball_canvas.create_text(12, 12, text=str(ball['number']),
-                                          fill=text_color, font=('Arial', 8, 'bold'))
+        # --- personal
+        self._section(root, "Personal")
+        self._field(root, "Full name", self.v_name)
+        self._field(root, "Professional title", self.v_title)
+        row = tk.Frame(root, bg=PANEL); row.pack(fill="x")
+        half = tk.Frame(row, bg=PANEL); half.pack(side="left", fill="x",
+                                                  expand=True)
+        field_label(half, "Email").pack(fill="x")
+        entry(half, self.v_email).pack(fill="x", pady=(2, 8))
+        half2 = tk.Frame(row, bg=PANEL); half2.pack(side="left", fill="x",
+                                                     expand=True, padx=(8, 0))
+        field_label(half2, "Phone").pack(fill="x")
+        entry(half2, self.v_phone).pack(fill="x", pady=(2, 8))
 
-            self.p2_prob_label.config(text=f"Win Probability: {self.win_probability['p2']}%")
-            self.p2_prob_bar.config(value=self.win_probability['p2'])
+        row = tk.Frame(root, bg=PANEL); row.pack(fill="x")
+        half = tk.Frame(row, bg=PANEL); half.pack(side="left", fill="x",
+                                                  expand=True)
+        field_label(half, "Location").pack(fill="x")
+        entry(half, self.v_location).pack(fill="x", pady=(2, 8))
+        half2 = tk.Frame(row, bg=PANEL); half2.pack(side="left", fill="x",
+                                                     expand=True, padx=(8, 0))
+        field_label(half2, "Website").pack(fill="x")
+        entry(half2, self.v_website).pack(fill="x", pady=(2, 8))
 
-        elif self.game_mode == '9ball':
-            # Update remaining balls
-            for widget in self.nine_balls_frame.winfo_children():
-                widget.destroy()
+        # --- summary
+        self._section(root, "Profile summary")
+        field_label(root, "A few lines about you").pack(fill="x")
+        self.txt_summary = text_area(root, 4)
+        self.txt_summary.pack(fill="x", pady=(2, 6))
 
-            remaining_balls = sorted([b for b in self.balls if b['type'] == 'numbered' and not b['pocketed']],
-                                   key=lambda x: x['number'])
+        # --- experience
+        self._section(root, "Experience")
+        self.exp_container = tk.Frame(root, bg=PANEL)
+        self.exp_container.pack(fill="x")
+        self._add_button(root, "＋ Add experience", self._add_experience)
 
-            for ball in remaining_balls:
-                ball_canvas = tk.Canvas(self.nine_balls_frame, width=32, height=32,
-                                      highlightthickness=0)
-                ball_canvas.pack(side=tk.LEFT, padx=2)
-                ball_canvas.create_oval(2, 2, 30, 30, fill=ball['color'],
-                                      outline='#FFFFFF', width=2)
-                text_color = '#FFFFFF' if ball['number'] != 9 else '#000000'
-                ball_canvas.create_text(16, 16, text=str(ball['number']),
-                                      fill=text_color, font=('Arial', 10, 'bold'))
+        # --- education
+        self._section(root, "Education")
+        self.edu_container = tk.Frame(root, bg=PANEL)
+        self.edu_container.pack(fill="x")
+        self._add_button(root, "＋ Add education", self._add_education)
 
-            next_ball = remaining_balls[0]['number'] if remaining_balls else 'None'
-            self.next_ball_label.config(text=f"Next ball to hit: {next_ball}")
+        # --- skills
+        self._section(root, "Skills & extras")
+        self._field(root, "Skills (comma separated)", self.v_skills)
+        self._field(root, "Languages (comma separated)", self.v_languages)
+        self._field(root, "Certifications (comma separated)", self.v_certs)
+
+        tk.Frame(root, bg=PANEL, height=20).pack(fill="x")
+
+    def _section(self, parent, title):
+        f = tk.Frame(parent, bg=PANEL)
+        f.pack(fill="x", pady=(12, 6))
+        tk.Label(f, text=title, bg=PANEL, fg=ACCENT,
+                 font=("Segoe UI", 10, "bold")).pack(side="left")
+        tk.Frame(f, bg=BORDER, height=1).pack(side="left", fill="x",
+                                              expand=True, padx=(8, 0))
+
+    def _field(self, parent, label, var):
+        f = tk.Frame(parent, bg=PANEL)
+        f.pack(fill="x", pady=(0, 6))
+        field_label(f, label).pack(fill="x")
+        entry(f, var).pack(fill="x", pady=(2, 0))
+
+    def _add_button(self, parent, text, cmd):
+        tk.Button(parent, text=text, command=cmd, relief="flat",
+                  bg="#EDF3FF", fg=ACCENT, activebackground="#DCE7FF",
+                  font=("Segoe UI", 9), cursor="hand2", bd=0,
+                  pady=4).pack(fill="x", pady=(4, 0))
+
+    def _add_experience(self):
+        row = ExperienceRow(self.exp_container, self._remove_experience)
+        row.pack(fill="x", pady=(0, 8))
+        self.exp_rows.append(row)
+
+    def _remove_experience(self, row):
+        if row in self.exp_rows:
+            self.exp_rows.remove(row)
+        row.destroy()
+
+    def _add_education(self):
+        row = EducationRow(self.edu_container, self._remove_education)
+        row.pack(fill="x", pady=(0, 8))
+        self.edu_rows.append(row)
+
+    def _remove_education(self, row):
+        if row in self.edu_rows:
+            self.edu_rows.remove(row)
+        row.destroy()
+
+    # -------- middle: gallery
+    def _build_gallery(self, parent):
+        wrap = tk.Frame(parent, bg=BG)
+        wrap.grid(row=0, column=1, sticky="nsew", padx=(0, 12))
+        wrap.rowconfigure(1, weight=1)
+        wrap.columnconfigure(0, weight=1)
+
+        head = tk.Frame(wrap, bg=BG)
+        head.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        tk.Label(head, text="25 styles", bg=BG, fg=TEXT,
+                 font=("Segoe UI", 12, "bold")).pack(side="left")
+
+        sf = ScrollFrame(wrap, bg=PANEL)
+        sf.grid(row=1, column=0, sticky="nsew")
+        holder = sf.inner
+        holder.configure(padx=6, pady=6)
+
+        for i, style in enumerate(STYLES):
+            tile = StyleTile(holder, style, i, self._select_style)
+            tile.pack(fill="x", pady=2)
+            self.tiles.append(tile)
+
+    # -------- right: preview
+    def _build_preview(self, parent):
+        wrap = tk.Frame(parent, bg=BG)
+        wrap.grid(row=0, column=2, sticky="nsew")
+        wrap.rowconfigure(1, weight=1)
+        wrap.columnconfigure(0, weight=1)
+
+        head = tk.Frame(wrap, bg=BG)
+        head.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        self.lbl_style = tk.Label(head, text="", bg=BG, fg=TEXT,
+                                  font=("Segoe UI", 12, "bold"))
+        self.lbl_style.pack(side="left")
+
+        card = Card(wrap)
+        card.grid(row=1, column=0, sticky="nsew")
+        self.preview = tk.Canvas(card, bg="#F4F6FA", highlightthickness=0)
+        self.preview.pack(fill="both", expand=True, padx=10, pady=10)
+        self.preview.bind("<Configure>",
+                          lambda e: self._refresh_preview())
+
+    # ------------------------------------------------------------ footer
+    def _build_footer(self):
+        bar = tk.Frame(self, bg=BG, height=30)
+        bar.pack(fill="x", side="bottom")
+        self.status = tk.Label(bar, text="Ready.", bg=BG, fg=MUTED,
+                               font=("Segoe UI", 8), anchor="w")
+        self.status.pack(side="left", padx=16)
+
+    def _set_status(self, msg):
+        self.status.configure(text=msg)
+
+    # ------------------------------------------------------------ actions
+    def _select_style(self, index):
+        self.selected = index
+        for i, t in enumerate(self.tiles):
+            t.set_selected(i == index)
+        self.lbl_style.configure(
+            text="%02d · %s" % (index + 1, STYLES[index]["name"]))
+        self._refresh_preview()
+
+    def _refresh_preview(self):
+        w = self.preview.winfo_width()
+        h = self.preview.winfo_height()
+        if w < 20 or h < 20:
+            return
+        draw_preview(self.preview, STYLES[self.selected], self.collect(),
+                     w, h)
+
+    # ------------------------------------------------------------ collect
+    def collect(self) -> CVData:
+        d = CVData()
+        d.name = self.v_name.get().strip()
+        d.title = self.v_title.get().strip()
+        d.email = self.v_email.get().strip()
+        d.phone = self.v_phone.get().strip()
+        d.location = self.v_location.get().strip()
+        d.website = self.v_website.get().strip()
+        d.summary = self.txt_summary.get("1.0", "end").strip()
+        d.skills = [s.strip() for s in self.v_skills.get().split(",")
+                    if s.strip()]
+        d.languages = [s.strip() for s in self.v_languages.get().split(",")
+                       if s.strip()]
+        d.certifications = [s.strip() for s in self.v_certs.get().split(",")
+                            if s.strip()]
+        d.experience = [r.get() for r in self.exp_rows if not r.is_empty()]
+        d.education = [r.get() for r in self.edu_rows if not r.is_empty()]
+        return d
+
+    # ------------------------------------------------------------ export
+    def _safe_filename(self, data, style):
+        base = data.name.strip().replace(" ", "_") or "CV"
+        for ch in '\\/:*?"<>|':
+            base = base.replace(ch, "")
+        return "%s_%s.pdf" % (base, style["name"].replace(" ", ""))
+
+    def export_current(self):
+        data = self.collect()
+        if not data.name:
+            messagebox.showwarning("Missing name",
+                                   "Please enter at least a name before "
+                                   "exporting.")
+            return
+        style = STYLES[self.selected]
+        path = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            initialfile=self._safe_filename(data, style),
+            filetypes=[("PDF files", "*.pdf")])
+        if not path:
+            return
+        try:
+            CVPdf(path, data, style).build()
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror("Export failed", str(exc))
+            return
+        self._set_status("Saved: %s" % path)
+        messagebox.showinfo("Done", "PDF saved to:\n%s" % path)
+
+    def export_all(self):
+        data = self.collect()
+        if not data.name:
+            messagebox.showwarning("Missing name",
+                                   "Please enter at least a name before "
+                                   "exporting.")
+            return
+        folder = filedialog.askdirectory(title="Choose output folder")
+        if not folder:
+            return
+        ok, fail = 0, 0
+        for style in STYLES:
+            fname = self._safe_filename(data, style)
+            try:
+                CVPdf(os.path.join(folder, fname), data, style).build()
+                ok += 1
+            except Exception:  # noqa: BLE001
+                fail += 1
+        self._set_status("Exported %d PDFs to %s" % (ok, folder))
+        messagebox.showinfo("Batch export",
+                            "%d PDFs written to:\n%s\n%d failures."
+                            % (ok, folder, fail))
+
+    # ------------------------------------------------------------ sample
+    def load_sample(self):
+        self.v_name.set("Alex Morgan")
+        self.v_title.set("Senior Product Designer")
+        self.v_email.set("alex.morgan@email.com")
+        self.v_phone.set("+44 7700 900123")
+        self.v_location.set("London, UK")
+        self.v_website.set("alexmorgan.design")
+
+        self.txt_summary.delete("1.0", "end")
+        self.txt_summary.insert("1.0",
+            "Product designer with 8+ years of experience building "
+            "accessible, data-informed interfaces for fintech and health "
+            "platforms. Comfortable leading discovery, design systems and "
+            "cross-functional delivery.")
+
+        for r in list(self.exp_rows):
+            self._remove_experience(r)
+        for r in list(self.edu_rows):
+            self._remove_education(r)
+
+        samples = [
+            ("Senior Product Designer", "Northwind Bank",
+             "2021 — Present",
+             "Led redesign of the mobile onboarding flow, lifting completion "
+             "by 27%.\nBuilt and maintained a 120-component design system "
+             "used by 6 squads.\nMentored 4 junior designers and ran weekly "
+             "critique sessions."),
+            ("Product Designer", "Helio Health", "2018 — 2021",
+             "Shipped a patient-facing appointment booking product from 0 to 1.\n"
+             "Ran 60+ usability sessions and translated findings into a "
+             "prioritised roadmap.\nPartnered with engineering to cut average "
+             "page load time by 41%."),
+            ("UI Designer", "Bright Studio", "2016 — 2018",
+             "Designed marketing sites and dashboards for 12 client accounts.\n"
+             "Introduced a shared Figma library that halved design handoff time."),
+        ]
+        for role, comp, dates, desc in samples:
+            self._add_experience()
+            row = self.exp_rows[-1]
+            row.v_role.set(role)
+            row.v_company.set(comp)
+            row.v_dates.set(dates)
+            row.txt.delete("1.0", "end")
+            row.txt.insert("1.0", desc)
+
+        edu = [
+            ("MA Interaction Design", "Masters", "Royal College of Art", "2016",
+             "Distinction — thesis on accessible data visualisation"),
+            ("BSc Computer Science", "Bachelors", "University of Manchester",
+             "2014", "First Class Honours"),
+        ]
+        for deg, lvl, sch, yr, det in edu:
+            self._add_education()
+            row = self.edu_rows[-1]
+            row.v_degree.set(deg)
+            row.v_level.set(lvl)
+            row.v_school.set(sch)
+            row.v_year.set(yr)
+            row.v_details.set(det)
+
+        self.v_skills.set("Design Systems, Figma, Prototyping, User Research, "
+                          "Accessibility, HTML/CSS, Data Visualisation, "
+                          "Workshop Facilitation")
+        self.v_languages.set("English (native), Spanish (fluent), "
+                             "French (basic)")
+        self.v_certs.set("Nielsen Norman Group UX Certification, "
+                         "IAAP CPACC Accessibility Core Competencies")
+
+        self._refresh_preview()
+        self._set_status("Sample data loaded — try a style on the right.")
+
+
+# =============================================================================
+#  MAIN
+# =============================================================================
 
 def main():
-    root = tk.Tk()
-    app = PoolGame(root)
-    root.mainloop()
+    try:
+        app = CVStudio()
+    except Exception as exc:  # noqa: BLE001
+        raise SystemExit(
+            "Could not start the GUI: %s\n"
+            "Make sure Tkinter is installed and reportlab is available "
+            "(pip install reportlab)." % exc
+        )
+    app.mainloop()
+
 
 if __name__ == "__main__":
     main()

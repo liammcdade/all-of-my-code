@@ -1,171 +1,109 @@
+#!/usr/bin/env python3
+"""
+mars_clock_accurate.py
+A fully leap-second-aware GUI clock for Mars Coordinated Time (MTC).
+Uses astropy for precise UTC -> TT conversion, then the Mars24 algorithm.
+"""
+
 import tkinter as tk
-from datetime import datetime, timezone
-import math
+import datetime
+from astropy.time import Time
 
-# ============================================================
-#  MARS TIME CALCULATION ENGINE
-# ============================================================
+# --- Mars24 / AM2000 constants ------------------------------------------
+J2000          = 2451545.0
+SOL_RATIO      = 1.0274912517        # Earth days per Martian sol
+MSD_OFFSET     = 44796.0
+MSD_CORRECTION = 0.0009626
 
-def msd_from_utc(utc_dt):
-    epoch = datetime(1873, 12, 29, 12, 3, 36, tzinfo=timezone.utc)
-    delta = utc_dt - epoch
-    jd_diff = delta.total_seconds() / 86400.0
-    return jd_diff / 1.0274912517
+UNIX_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
-def mtc_from_msd(msd):
-    fraction = msd - math.floor(msd)
-    return fraction * 24
 
-def hours_to_time_str(hours):
-    hours = hours % 24
-    total_seconds = int(hours * 3600)
-    h = total_seconds // 3600
-    m = (total_seconds % 3600) // 60
-    s = total_seconds % 60
-    return f"{h:02d}:{m:02d}:{s:02d}"
+def mars_utc_hms(dt_utc):
+    """
+    Return (h, m, s) of Mars UTC (MTC) with full leap-second accuracy.
+    """
+    # Use astropy to convert UTC to TT (Terrestrial Time).
+    # This correctly applies all historical and future leap seconds.
+    t = Time(dt_utc, scale='utc')
+    jd_tt = t.tt.jd  # Julian Date in Terrestrial Time
 
-def local_time_at_longitude(mtc_hours, longitude_deg):
-    offset_hours = longitude_deg / 15.0
-    return (mtc_hours + offset_hours) % 24
+    # Mars24 / AM2000 formula for Mars Sol Date (MSD)
+    msd = ((jd_tt - J2000 - 4.5) / SOL_RATIO) + MSD_OFFSET - MSD_CORRECTION
 
-# ============================================================
-#  ROVER DATA (now includes driving stats!)
-# ============================================================
-rovers = [
-    {
-        "name": "Perseverance",
-        "mission": "NASA",
-        "lat": "18.447°N",
-        "lon": 77.402,
-        "lon_str": "77.402°E",
-        "color": "#f38ba8",      # pink-red
-        "drive_typical": "100 – 300+ m",
-        "drive_record": "411.7 m (single sol)",
-        "tech": "AutoNav (thinks while driving)"
-    },
-    {
-        "name": "Curiosity",
-        "mission": "NASA",
-        "lat": "4.5895°S",
-        "lon": 137.4417,
-        "lon_str": "137.442°E",
-        "color": "#a6e3a1",      # green
-        "drive_typical": "30 – 100 m",
-        "drive_record": "~144 m (single sol)",
-        "tech": "Stop-Think-Drive cycle"
-    }
-]
+    # Coordinated Mars Time (MTC) is the fractional part of MSD, scaled to 24h
+    mtc_hours = (msd * 24.0) % 24.0
 
-# ============================================================
-#  BUILD THE GUI
-# ============================================================
+    h = int(mtc_hours)
+    m_float = (mtc_hours - h) * 60.0
+    m = int(m_float)
+    s = (m_float - m) * 60.0
+    return h, m, s
 
-root = tk.Tk()
-root.title("🪐 Mars Rover Real-Time Dashboard")
-root.geometry("620x500")
-root.resizable(False, False)
-root.configure(bg="#1e1e2e")
 
-def make_label(parent, text, font_size, weight="normal", fg="white", bg="#1e1e2e"):
-    return tk.Label(parent, text=text, font=("Segoe UI", font_size, weight),
-                    fg=fg, bg=bg)
+class MarsClockApp:
+    def __init__(self, root):
+        self.root = root
+        root.title("Mars UTC (MTC) — Fully Accurate")
+        root.configure(bg="#101014")
+        root.resizable(False, False)
 
-# --- Header ---
-header = make_label(root, "🔴 MARS ROVER DASHBOARD", 18, "bold", "#f9a825")
-header.pack(pady=(15, 5))
+        tk.Label(
+            root, text="MARS UTC (MTC)",
+            font=("Helvetica", 14, "bold"),
+            fg="#7a7a8c", bg="#101014",
+        ).pack(pady=(24, 0))
 
-# --- Earth UTC ---
-tk.Label(root, text="🌍 Earth UTC Time", font=("Segoe UI", 11, "bold"),
-         fg="#a6e3a1", bg="#1e1e2e").pack(pady=(10, 0))
-utc_label = make_label(root, "--:--:--", 16, "bold", "#cdd6f4")
-utc_label.pack()
+        self.mars_label = tk.Label(
+            root, text="--:--:--",
+            font=("Consolas", 80, "bold"),
+            fg="#ff6b35", bg="#101014",
+        )
+        self.mars_label.pack(padx=40, pady=(0, 4))
 
-# --- MTC ---
-tk.Label(root, text="🕒 Mars Coordinated Time (MTC — 0° longitude)",
-         font=("Segoe UI", 11, "bold"), fg="#89b4fa", bg="#1e1e2e").pack(pady=(6, 0))
-mtc_label = make_label(root, "--:--:--", 16, "bold", "#89b4fa")
-mtc_label.pack()
+        self.sol_label = tk.Label(
+            root, text="", font=("Helvetica", 13),
+            fg="#9a9ab0", bg="#101014",
+        )
+        self.sol_label.pack()
 
-# --- Separator ---
-tk.Label(root, text="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", font=("Segoe UI", 10),
-         fg="#585b70", bg="#1e1e2e").pack(pady=(10, 5))
+        tk.Frame(root, height=1, bg="#2a2a38").pack(fill="x", padx=30, pady=16)
 
-# --- Rover Cards (each in a framed container) ---
-rover_widgets = {}  # store the time labels for updating
+        self.earth_label = tk.Label(
+            root, text="", font=("Consolas", 15),
+            fg="#5ad1a0", bg="#101014",
+        )
+        self.earth_label.pack(pady=(0, 6))
 
-for rover in rovers:
-    # Main frame for this rover (like a card)
-    card = tk.Frame(root, bg="#313244", bd=2, relief=tk.GROOVE)
-    card.pack(pady=6, padx=20, fill=tk.X)
+        self.note = tk.Label(
+            root,
+            text="Leap-second aware via astropy  •  Mars seconds ≈ 2.75% longer",
+            font=("Helvetica", 10), fg="#5a5a70", bg="#101014",
+        )
+        self.note.pack(pady=(0, 20))
 
-    # Row 1: Name + Mission + Location
-    header_row = tk.Frame(card, bg="#313244")
-    header_row.pack(pady=(8, 0), padx=10, anchor=tk.W)
-    
-    name_color = rover["color"]
-    tk.Label(header_row, text=f"🛰️  {rover['name']}", font=("Segoe UI", 12, "bold"),
-             fg=name_color, bg="#313244").pack(side=tk.LEFT)
-    tk.Label(header_row, text=f"({rover['mission']})", font=("Segoe UI", 10),
-             fg="#a6adc8", bg="#313244").pack(side=tk.LEFT, padx=(6, 12))
-    tk.Label(header_row, text=f"📍 {rover['lat']}, {rover['lon_str']}", font=("Segoe UI", 10),
-             fg="#cdd6f4", bg="#313244").pack(side=tk.LEFT)
+        self._tick()
 
-    # Row 2: The actual ticking clock (local time)
-    time_row = tk.Frame(card, bg="#313244")
-    time_row.pack(pady=(2, 0), padx=10, anchor=tk.W)
-    
-    tk.Label(time_row, text="Local Solar Time:", font=("Segoe UI", 10, "bold"),
-             fg="#b4befe", bg="#313244").pack(side=tk.LEFT)
-    time_label = tk.Label(time_row, text="--:--:--", font=("Courier New", 18, "bold"),
-                          fg=name_color, bg="#313244")
-    time_label.pack(side=tk.LEFT, padx=(10, 0))
-    rover_widgets[rover["name"]] = time_label
+    def _tick(self):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        h, m, s = mars_utc_hms(now)
 
-    # Row 3: Driving stats (the new info you provided!)
-    stats_row = tk.Frame(card, bg="#313244")
-    stats_row.pack(pady=(4, 8), padx=10, anchor=tk.W)
-    
-    tk.Label(stats_row, text="🚗 Daily Drive:", font=("Segoe UI", 9, "bold"),
-             fg="#fab387", bg="#313244").pack(side=tk.LEFT)
-    tk.Label(stats_row, text=rover["drive_typical"], font=("Segoe UI", 9),
-             fg="#cdd6f4", bg="#313244").pack(side=tk.LEFT, padx=(5, 15))
-    
-    tk.Label(stats_row, text="🏆 Record:", font=("Segoe UI", 9, "bold"),
-             fg="#f9e2af", bg="#313244").pack(side=tk.LEFT)
-    tk.Label(stats_row, text=rover["drive_record"], font=("Segoe UI", 9),
-             fg="#cdd6f4", bg="#313244").pack(side=tk.LEFT, padx=(5, 15))
-    
-    tk.Label(stats_row, text=f"⚙️ {rover['tech']}", font=("Segoe UI", 8, "italic"),
-             fg="#6c7086", bg="#313244").pack(side=tk.LEFT)
+        # Show 2 decimal places for smooth motion
+        self.mars_label.config(text=f"{h:02d}:{m:02d}:{s:05.2f}")
+        self.earth_label.config(
+            text=f"Earth UTC  {now.strftime('%Y-%m-%d  %H:%M:%S')}"
+        )
 
-# --- Footer (Sol Date) ---
-sol_label = make_label(root, "MSD: --.------", 10, "normal", "#6c7086")
-sol_label.pack(pady=(12, 5))
+        # Compute and display MSD using the same astropy path
+        t = Time(now, scale='utc')
+        jd_tt = t.tt.jd
+        msd = ((jd_tt - J2000 - 4.5) / SOL_RATIO) + MSD_OFFSET - MSD_CORRECTION
+        self.sol_label.config(text=f"Mars Sol Date (MSD): {msd:,.5f}")
 
-# ============================================================
-#  TICK FUNCTION
-# ============================================================
+        # 10 FPS is smooth and efficient
+        self.root.after(100, self._tick)
 
-def update_clock():
-    utc_now = datetime.now(timezone.utc)
-    msd = msd_from_utc(utc_now)
-    mtc_hours = mtc_from_msd(msd)
 
-    # Update Earth & MTC
-    utc_label.config(text=utc_now.strftime('%Y-%m-%d  %H:%M:%S') + " UTC")
-    mtc_label.config(text=hours_to_time_str(mtc_hours))
-    sol_label.config(text=f"MSD: {msd:.6f}")
-
-    # Update each rover's local time
-    for rover in rovers:
-        local_hours = local_time_at_longitude(mtc_hours, rover["lon"])
-        rover_widgets[rover["name"]].config(text=hours_to_time_str(local_hours))
-
-    root.after(1000, update_clock)
-
-# ============================================================
-#  START
-# ============================================================
-
-update_clock()
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    MarsClockApp(root)
+    root.mainloop()

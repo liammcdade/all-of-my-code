@@ -1,804 +1,395 @@
+#!/usr/bin/env python3
 """
-chart_generator.py
+best_team_of_all_time.py
+========================
+Finds the greatest team in English top-flight history (1888-89 → present).
 
-Loads the 2026/27 season simulation module, runs the unified simulation,
-and writes 1280x720 (16:9) infographic-style PNGs matching the reference
-image (dark-green background, yellow / teal / cream accents).
+Three rating structures, all combined into a 0-10 score:
+    A. Results-only Elo               (W/D/L, classical)
+    B. Goal-difference-weighted Elo   (rewards dominance)
+    C. Bradley-Terry per season       (proper ML, logistic regression)
 
-Produces 25 charts:
+Handles both CSV schemas:
+    - Old (1993-94): Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR
+    - New (2000-01+): same + HT scores, ref, shots, cards, odds, ...
 
-   01  average_european_spots      hero card  (UCL / UEL / UECL / total)
-   02  title_race                  PL title probability
-   03  ucl_qualification           UCL qualification probability
-   04  uel_qualification           UEL qualification probability
-   05  uecl_qualification          UECL qualification probability
-   06  european_qualification      Any European qualification
-   07  european_win_chances        P(a PL club wins UCL/UEL/UECL)
-   08  points_thresholds           Avg points needed for each outcome
-   09  carabao_cup                 Carabao Cup win probability
-   10  fa_cup                      FA Cup win probability
-   11  coefficient_top2            UEFA coefficient Top-2 race
-   12  eps_card                    England EPS hero card
-   13  relegation                  Relegation probability
-   14  avg_points                  Average points by team
-   15  avg_finish_position         Average finishing position (lower = better)
-   16  median_position             Median finishing position
-   17  manutd_streak               Man United 5-game win streak tracker
-   18  assoc_coefficients          Average association coefficients
-   19  england_coeff_range         England coefficient p10/avg/p90
-   20  ucl_league_top8             UCL league-phase Top-8 finish probability
-   21  uel_league_top8             UEL league-phase Top-8 finish probability
-   22  uecl_league_top8            UECL league-phase Top-8 finish probability
-   23  pl_club_europe_win          P(each PL club wins each UEFA trophy)
-   24  pl_elo_ratings              Elo ratings of PL clubs
-   25  ucl_winner_by_pl_club       UCL win probability per PL club
+Author: first attempt
 """
 
-from __future__ import annotations
-
-import importlib.util
 import os
-import sys
-import traceback
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
-
+import glob
+import warnings
+from pathlib import Path
 import numpy as np
-import matplotlib
+import pandas as pd
 
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
+warnings.filterwarnings("ignore")
 
+# ══════════════════════════════════════════════════════════════════════
+#  CONFIG  — edit these
+# ══════════════════════════════════════════════════════════════════════
+DATA_DIR   = Path(r"C:\Users\liam\Documents\GitHub\Footballdata\data\ENGLAND\Premier league\GAMES")
+OUTPUT_DIR = DATA_DIR.parent / "outputs"
 
-# =============================================================================
-# CONFIG
-# =============================================================================
+PL_START   = None          # e.g. "1992-08-15" to restrict to PL era
+TOP_DIV    = "E0"          # filter Div column if present (football-data.co.uk convention)
 
-SIM_PATH = r"C:\Users\liam\Documents\GitHub\all-of-my-code\sportsanalysis\premier-league\26-27-season.py"
-OUT_DIR  = r"C:\Users\liam\Documents\GitHub\all-of-my-code\sportsanalysis\premier-league\charts"
+# Elo hyperparameters
+ELO_BASE           = 1500
+ELO_K              = 20
+ELO_HOME_ADVANTAGE = 60
+SEASON_REGRESS     = 0.75   # 1.0 = no decay, 0.0 = full reset between seasons
 
-N_SIMS = 1000
+# Filtering thresholds (drop 1-season wonders)
+MIN_MATCHES = 500
+MIN_SEASONS = 15
 
-# =============================================================================
-# CANVAS — 1280 x 720 px @ 100 DPI = 16:9
-# =============================================================================
+# Composite weights
+W_PEAK, W_BEST_SEASON, W_AVG = 0.35, 0.40, 0.25   # Elo component
+BT_MAX_W, BT_AVG_W           = 0.60, 0.40         # Bradley-Terry component
+ELO_SHARE, BT_SHARE          = 0.45, 0.35         # final blend (was 0.60/0.40)
+ACH_SHARE                    = 0.20              # achievement component
 
-DPI     = 100
-FIG_W   = 12.8    # inches  -> 1280 px
-FIG_H   = 7.2     # inches  ->  720 px
-FIGSIZE = (FIG_W, FIG_H)
-
-# =============================================================================
-# PALETTE & STYLE
-# =============================================================================
-
-BG     = "#1e3329"
-BG_ALT = "#2a4235"
-CREAM  = "#f5f0e6"
-YELLOW = "#f0b93c"
-TEAL   = "#4dbfa8"
-LIGHT  = "#c4d4ce"
-MUTED  = "#8ba39a"
-RED    = "#d4685a"
-
-FONT_FAMILY = "DejaVu Sans"
-plt.rcParams["font.family"] = FONT_FAMILY
-plt.rcParams["font.sans-serif"] = [FONT_FAMILY, "DejaVu Sans"]
+BT_K_SHRINK = 5.0   # pseudo-seasons of prior for Bayesian shrinkage
 
 
-# =============================================================================
-# LOW-LEVEL HELPERS
-# =============================================================================
-
-def _new_fig():
-    fig = plt.figure(figsize=FIGSIZE, facecolor=BG)
-    ax = fig.add_axes([0, 0, 1, 1])
-    ax.set_facecolor(BG)
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    ax.axis("off")
-    return fig, ax
-
-
-def _save(fig, path: str) -> None:
-    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    fig.savefig(path, facecolor=BG, dpi=DPI)
-    plt.close(fig)
-    print(f"  wrote {path}")
-
-
-def _clear_pngs(out_dir: str) -> int:
-    """Delete every .png in out_dir. Returns the number removed."""
-    if not os.path.isdir(out_dir):
-        return 0
-    removed = 0
-    for name in os.listdir(out_dir):
-        if name.lower().endswith(".png"):
-            full = os.path.join(out_dir, name)
-            if os.path.isfile(full):
-                try:
-                    os.remove(full)
-                    removed += 1
-                except OSError as exc:
-                    print(f"  WARNING: could not remove {full}: {exc}",
-                          file=sys.stderr)
-    return removed
-
-
-def _title_block(ax, eyebrow: str, title: str,
-                 eyebrow_y: float = 0.94,
-                 title_y: float = 0.88,
-                 title_size: int = 26) -> None:
-    ax.text(0.05, eyebrow_y, eyebrow, fontsize=10, color=MUTED,
-            va="top", ha="left")
-    ax.text(0.05, title_y, title, fontsize=title_size, color=CREAM,
-            va="top", ha="left", fontweight="bold", linespacing=1.05)
-
-
-# =============================================================================
-# CHART TYPE 1 — hero card (big number + stacked bar)
-# =============================================================================
-
-def draw_hero_card(
-    path: str,
-    eyebrow: str,
-    title: str,
-    big_value: str,
-    caption: str,
-    segments: Sequence[Tuple[float, str, str, str, str]],
-) -> None:
-    fig, ax = _new_fig()
-
-    # Header
-    ax.text(0.05, 0.94, eyebrow, fontsize=11, color=MUTED,
-            va="top", ha="left")
-    ax.text(0.05, 0.875, title, fontsize=44, color=CREAM,
-            va="top", ha="left", fontweight="bold", linespacing=1.05)
-
-    # Big number on the left, caption to its right
-    ax.text(0.05, 0.46, big_value, fontsize=140, color=YELLOW,
-            va="center", ha="left", fontweight="bold")
-    ax.text(0.60, 0.40, caption, fontsize=13, color=CREAM,
-            va="center", ha="left")
-
-    # Stacked horizontal bar
-    bar_x0, bar_x1 = 0.05, 0.95
-    bar_y, bar_h = 0.20, 0.036
-    bar_w = bar_x1 - bar_x0
-    total = sum(s[0] for s in segments) or 1.0
-
-    x = bar_x0
-    starts: List[float] = []
-    for val, _, _, _, color in segments:
-        w = bar_w * (val / total)
-        starts.append(x)
-        ax.add_patch(Rectangle((x, bar_y), w, bar_h,
-                               facecolor=color, edgecolor="none"))
-        x += w
-
-    # Legend under each segment start
-    for (val, num_txt, tag, sub, color), lx in zip(segments, starts):
-        ax.text(lx, 0.135, num_txt, fontsize=26, color=color,
-                va="center", ha="left", fontweight="bold")
-        ax.text(lx, 0.095, tag, fontsize=12, color=CREAM,
-                va="center", ha="left", fontweight="bold")
-        ax.text(lx, 0.065, sub, fontsize=9, color=MUTED,
-                va="center", ha="left")
-
-    _save(fig, path)
-
-
-# =============================================================================
-# CHART TYPE 2 — horizontal bars
-# =============================================================================
-
-def draw_horizontal_bars(
-    path: str,
-    eyebrow: str,
-    title: str,
-    items: Sequence[Tuple[str, float]],
-    value_fmt: str = "{:.2f}%",
-    bar_color: Any = YELLOW,
-    max_bars: Optional[int] = None,
-    label_w: float = 0.30,
-    bar_value_fn: Optional[Callable[[float], float]] = None,
-    label_fmt: Optional[str] = None,
-    title_size: int = 24,
-) -> None:
-    """
-    Horizontal bars.
-
-    items         : sequence of (label, value)
-    bar_value_fn  : optional transform used only for the bar *length*
-                    (value shown in text is still the raw value).
-    label_fmt     : optional format string for the label (e.g. "{:<20}").
-    """
-    items = list(items)
-    if max_bars:
-        items = items[:max_bars]
-    if not items:
-        return
-
-    fig, ax = _new_fig()
-    _title_block(ax, eyebrow, title, title_size=title_size)
-
-    n = len(items)
-    top = 0.80
-    bottom = 0.05
-    row_h = (top - bottom) / n
-
-    bar_x = 0.05 + label_w + 0.01
-    bar_max_w = 0.95 - bar_x - 0.08
-
-    raw_values = [v for _, v in items]
-    display_values = (raw_values if bar_value_fn is None
-                      else [bar_value_fn(v) for v in raw_values])
-    max_v = max(display_values, default=1.0) or 1.0
-
-    if isinstance(bar_color, (list, tuple, np.ndarray)):
-        colors = list(bar_color)
-        if len(colors) < n:
-            colors = (colors * n)[:n]
-    else:
-        colors = [bar_color] * n
-
-    # Auto font sizing for long tables.
-    row_fs = 10 if n <= 15 else (9 if n <= 20 else 8)
-    label_fmt = label_fmt or "{:<24}"
-
-    for i, (label, value) in enumerate(items):
-        y = top - (i + 0.5) * row_h
-        ax.text(0.05, y, label_fmt.format(label),
-                fontsize=row_fs, color=CREAM, va="center", ha="left")
-        h = row_h * 0.55
-        w = bar_max_w * (display_values[i] / max_v)
-        ax.add_patch(Rectangle((bar_x, y - h / 2.0), w, h,
-                               facecolor=colors[i], edgecolor="none"))
-        ax.text(bar_x + w + 0.008, y,
-                value_fmt.format(value),
-                fontsize=row_fs, color=CREAM,
-                va="center", ha="left", fontweight="bold")
-
-    _save(fig, path)
-
-
-# =============================================================================
-# CHART TYPE 3 — three big numbers
-# =============================================================================
-
-def draw_three_stats(
-    path: str,
-    eyebrow: str,
-    title: str,
-    items: Sequence[Tuple[str, str, str, str]],
-) -> None:
-    fig, ax = _new_fig()
-    _title_block(ax, eyebrow, title, title_size=32, title_y=0.85)
-
-    n = len(items)
-    col_w = 0.90 / max(n, 1)
-
-    for i, (tag, name, val_s, color) in enumerate(items):
-        x = 0.05 + i * col_w
-        ax.text(x, 0.52, tag, fontsize=15, color=MUTED,
-                va="center", ha="left", fontweight="bold")
-        ax.text(x, 0.46, name, fontsize=12, color=CREAM,
-                va="center", ha="left")
-        ax.text(x, 0.26, val_s, fontsize=72, color=color,
-                va="center", ha="left", fontweight="bold")
-
-    _save(fig, path)
-
-
-# =============================================================================
-# LOAD THE SIMULATION MODULE
-# =============================================================================
-
-def load_sim_module(path: str):
-    spec = importlib.util.spec_from_file_location("season_26_27", path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load module from {path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["season_26_27"] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-# =============================================================================
-# NAME CLEANUPS
-# =============================================================================
-
-_CARABAO_SHORT = {
-    "Manchester City": "Man City",
-    "Brighton & Hove Albion": "Brighton",
-    "Newcastle United": "Newcastle",
-    "Bradford City": "Bradford",
-    "Peterborough United": "Peterboro",
-    "Fleetwood Town": "Fleetwood",
+# ══════════════════════════════════════════════════════════════════════
+#  TEAM NAME CANONICALISATION
+# ══════════════════════════════════════════════════════════════════════
+ALIASES = {
+    "Sheffield Weds":   "Sheffield Wednesday",
+    "Nott'm Forest":    "Nottingham Forest",
+    "Man United":       "Manchester United",
+    "Man City":         "Manchester City",
+    "Newcastle":        "Newcastle United",
+    "Tottenham":        "Tottenham Hotspur",
+    "West Brom":        "West Bromwich Albion",
+    "West Ham":         "West Ham United",
+    "QPR":              "Queens Park Rangers",
+    "Stoke":            "Stoke City",
+    "Swansea":          "Swansea City",
+    "Wigan":            "Wigan Athletic",
+    "Wolves":           "Wolverhampton Wanderers",
+    "Norwich":          "Norwich City",
+    "Hull":             "Hull City",
+    "Brighton":         "Brighton & Hove Albion",
+    "Huddersfield":     "Huddersfield Town",
+    "Sheffield Utd":    "Sheffield United",
+    "Bournemouth":      "AFC Bournemouth",
+    "Charlton":         "Charlton Athletic",
+    "Coventry":         "Coventry City",
+    "Derby":            "Derby County",
+    "Ipswich":          "Ipswich Town",
+    "Leicester":        "Leicester City",
+    "Blackburn":        "Blackburn Rovers",
+    "Bolton":           "Bolton Wanderers",
+    "Preston":          "Preston North End",
+    "Birmingham":       "Birmingham City",
+    "Luton":            "Luton Town",
 }
 
-
-def _short(name: str) -> str:
-    return _CARABAO_SHORT.get(name, name)
-
-
-# =============================================================================
-# SMALL HELPERS FOR CHART DATA PREP
-# =============================================================================
-
-def _sorted_desc(d: Dict[str, float], teams: Optional[Sequence[str]] = None,
-                 top: Optional[int] = None) -> List[Tuple[str, float]]:
-    src = teams if teams is not None else d.keys()
-    rows = sorted(((t, d[t]) for t in src), key=lambda x: -x[1])
-    return rows[:top] if top else rows
+def canon(name: str) -> str:
+    return ALIASES.get(str(name).strip(), str(name).strip())
 
 
-def _top_n_league_probability(euro_positions_comp: Dict[str, Dict[int, int]],
-                              n_sims: int,
-                              lo: int = 1, hi: int = 8,
-                              top: Optional[int] = None
-                              ) -> List[Tuple[str, float]]:
-    """Chance a team finishes in league-phase positions [lo, hi]."""
-    rows: List[Tuple[str, float]] = []
-    for team, pos_counts in euro_positions_comp.items():
-        c = sum(v for p, v in pos_counts.items() if lo <= p <= hi)
-        rows.append((team, c / max(1, n_sims) * 100.0))
-    rows.sort(key=lambda x: -x[1])
-    return rows[:top] if top else rows
+# ══════════════════════════════════════════════════════════════════════
+#  DATA LOADING  (both schemas → one tidy frame)
+# ══════════════════════════════════════════════════════════════════════
+CORE = ["Date", "HomeTeam", "AwayTeam", "FTHG", "FTAG"]
+
+def season_of(ts: pd.Timestamp) -> str:
+    y = ts.year
+    return f"{y}-{y+1}" if ts.month >= 7 else f"{y-1}-{y}"
+
+def _read_csv(path: Path) -> pd.DataFrame | None:
+    for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
+        try:
+            return pd.read_csv(path, encoding=enc)
+        except (UnicodeDecodeError, pd.errors.ParserError):
+            continue
+    return None
+
+def load_matches(folder: Path) -> pd.DataFrame:
+    files = sorted(glob.glob(str(folder / "*.csv")))
+    if not files:
+        raise FileNotFoundError(f"No CSVs in {folder}")
+
+    frames, bad = [], []
+    for f in files:
+        df = _read_csv(Path(f))
+        if df is None:
+            bad.append((Path(f).name, "unreadable")); continue
+        df.columns = [c.strip() for c in df.columns]
+
+        # Optional Div filter
+        if "Div" in df.columns and TOP_DIV:
+            df = df[df["Div"].astype(str).str.strip() == TOP_DIV]
+
+        missing = [c for c in CORE if c not in df.columns]
+        if missing:
+            bad.append((Path(f).name, f"missing {missing}")); continue
+
+        sub = df[CORE].copy()
+        sub["source"] = Path(f).stem
+        frames.append(sub)
+
+    if not frames:
+        raise RuntimeError("No readable match files found.")
+
+    m = pd.concat(frames, ignore_index=True)
+    m["HomeTeam"] = m["HomeTeam"].map(canon)
+    m["AwayTeam"] = m["AwayTeam"].map(canon)
+    m["FTHG"]     = pd.to_numeric(m["FTHG"], errors="coerce")
+    m["FTAG"]     = pd.to_numeric(m["FTAG"], errors="coerce")
+    m["Date"]     = pd.to_datetime(m["Date"], dayfirst=True, errors="coerce")
+
+    n0 = len(m)
+    m = m.dropna(subset=CORE)
+    m = m[(m["HomeTeam"] != "") & (m["AwayTeam"] != "")]
+    m = m.drop_duplicates(subset=["Date", "HomeTeam", "AwayTeam"])
+    m = m.sort_values("Date").reset_index(drop=True)
+    m["season"] = m["Date"].apply(season_of)
+
+    if PL_START:
+        m = m[m["Date"] >= pd.Timestamp(PL_START)].reset_index(drop=True)
+
+    # ── report ──
+    print(f"\nLoaded {len(m):,} matches from {len(frames)} files")
+    print(f"  dropped {n0 - len(m):,} invalid / duplicate rows")
+    print(f"  dates  : {m['Date'].min().date()} → {m['Date'].max().date()}")
+    print(f"  seasons: {m['season'].nunique()}")
+    print(f"  teams  : {m['HomeTeam'].nunique()}")
+    if bad:
+        print(f"  ⚠ {len(bad)} files skipped (first 5):")
+        for name, why in bad[:5]:
+            print(f"     - {name}: {why}")
+    return m
 
 
-# =============================================================================
-# BUILD ALL CHARTS
-# =============================================================================
+# ══════════════════════════════════════════════════════════════════════
+#  ELO ENGINE
+# ══════════════════════════════════════════════════════════════════════
+def _goal_mult(gd: int) -> float:
+    if gd <= 1: return 1.0
+    if gd == 2: return 1.5
+    return (11.0 + gd) / 8.0
 
-def make_all_charts(r: Dict[str, Any], out_dir: str) -> None:
-    os.makedirs(out_dir, exist_ok=True)
-    print(f"\nWriting 1280x720 charts to {out_dir}\n")
+def run_elo(matches: pd.DataFrame, *, goal_weight: bool):
+    ratings, season_end, sp = {}, {}, {}
+    rows = []
+    for season in sorted(matches["season"].unique()):
+        sm = matches[matches["season"] == season]
+        for r in sm.itertuples(index=False):
+            h, a = r.HomeTeam, r.AwayTeam
+            rh, ra = ratings.get(h, ELO_BASE), ratings.get(a, ELO_BASE)
+            exp_h  = 1.0 / (1.0 + 10 ** ((ra - rh - ELO_HOME_ADVANTAGE) / 400.0))
 
-    teams = r["pl_teams_set"]
-    n_sims = r["n_sims"]
+            if   r.FTHG > r.FTAG: sh = 1.0
+            elif r.FTHG < r.FTAG: sh = 0.0
+            else:                 sh = 0.5
 
-    # =========================================================================
-    # 01 — Hero card: average European spots
-    # =========================================================================
-    ucl_s  = r["avg_pl_ucl_spots"]
-    uel_s  = r["avg_pl_uel_spots"]
-    uecl_s = r["avg_pl_uecl_spots"]
-    tot_s  = r["avg_pl_total_spots"]
+            k = ELO_K * (_goal_mult(int(abs(r.FTHG - r.FTAG))) if goal_weight else 1.0)
+            nh, na = rh + k * (sh - exp_h), ra + k * ((1 - sh) - (1 - exp_h))
+            ratings[h], ratings[a] = nh, na
+            sp.setdefault(h, set()).add(season)
+            sp.setdefault(a, set()).add(season)
+            rows.append((r.Date, season, h, a, nh, na))
 
-    draw_hero_card(
-        path=os.path.join(out_dir, "01_average_european_spots.png"),
-        eyebrow="PREMIER LEAGUE · AVERAGE PER SEASON",
-        title="Average European spots",
-        big_value=f"{tot_s:.2f}",
-        caption="total European spots",
-        segments=[
-            (ucl_s,  f"{ucl_s:.2f}",  "UCL",  "Champions League",  YELLOW),
-            (uel_s,  f"{uel_s:.2f}",  "UEL",  "Europa League",     TEAL),
-            (uecl_s, f"{uecl_s:.2f}", "UECL", "Conference League", LIGHT),
-        ],
-    )
+        for t, rt in ratings.items():
+            season_end[(season, t)] = rt
+        for t in ratings:
+            ratings[t] = SEASON_REGRESS * ratings[t] + (1 - SEASON_REGRESS) * ELO_BASE
 
-    # =========================================================================
-    # 02 — Title race
-    # =========================================================================
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "02_title_race.png"),
-        eyebrow="PREMIER LEAGUE · 2026/27",
-        title="Title probability",
-        items=_sorted_desc(r["title_prob"], teams, top=10),
-        bar_color=YELLOW,
-    )
-
-    # =========================================================================
-    # 03 — UCL qualification
-    # =========================================================================
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "03_ucl_qualification.png"),
-        eyebrow="PREMIER LEAGUE · 2026/27",
-        title="Champions League qualification probability",
-        items=_sorted_desc(r["ucl_qual_prob"], teams, top=14),
-        bar_color=YELLOW,
-    )
-
-    # =========================================================================
-    # 04 — UEL qualification
-    # =========================================================================
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "04_uel_qualification.png"),
-        eyebrow="PREMIER LEAGUE · 2026/27",
-        title="Europa League qualification probability",
-        items=_sorted_desc(r["uel_qual_prob"], teams, top=14),
-        bar_color=TEAL,
-    )
-
-    # =========================================================================
-    # 05 — UECL qualification
-    # =========================================================================
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "05_uecl_qualification.png"),
-        eyebrow="PREMIER LEAGUE · 2026/27",
-        title="Conference League qualification probability",
-        items=_sorted_desc(r["uecl_qual_prob"], teams, top=14),
-        bar_color=LIGHT,
-    )
-
-    # =========================================================================
-    # 06 — Any European qualification
-    # =========================================================================
-    euro_items = sorted(
-        ((t, r["ucl_qual_prob"][t] + r["uel_qual_prob"][t] + r["uecl_qual_prob"][t])
-         for t in teams),
-        key=lambda x: -x[1],
-    )[:16]
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "06_european_qualification.png"),
-        eyebrow="PREMIER LEAGUE · 2026/27",
-        title="Any European qualification probability",
-        items=euro_items,
-        bar_color=TEAL,
-    )
-
-    # =========================================================================
-    # 07 — European win chances
-    # =========================================================================
-    draw_three_stats(
-        path=os.path.join(out_dir, "07_european_win_chances.png"),
-        eyebrow="PL CLUBS · CONTINENTAL SILVERWARE",
-        title="Chance a PL team wins",
-        items=[
-            ("UCL",  "Champions League",  f"{r['pl_ucl_win_prob']:.2f}%",  YELLOW),
-            ("UEL",  "Europa League",     f"{r['pl_uel_win_prob']:.2f}%",  TEAL),
-            ("UECL", "Conference League", f"{r['pl_uecl_win_prob']:.2f}%", LIGHT),
-        ],
-    )
-
-    # =========================================================================
-    # 08 — Points thresholds
-    # =========================================================================
-    thresholds = [
-        ("Premier League title",  r["avg_title_points"]),
-        ("Champions League",      r["avg_ucl_qual_points"]),
-        ("Europa League",         r["avg_uel_qual_points"]),
-        ("Conference League",     r["avg_uecl_qual_points"]),
-        ("Avoid relegation",      r["avg_avoid_relegation_points"]),
-    ]
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "08_points_thresholds.png"),
-        eyebrow="PREMIER LEAGUE · SEASON PROJECTION",
-        title="Average points needed",
-        items=thresholds,
-        value_fmt="{:.2f}",
-        bar_color=[YELLOW, YELLOW, TEAL, TEAL, LIGHT],
-        label_w=0.36,
-    )
-
-    # =========================================================================
-    # 09 — Carabao Cup
-    # =========================================================================
-    carabao_rows = sorted(
-        ((_short(t), cnt / n_sims * 100.0)
-         for t, cnt in r["carabao_win_counts"].items()),
-        key=lambda x: -x[1],
-    )
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "09_carabao_cup.png"),
-        eyebrow="CARABAO CUP · 2026/27",
-        title="Win probability",
-        items=carabao_rows,
-        bar_color=YELLOW,
-        label_w=0.34,
-        max_bars=15,
-    )
-
-    # =========================================================================
-    # 10 — FA Cup
-    # =========================================================================
-    fa_cup_rows = sorted(
-        ((t, cnt / n_sims * 100.0)
-         for t, cnt in r["fa_cup_win_counts"].items()),
-        key=lambda x: -x[1],
-    )[:20]
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "10_fa_cup.png"),
-        eyebrow="FA CUP · 2026/27",
-        title="Win probability",
-        items=fa_cup_rows,
-        bar_color=LIGHT,
-        label_w=0.32,
-    )
-
-    # =========================================================================
-    # 11 — Coefficient Top-2 race
-    # =========================================================================
-    assoc_rows = sorted(
-        r["assoc_top2_prob"].items(),
-        key=lambda x: -x[1],
-    )[:14]
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "11_coefficient_top2.png"),
-        eyebrow="UEFA COEFFICIENT · 2026/27",
-        title="Chance of a Top-2 finish",
-        items=assoc_rows,
-        bar_color=TEAL,
-        label_w=0.30,
-    )
-
-    # =========================================================================
-    # 12 — EPS hero card
-    # =========================================================================
-    eps = r["eps_earned_prob"]
-    draw_hero_card(
-        path=os.path.join(out_dir, "12_eps_card.png"),
-        eyebrow="EPS · EXTRA PERFORMANCE SPOT · 2027/28 UCL",
-        title="England Top-2 coefficient",
-        big_value=f"{eps:.1f}%",
-        caption="chance the 5th PL side enters the UCL",
-        segments=[
-            (eps,         f"{eps:.1f}%",         "EPS",    "England Top 2", YELLOW),
-            (100.0 - eps, f"{100.0 - eps:.1f}%", "NO EPS", "Outside Top 2", BG_ALT),
-        ],
-    )
-
-    # =========================================================================
-    # 13 — Relegation battle
-    # =========================================================================
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "13_relegation.png"),
-        eyebrow="PREMIER LEAGUE · 2026/27",
-        title="Relegation probability",
-        items=_sorted_desc(r["relegation_prob"], teams, top=10),
-        bar_color=RED,
-    )
-
-    # =========================================================================
-    # 14 — Average points by team
-    # =========================================================================
-    avg_pts_rows = sorted(
-        ((t, r["avg_points"][t]) for t in teams),
-        key=lambda x: -x[1],
-    )
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "14_avg_points.png"),
-        eyebrow="PREMIER LEAGUE · SEASON PROJECTION",
-        title="Average points per season",
-        items=avg_pts_rows,
-        value_fmt="{:.2f}",
-        bar_color=YELLOW,
-        label_w=0.32,
-    )
-
-    # =========================================================================
-    # 15 — Average finish position (lower is better → invert bar length)
-    # =========================================================================
-    pos_rows = sorted(
-        ((t, r["avg_positions"][t]) for t in teams),
-        key=lambda x: x[1],
-    )
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "15_avg_finish_position.png"),
-        eyebrow="PREMIER LEAGUE · SEASON PROJECTION",
-        title="Average finishing position",
-        items=pos_rows,
-        value_fmt="{:.2f}",
-        bar_color=TEAL,
-        label_w=0.32,
-        bar_value_fn=lambda v: 21.0 - v,
-    )
-
-    # =========================================================================
-    # 16 — Median position
-    # =========================================================================
-    med_rows = sorted(
-        ((t, float(r["median_positions"][t])) for t in teams),
-        key=lambda x: x[1],
-    )
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "16_median_position.png"),
-        eyebrow="PREMIER LEAGUE · SEASON PROJECTION",
-        title="Median finishing position",
-        items=med_rows,
-        value_fmt="{:.0f}",
-        bar_color=LIGHT,
-        label_w=0.32,
-        bar_value_fn=lambda v: 21.0 - v,
-    )
-
-    # =========================================================================
-    # 17 — Man United 5-game winning streak tracker
-    # =========================================================================
-    draw_three_stats(
-        path=os.path.join(out_dir, "17_manutd_streak.png"),
-        eyebrow="MAN UNITED · PL + UCL RESULT TRACKER",
-        title="Longest winning streak",
-        items=[
-            ("AVG",     "Average streak",
-             f"{r['manutd_streak_avg']:.2f}", TEAL),
-            ("P(>=5)",  "Chance of 5+ wins in a row",
-             f"{r['manutd_streak_5plus_prob']:.1f}%", YELLOW),
-            ("MAX",     "Longest observed streak",
-             f"{r['manutd_streak_max']}", CREAM),
-        ],
-    )
-
-    # =========================================================================
-    # 18 — Association average coefficients
-    # =========================================================================
-    assoc_avg_rows = sorted(
-        ((a, c) for a, c in r.get("assoc_avg_coeff", {}).items()),
-        key=lambda x: -x[1],
-    )[:15]
-    if assoc_avg_rows:
-        draw_horizontal_bars(
-            path=os.path.join(out_dir, "18_assoc_coefficients.png"),
-            eyebrow="UEFA COEFFICIENT · SEASON AVERAGE",
-            title="Association coefficient",
-            items=assoc_avg_rows,
-            value_fmt="{:.3f}",
-            bar_color=TEAL,
-            label_w=0.32,
-        )
-
-    # =========================================================================
-    # 19 — England coefficient range
-    # =========================================================================
-    draw_three_stats(
-        path=os.path.join(out_dir, "19_england_coeff_range.png"),
-        eyebrow="ENGLAND · UEFA COEFFICIENT DISTRIBUTION",
-        title="England coefficient spread",
-        items=[
-            ("P10", "10th percentile",
-             f"{r['england_coeff_p10']:.3f}", LIGHT),
-            ("AVG", "Average",
-             f"{r['england_avg_coeff']:.3f}", YELLOW),
-            ("P90", "90th percentile",
-             f"{r['england_coeff_p90']:.3f}", TEAL),
-        ],
-    )
-
-    # =========================================================================
-    # 20 — UCL league-phase Top-8 probability
-    # =========================================================================
-    ucl_top8 = _top_n_league_probability(
-        r["euro_league_positions"]["UCL"], n_sims, lo=1, hi=8, top=14)
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "20_ucl_league_top8.png"),
-        eyebrow="UCL · LEAGUE PHASE",
-        title="Chance of a Top-8 finish",
-        items=ucl_top8,
-        bar_color=YELLOW,
-        label_w=0.32,
-    )
-
-    # =========================================================================
-    # 21 — UEL league-phase Top-8 probability
-    # =========================================================================
-    uel_top8 = _top_n_league_probability(
-        r["euro_league_positions"]["UEL"], n_sims, lo=1, hi=8, top=14)
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "21_uel_league_top8.png"),
-        eyebrow="UEL · LEAGUE PHASE",
-        title="Chance of a Top-8 finish",
-        items=uel_top8,
-        bar_color=TEAL,
-        label_w=0.32,
-    )
-
-    # =========================================================================
-    # 22 — UECL league-phase Top-8 probability
-    # =========================================================================
-    uecl_top8 = _top_n_league_probability(
-        r["euro_league_positions"]["UECL"], n_sims, lo=1, hi=8, top=14)
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "22_uecl_league_top8.png"),
-        eyebrow="UECL · LEAGUE PHASE",
-        title="Chance of a Top-8 finish",
-        items=uecl_top8,
-        bar_color=LIGHT,
-        label_w=0.32,
-    )
-
-    # =========================================================================
-    # 23 — Per-PL-club European win probability
-    # =========================================================================
-    combined_euro: Dict[str, float] = {}
-    for t in teams:
-        combined_euro[t] = (
-            r["ucl_win_prob"].get(t, 0.0)
-            + r["uel_win_prob"].get(t, 0.0)
-            + r["uecl_win_prob"].get(t, 0.0)
-        )
-    combined_rows = sorted(
-        ((t, v) for t, v in combined_euro.items() if v > 0.0),
-        key=lambda x: -x[1],
-    )[:16]
-    if combined_rows:
-        draw_horizontal_bars(
-            path=os.path.join(out_dir, "23_pl_club_europe_win.png"),
-            eyebrow="PL CLUBS · EUROPEAN TROPHY PROBABILITY",
-            title="Chance of winning a UEFA trophy",
-            items=combined_rows,
-            bar_color=YELLOW,
-            label_w=0.32,
-        )
-
-    # =========================================================================
-    # 24 — PL Elo ratings
-    # =========================================================================
-    elo_rows = sorted(
-        ((t, r["pl_elos"][t]) for t in teams if t in r["pl_elos"]),
-        key=lambda x: -x[1],
-    )
-    draw_horizontal_bars(
-        path=os.path.join(out_dir, "24_pl_elo_ratings.png"),
-        eyebrow="PREMIER LEAGUE · MODEL INPUTS",
-        title="Elo ratings",
-        items=elo_rows,
-        value_fmt="{:.0f}",
-        bar_color=TEAL,
-        label_w=0.32,
-    )
-
-    # =========================================================================
-    # 25 — UCL win probability per PL club
-    # =========================================================================
-    ucl_win_rows = sorted(
-        ((t, r["ucl_win_prob"].get(t, 0.0)) for t in teams
-         if r["ucl_win_prob"].get(t, 0.0) > 0.0),
-        key=lambda x: -x[1],
-    )[:14]
-    if ucl_win_rows:
-        draw_horizontal_bars(
-            path=os.path.join(out_dir, "25_ucl_winner_by_pl_club.png"),
-            eyebrow="UCL · 2026/27",
-            title="Champions League win probability",
-            items=ucl_win_rows,
-            bar_color=YELLOW,
-            label_w=0.32,
-        )
-
-    print(f"\nAll charts written ({len(os.listdir(out_dir))} files in dir).")
+    pm = pd.DataFrame(rows, columns=["Date", "season", "home", "away",
+                                     "home_post", "away_post"])
+    return pm, season_end, sp
 
 
-# =============================================================================
-# MAIN
-# =============================================================================
+# ══════════════════════════════════════════════════════════════════════
+#  BRADLEY-TERRY  (per-season logistic regression = real ML)
+# ══════════════════════════════════════════════════════════════════════
+def run_bradley_terry(matches: pd.DataFrame) -> pd.DataFrame:
+    from sklearn.linear_model import LogisticRegression
 
-def main() -> int:
-    print("=" * 70)
-    print("Loading simulation module …")
-    print(f"  {SIM_PATH}")
-    print("=" * 70)
+    out = []
+    for season in sorted(matches["season"].unique()):
+        sm = matches[matches["season"] == season]
+        nd = sm[sm["FTHG"] != sm["FTAG"]]
+        teams = sorted(set(sm["HomeTeam"]) | set(sm["AwayTeam"]))
+        if len(nd) < 50 or len(teams) < 6:
+            continue
 
-    if not os.path.isfile(SIM_PATH):
-        print(f"ERROR: file not found: {SIM_PATH}", file=sys.stderr)
-        return 1
+        idx = {t: i for i, t in enumerate(teams)}
+        X = np.zeros((len(nd), len(teams)))
+        for i, r in enumerate(nd.itertuples(index=False)):
+            X[i, idx[r.HomeTeam]] =  1.0
+            X[i, idx[r.AwayTeam]] = -1.0
+        y = (nd["FTHG"] > nd["FTAG"]).astype(int).values
 
-    # ---- Wipe any stale PNGs before we start ----
-    removed = _clear_pngs(OUT_DIR)
-    print(f"Cleared {removed} existing PNG(s) from {OUT_DIR}")
+        try:
+            clf = LogisticRegression(C=0.5, max_iter=500, solver="lbfgs")
+            clf.fit(X, y)
+        except Exception as e:
+            print(f"  BT skipped {season}: {e}"); continue
 
-    try:
-        sim = load_sim_module(SIM_PATH)
-    except Exception:
-        traceback.print_exc()
-        return 1
+        # Z-score within season so early small-league seasons don't dominate
+        coefs = clf.coef_[0]
+        mu, sd = coefs.mean(), coefs.std()
+        z = (coefs - mu) / (sd + 1e-9)
 
-    if hasattr(sim, "NUM_PL_SIMS"):
-        sim.NUM_PL_SIMS = N_SIMS
+        for t, i in idx.items():
+            out.append((season, t, float(z[i])))
 
-    print(f"\nRunning {N_SIMS} simulations …")
-    try:
-        result = sim.run_simulation(N_SIMS)
-    except TypeError:
-        result = sim.run_simulation()
+    raw = pd.DataFrame(out, columns=["season", "team", "bt_z"])
 
-    print("\nSimulations complete. Building charts …")
-    make_all_charts(result, OUT_DIR)
+    # Per-team aggregated stats with Bayesian shrinkage
+    agg = raw.groupby("team")["bt_z"].agg(["max", "mean", "count"]).rename(
+        columns={"max": "bt_peak_raw", "mean": "bt_avg_raw", "count": "bt_seasons"})
+    shrink = agg["bt_seasons"] / (agg["bt_seasons"] + BT_K_SHRINK)
+    agg["bt_peak"] = agg["bt_peak_raw"] * shrink
+    agg["bt_avg"]  = agg["bt_avg_raw"]  * shrink
+    return agg.reset_index()
 
-    print("\nDone.")
-    return 0
+
+# ══════════════════════════════════════════════════════════════════════
+#  SCORING
+# ══════════════════════════════════════════════════════════════════════
+def minmax(s: pd.Series) -> pd.Series:
+    lo, hi = s.min(), s.max()
+    return pd.Series(1.0, index=s.index) if hi == lo else (s - lo) / (hi - lo)
+
+def summarize_elo(pm: pd.DataFrame, season_end: dict, sp: dict) -> pd.DataFrame:
+    long = pd.concat([
+        pm[["home", "home_post"]].rename(columns={"home": "team", "home_post": "rating"}),
+        pm[["away", "away_post"]].rename(columns={"away": "team", "away_post": "rating"}),
+    ])
+    base = long.groupby("team")["rating"].agg(
+        peak_raw="max", avg="mean", matches="size")
+    # Longevity-aware peak: compress short-career spikes toward the mean
+    base["peak"] = base["peak_raw"] - 0.5 * (base["peak_raw"] - base["avg"])
+    bse = (pd.Series({(s, t): r for (s, t), r in season_end.items()})
+             .groupby(level=1).max().rename("best_season"))
+    ns  = pd.Series({t: len(v) for t, v in sp.items()}, name="seasons")
+    return base.join(bse).join(ns)
+
+def summarize_bt(df: pd.DataFrame) -> pd.DataFrame:
+    return df.set_index("team")[["bt_peak", "bt_avg"]]
+
+def summarize_achievements(matches: pd.DataFrame) -> pd.DataFrame:
+    """Compute titles and top-4 finishes per team from per-season standings."""
+    m = matches.copy()
+    m["home_pts"] = np.where(m["FTHG"] > m["FTAG"], 3,
+                   np.where(m["FTHG"] == m["FTAG"], 1, 0))
+    m["away_pts"] = np.where(m["FTAG"] > m["FTHG"], 3,
+                   np.where(m["FTHG"] == m["FTAG"], 1, 0))
+
+    home = m[["season", "HomeTeam", "home_pts"]].rename(
+        columns={"HomeTeam": "team", "home_pts": "pts"})
+    away = m[["season", "AwayTeam", "away_pts"]].rename(
+        columns={"AwayTeam": "team", "away_pts": "pts"})
+    tbl = pd.concat([home, away], ignore_index=True)
+    tbl = tbl.groupby(["season", "team"])["pts"].sum().reset_index()
+    tbl = tbl.sort_values(["season", "pts"], ascending=[True, False])
+    tbl["pos"] = tbl.groupby("season")["pts"].rank(
+        method="min", ascending=False).astype(int)
+
+    titles = tbl[tbl["pos"] == 1].groupby("team").size().rename("titles")
+    top4   = tbl[tbl["pos"] <= 4].groupby("team").size().rename("top4")
+    return pd.concat([titles, top4], axis=1).fillna(0).astype(int)
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  MAIN
+# ══════════════════════════════════════════════════════════════════════
+def main():
+    print("=" * 74)
+    print("  BEST ENGLISH TOP-FLIGHT TEAM OF ALL TIME")
+    print("=" * 74)
+
+    matches = load_matches(DATA_DIR)
+
+    print("\n[1/3]  Results-only Elo...")
+    pm_a, se_a, sp_a = run_elo(matches, goal_weight=False)
+    sum_a = summarize_elo(pm_a, se_a, sp_a)
+
+    print("[2/3]  Goal-difference Elo...")
+    pm_b, se_b, sp_b = run_elo(matches, goal_weight=True)
+    sum_b = summarize_elo(pm_b, se_b, sp_b)
+
+    print("[3/4]  Bradley-Terry ML...")
+    bt_df = run_bradley_terry(matches)
+    sum_bt = summarize_bt(bt_df)
+    print(f"       BT fit for {len(bt_df):,} teams")
+
+    print("[4/4]  Achievements (titles & top-4)...")
+    ach = summarize_achievements(matches)
+
+    # ── Combine the two Elo structures first ──
+    elo = pd.DataFrame({
+        "peak":        (sum_a["peak"] + sum_b["peak"]) / 2,
+        "best_season": (sum_a["best_season"] + sum_b["best_season"]) / 2,
+        "avg":         (sum_a["avg"] + sum_b["avg"]) / 2,
+        "matches":     sum_a["matches"],
+        "seasons":     sum_a["seasons"],
+    })
+    elo["elo_score"] = (W_PEAK * minmax(elo["peak"]) +
+                        W_BEST_SEASON * minmax(elo["best_season"]) +
+                        W_AVG * minmax(elo["avg"]))
+
+    # ── Merge BT in ──
+    combined = elo.join(sum_bt, how="left").fillna({"bt_peak": 0, "bt_avg": 0})
+    combined["bt_score"] = (BT_MAX_W * minmax(combined["bt_peak"]) +
+                            BT_AVG_W * minmax(combined["bt_avg"]))
+
+    # ── Merge achievements in ──
+    combined = combined.join(ach, how="left").fillna({"titles": 0, "top4": 0})
+    combined["ach_score"] = (
+        0.7 * minmax(combined["titles"]) +
+        0.3 * minmax(combined["top4"]))
+
+    # ── Final score ──
+    combined["score_10"] = (
+        ELO_SHARE * combined["elo_score"] +
+        BT_SHARE * combined["bt_score"] +
+        ACH_SHARE * combined["ach_score"]) * 10
+
+    # ── Filter and sort ──
+    combined = combined[(combined["matches"] >= MIN_MATCHES) &
+                        (combined["seasons"] >= MIN_SEASONS)]
+    combined = combined.sort_values("score_10", ascending=False)
+
+    # ── Report ──
+    print("\n" + "=" * 74)
+    print("  TOP 20 — COMBINED RANKING (score / 10)")
+    print("=" * 74)
+    show = combined.head(20)[
+        ["score_10", "elo_score", "bt_score", "ach_score", "peak", "best_season",
+         "avg", "matches", "seasons", "titles", "top4"]].round(2)
+    show.columns = ["Score/10", "Elo", "BT", "Ach", "Peak Elo", "Best Season",
+                    "Avg Elo", "Matches", "Seasons", "Titles", "Top-4"]
+    print(show.to_string())
+
+    # ── Best single season (interesting side-quest) ──
+    print("\n" + "=" * 74)
+    print("  TOP 10 BEST SINGLE SEASONS (Elo at season end)")
+    print("=" * 74)
+    bs = pd.DataFrame(
+        [(t, s, r) for (s, t), r in se_b.items()],
+        columns=["team", "season", "elo"]).nlargest(10, "elo")
+    print(bs.to_string(index=False))
+
+    # ── Save everything ──
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    combined.round(3).to_csv(OUTPUT_DIR / "all_time_ranking.csv")
+    sum_a.round(3).to_csv(OUTPUT_DIR / "elo_results_only.csv")
+    sum_b.round(3).to_csv(OUTPUT_DIR / "elo_goal_diff.csv")
+    bt_df.round(3).to_csv(OUTPUT_DIR / "bradley_terry.csv")
+    ach.round(3).to_csv(OUTPUT_DIR / "achievements.csv")
+    print(f"\nResults saved to  {OUTPUT_DIR}")
+
+    winner = combined.index[0]
+    print(f"\n🏆 WINNER:  {winner}   —   {combined.iloc[0]['score_10']:.2f} / 10\n")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

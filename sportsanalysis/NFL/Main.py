@@ -18,56 +18,56 @@ MAX_TIE_PROB = 0.005      # 0.5% max when ΔR = 0
 TIE_SIGMA = 85            # decay rate
 
 # =========================
-# INITIAL ELO
+# INITIAL ELO (Updated to current mid-season ratings)
 # =========================
 ELO = {
     # AFC East
-    "Buffalo Bills": 1654.33,
-    "Miami Dolphins": 1351.38,
-    "New England Patriots": 1647.9,
-    "New York Jets": 1208.62,
+    "Buffalo Bills": 1669.04,
+    "Miami Dolphins": 1389.74,
+    "New England Patriots": 1591.47,
+    "New York Jets": 1346.99,
 
     # AFC North
-    "Baltimore Ravens": 1574.12,
-    "Cincinnati Bengals": 1507.33,
-    "Cleveland Browns": 1384.96,
-    "Pittsburgh Steelers": 1512.79,
+    "Baltimore Ravens": 1535.20,
+    "Cincinnati Bengals": 1549.33,
+    "Cleveland Browns": 1446.47,
+    "Pittsburgh Steelers": 1558.52,
 
     # AFC South
-    "Houston Texans": 1621.38,
-    "Indianapolis Colts": 1409.45,
-    "Jacksonville Jaguars": 1629.33,
-    "Tennessee Titans": 1339.02,
+    "Houston Texans": 1518.84,
+    "Indianapolis Colts": 1414.52,
+    "Jacksonville Jaguars": 1580.97,
+    "Tennessee Titans": 1281.87,
 
     # AFC West
-    "Denver Broncos": 1553.71,
-    "Kansas City Chiefs": 1447.4,
-    "Las Vegas Raiders": 1291.67,
-    "Los Angeles Chargers": 1468.17,
+    "Denver Broncos": 1633.73,
+    "Kansas City Chiefs": 1573.95,
+    "Las Vegas Raiders": 1383.28,
+    "Los Angeles Chargers": 1416.20,
 
     # NFC East
-    "Dallas Cowboys": 1505.07,
-    "New York Giants": 1424.17,
-    "Philadelphia Eagles": 1593.87,
-    "Washington Commanders": 1333.96,
+    "Dallas Cowboys": 1458.91,
+    "New York Giants": 1439.22,
+    "Philadelphia Eagles": 1480.98,
+    "Washington Commanders": 1414.00,
 
     # NFC North
-    "Chicago Bears": 1572.43,
-    "Detroit Lions": 1622.48,
-    "Green Bay Packers": 1500.92,
-    "Minnesota Vikings": 1480.04,
+    "Chicago Bears": 1572.81,
+    "Detroit Lions": 1566.87,
+    "Green Bay Packers": 1530.22,
+    "Minnesota Vikings": 1636.07,
 
     # NFC South
-    "Atlanta Falcons": 1495.47,
-    "Carolina Panthers": 1409.2,
-    "New Orleans Saints": 1412.48,
-    "Tampa Bay Buccaneers": 1454.83,
+    "Atlanta Falcons": 1472.95,
+    "Carolina Panthers": 1433.83,
+    "New Orleans Saints": 1392.93,
+    "Tampa Bay Buccaneers": 1455.64,
 
     # NFC West
-    "Arizona Cardinals": 1347.06,
-    "Los Angeles Rams": 1682.43,
-    "San Francisco 49ers": 1626.49,
-    "Seattle Seahawks": 1751,
+    "Arizona Cardinals": 1362.64,
+    "Los Angeles Rams": 1588.15,
+    "San Francisco 49ers": 1623.09,
+    "Seattle Seahawks": 1681.59,
 }
 
 # =========================
@@ -197,52 +197,52 @@ WEEKLY_SCHEDULE = {
         ("Los Angeles Rams", "Buffalo Bills", 34, 37),  # OT win for Bills (Monday Night)
     ],
     6: [
-        ("Denver Broncos", "Seattle Seahawks", None, None),   # Not yet played
-        ("Jacksonville Jaguars", "Houston Texans", None, None),
-        ("Philadelphia Eagles", "Carolina Panthers", None, None),
-        ("Cleveland Browns", "Baltimore Ravens", None, None),
-        ("Atlanta Falcons", "Chicago Bears", None, None),
-        ("New York Giants", "New Orleans Saints", None, None),
-        ("New England Patriots", "New York Jets", None, None),
-        ("Tampa Bay Buccaneers", "Pittsburgh Steelers", None, None),
-        ("Indianapolis Colts", "Tennessee Titans", None, None),
-        ("Los Angeles Rams", "Arizona Cardinals", None, None),
-        ("Las Vegas Raiders", "Buffalo Bills", None, None),
-        ("Kansas City Chiefs", "Los Angeles Chargers", None, None),
-        ("Green Bay Packers", "Dallas Cowboys", None, None),
-        ("San Francisco 49ers", "Washington Commanders", None, None),
+    ("Denver Broncos", "Seattle Seahawks", 17, 14),   # OT
+    ("Jacksonville Jaguars", "Houston Texans", 31, 34),
+    ("Philadelphia Eagles", "Carolina Panthers", 14, 25),
+    ("Cleveland Browns", "Baltimore Ravens", 13, 10),
+    ("Atlanta Falcons", "Chicago Bears", 23, 31),
+    ("New York Giants", "New Orleans Saints", 27, 34),
+    ("New England Patriots", "New York Jets", 26, 19),
+    ("Tampa Bay Buccaneers", "Pittsburgh Steelers", 19, 26),  # OT
+    ("Indianapolis Colts", "Tennessee Titans", 20, 26),
+    ("Los Angeles Rams", "Arizona Cardinals", 16, 18),
+    ("Las Vegas Raiders", "Buffalo Bills", 30, 33),
+    ("Kansas City Chiefs", "Los Angeles Chargers", 22, 6),
+    ("Green Bay Packers", "Dallas Cowboys", 23, 13),
+    ("San Francisco 49ers", "Washington Commanders", 23, 17),
     ],
     7: [
-        ("Chicago Bears", "New England Patriots"),
-        ("New Orleans Saints", "Pittsburgh Steelers"),
-        ("Tennessee Titans", "Cleveland Browns"),
-        ("Baltimore Ravens", "Cincinnati Bengals"),
-        ("Minnesota Vikings", "Indianapolis Colts"),
-        ("New York Jets", "Miami Dolphins"),
-        ("Houston Texans", "New York Giants"),
-        ("Atlanta Falcons", "San Francisco 49ers"),
-        ("Carolina Panthers", "Tampa Bay Buccaneers"),
-        ("Arizona Cardinals", "Denver Broncos"),
-        ("Detroit Lions", "Green Bay Packers"),
-        ("Las Vegas Raiders", "Los Angeles Rams"),
-        ("Seattle Seahawks", "Kansas City Chiefs"),
-        ("Philadelphia Eagles", "Dallas Cowboys"),
+        ("Chicago Bears", "New England Patriots", 30, 24),
+        ("New Orleans Saints", "Pittsburgh Steelers", 10, 16),
+        ("Tennessee Titans", "Cleveland Browns", 24, 27),
+        ("Baltimore Ravens", "Cincinnati Bengals", 13, 35),
+        ("Minnesota Vikings", "Indianapolis Colts", 16, 10),
+        ("New York Jets", "Miami Dolphins", 25, 28),
+        ("Houston Texans", "New York Giants", 21, 27),  # OT
+        ("Atlanta Falcons", "San Francisco 49ers", 29, 20),
+        ("Carolina Panthers", "Tampa Bay Buccaneers", 13, 43),
+        ("Arizona Cardinals", "Denver Broncos", 16, 30),
+        ("Detroit Lions", "Green Bay Packers", 20, 17),
+        ("Las Vegas Raiders", "Los Angeles Rams", 21, 35),
+        ("Seattle Seahawks", "Kansas City Chiefs", 20, 3),
+        ("Philadelphia Eagles", "Dallas Cowboys", 21, 38),
     ],
     8: [
-        ("Green Bay Packers", "Carolina Panthers"),
-        ("Tampa Bay Buccaneers", "Atlanta Falcons"),
-        ("Dallas Cowboys", "Arizona Cardinals"),
-        ("Buffalo Bills", "Baltimore Ravens"),
-        ("Pittsburgh Steelers", "Cleveland Browns"),
-        ("Jacksonville Jaguars", "Indianapolis Colts"),
-        ("New York Jets", "Las Vegas Raiders"),
-        ("Detroit Lions", "Minnesota Vikings"),
-        ("Cincinnati Bengals", "Tennessee Titans"),
-        ("Los Angeles Rams", "Los Angeles Chargers"),
-        ("Denver Broncos", "Kansas City Chiefs"),
-        ("Miami Dolphins", "New England Patriots"),
-        ("Washington Commanders", "Philadelphia Eagles"),
-        ("Seattle Seahawks", "Chicago Bears"),
+        ("Green Bay Packers", "Carolina Panthers", 27, 19),
+        ("Tampa Bay Buccaneers", "Atlanta Falcons", 16, 0),
+        ("Dallas Cowboys", "Arizona Cardinals", 30, 33),  # OT
+        ("Buffalo Bills", "Baltimore Ravens", 36, 10),
+        ("Pittsburgh Steelers", "Cleveland Browns", 27, 6),
+        ("Jacksonville Jaguars", "Indianapolis Colts", 42, 7),
+        ("New York Jets", "Las Vegas Raiders", 33, 38),
+        ("Detroit Lions", "Minnesota Vikings", 19, 15),
+        ("Cincinnati Bengals", "Tennessee Titans", 43, 36),  # OT
+        ("Los Angeles Rams", "Los Angeles Chargers", 24, 9),
+        ("Denver Broncos", "Kansas City Chiefs", 28, 24),
+        ("Miami Dolphins", "New England Patriots", 19, 24),
+        ("Washington Commanders", "Philadelphia Eagles", 27, 10),
+        ("Seattle Seahawks", "Chicago Bears", None, None),  # Not played yet (scheduled for 11/02)
     ],
     9: [
         ("Baltimore Ravens", "Jacksonville Jaguars"),
@@ -465,6 +465,11 @@ for wk, games in WEEKLY_SCHEDULE.items():
 
 # Total number of regular-season games per season
 TOTAL_GAMES_PER_SEASON = sum(len(CLEANED_SCHEDULE[w]) for w in range(1, 19))
+
+# Number of games remaining in the season (games without historical scores)
+GAMES_LEFT = sum(
+    1 for w in range(1, 19) for game in CLEANED_SCHEDULE[w] if len(game) == 2
+)
 
 
 # ==============================================================================
@@ -756,7 +761,7 @@ def run_sim():
     total_home_record = {team: [0, 0, 0] for team in VALID_TEAMS}
 
     print(f"Running {N_SIMS} NFL simulations with ties and neutral locations...")
-    print(f"Total regular-season games per season: {TOTAL_GAMES_PER_SEASON}\n")
+    print(f"Games left: {GAMES_LEFT}\n")
 
     for _ in tqdm(range(N_SIMS), desc="Running simulations", unit="sim"):
         record, home_record, final_elo = simulate_season(pre_season_elo.copy())

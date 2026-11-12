@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
-Simplified National League North 2025-26 Season Predictor
-Outputs the predicted final table with average points and probabilities.
+National League North 2025-26 Season Predictor - Improved Version
+
+Improvements over original:
+  1. Team strength model (attack/defense) from actual goal data, with Bayesian shrinkage
+  2. League-calibrated parameters from actual season data
+  3. Correct zero-sum ELO updates
+  4. Standard English playoff bracket (2nd v winner(5v6), 3rd v winner(4v7))
+  5. Clamped expected-goal lambdas to avoid blow-out artifacts
+  6. 5000 simulations, plus points std-dev per team
+  7. Removal of ad-hoc form/wdl adjustments (noise → strength model)
 """
 
 import random
@@ -11,9 +19,9 @@ from collections import defaultdict
 from itertools import permutations
 from tqdm import tqdm
 
-# ===============================
-# COMPLETED FIXTURES (All played matches)
-# ===============================
+# =========================================================
+# COMPLETED FIXTURES
+# =========================================================
 COMPLETED_FIXTURES = [
     # Matchday 1
     ("Telford Utd", "Brackley Town", 1, 2),
@@ -132,313 +140,493 @@ COMPLETED_FIXTURES = [
     ("Worksop Town", "Southport", 2, 0),
     ("Hebburn Town", "Hednesford", 2, 1),
 
+    # September
+    ("Southport", "Spennymoor", 2, 2),
+    ("South Shields", "Buxton", 4, 0),
+    ("Oxford City", "Morecambe", 1, 1),
+    ("Merthyr Town", "Marine", 1, 2),
+    ("Macclesfield", "Harborough Town", 1, 0),
+    ("Hednesford", "Radcliffe", 4, 1),
+    ("Darlington", "Hebburn Town", 1, 1),
+    ("Chorley", "Spalding Utd", 2, 1),
+    ("Chester", "Worksop Town", 4, 1),
+    ("Brackley Town", "Scarborough", 1, 1),
+    ("Bedford Town", "Hereford Utd", 1, 1),
+    ("Telford Utd", "Kings Lynn", 0, 5),
+    ("Brackley Town", "South Shields", 3, 2),
 
+    # October
+    ("Worksop Town", "Morecambe", 2, 1),
+    ("Radcliffe", "Scarborough", 4, 1),
+    ("Marine", "Spalding Utd", 1, 0),
+    ("Macclesfield", "South Shields", 4, 3),
+    ("Kings Lynn", "Buxton", 1, 0),
+    ("Hereford Utd", "Hednesford", 0, 1),
+    ("Hebburn Town", "Oxford City", 0, 3),
+    ("Harborough Town", "Southport", 1, 0),
+    ("Darlington", "Merthyr Town", 1, 1),
+    ("Chorley", "Telford Utd", 2, 1),
+    ("Chester", "Bedford Town", 1, 0),
+    ("Brackley Town", "Spennymoor", 2, 1),
+    ("Hebburn Town", "Scarborough", 0, 2),
+    ("Southport", "Radcliffe", 0, 2),
+    ("Merthyr Town", "Kings Lynn", 1, 1),
+    ("Hednesford", "Brackley Town", 3, 2),
+    ("Buxton", "Worksop Town", 2, 2),
+    ("Telford Utd", "Darlington", 2, 1),
+    ("South Shields", "Chester", 3, 1),
+    ("Scarborough", "Bedford Town", 1, 2),
+    ("Merthyr Town", "Morecambe", 1, 3),
+    ("Marine", "Oxford City", 1, 1),
+    ("Macclesfield", "Hereford Utd", 1, 2),
+    ("Kings Lynn", "Southport", 0, 0),
+    ("Hednesford", "Spalding Utd", 2, 0),
+    ("Harborough Town", "Worksop Town", 1, 1),
+    ("Darlington", "Spennymoor", 3, 0),
+    ("Chorley", "Buxton", 2, 3),
+    ("Brackley Town", "Radcliffe", 0, 1),
+    ("Telford Utd", "Hebburn Town", 2, 2),
+    ("Worksop Town", "Kings Lynn", 5, 0),
+    ("Spennymoor", "South Shields", 0, 1),
+    ("Spalding Utd", "Brackley Town", 2, 2),
+    ("Radcliffe", "Chorley", 0, 3),
+    ("Oxford City", "Merthyr Town", 3, 0),
+    ("Morecambe", "Darlington", 1, 0),
+    ("Hereford Utd", "Telford Utd", 0, 1),
+    ("Chester", "Marine", 2, 1),
+    ("Buxton", "Harborough Town", 3, 0),
+    ("Bedford Town", "Hednesford", 1, 0),
+    ("Southport", "Telford Utd", 1, 2),
+    ("Radcliffe", "Merthyr Town", 3, 3),
+    ("Oxford City", "South Shields", 1, 3),
+    ("Morecambe", "Scarborough", 2, 0),
+    ("Hereford Utd", "Kings Lynn", 0, 3),
+    ("Hebburn Town", "Harborough Town", 1, 1),
+    ("Chester", "Hednesford", 0, 1),
+    ("Buxton", "Marine", 4, 2),
+    ("Bedford Town", "Macclesfield", 0, 3),
+    ("Worksop Town", "Brackley Town", 0, 1),
+    ("Spennymoor", "Chorley", 2, 0),
+    ("Spalding Utd", "Darlington", 3, 2),
+
+    # November
+    ("South Shields", "Southport", 5, 1),
+    ("Scarborough", "Buxton", 2, 2),
+    ("Merthyr Town", "Hebburn Town", 4, 1),
+    ("Kings Lynn", "Spennymoor", 2, 0),
+    ("Hednesford", "Morecambe", 6, 2),
+    ("Chorley", "Hereford Utd", 1, 2),
+    ("Brackley Town", "Chester", 0, 1),
+    ("Telford Utd", "Spalding Utd", 2, 1),
+    ("Darlington", "Oxford City", 1, 1),
+    ("Scarborough", "Marine", 1, 3),
+    ("Morecambe", "Hereford Utd", 2, 2),
 ]
 
+# =========================================================
+# LEAGUE PARAMETERS (calibrated from actual match data)
+# =========================================================
+LEAGUE_HOME_GOALS = 1.63     # home goals / match
+LEAGUE_AWAY_GOALS = 1.21     # away goals / match
+LEAGUE_HOME_WIN   = 0.481
+LEAGUE_DRAW       = 0.208
+LEAGUE_AWAY_WIN   = 0.311
+
+BASE_ELO          = 1500
+K_FACTOR          = 20
+HOME_ADV_ELO      = 60       # ~58% win-share for equal teams
+PRIOR_GAMES       = 10       # shrinkage strength (higher = more conservative)
+
+PLAYOFF_WEIGHTS = {
+    'league': 1.0,
+    'playoff_qf': 1.2,
+    'playoff_sf': 1.3,
+    'playoff_final': 1.5,
+}
+
+# Clamps to keep λ's sane even for extreme mismatches
+LAMBDA_MIN = 0.35
+LAMBDA_MAX = 4.20
+ELO_FACTOR_MIN = 0.75
+ELO_FACTOR_MAX = 1.35
+
+NUM_SIMULATIONS = 5000
+
+# =========================================================
+# HELPERS
+# =========================================================
 def calculate_standings(fixtures):
-    """Calculate standings from completed fixtures"""
+    """Compute current standings (points / GD / GF and last-5 form)."""
     stats = defaultdict(lambda: {
         'played': 0, 'won': 0, 'drawn': 0, 'lost': 0,
-        'gf': 0, 'ga': 0, 'points': 0
+        'gf': 0, 'ga': 0, 'points': 0,
     })
-    
     for home, away, hs, aws in fixtures:
-        # Home team stats
         stats[home]['played'] += 1
         stats[home]['gf'] += hs
         stats[home]['ga'] += aws
-        
-        # Away team stats
         stats[away]['played'] += 1
         stats[away]['gf'] += aws
         stats[away]['ga'] += hs
-        
+
         if hs > aws:
-            stats[home]['won'] += 1
-            stats[home]['points'] += 3
+            stats[home]['won'] += 1; stats[home]['points'] += 3
             stats[away]['lost'] += 1
         elif hs < aws:
-            stats[away]['won'] += 1
-            stats[away]['points'] += 3
+            stats[away]['won'] += 1; stats[away]['points'] += 3
             stats[home]['lost'] += 1
         else:
-            stats[home]['drawn'] += 1
-            stats[away]['drawn'] += 1
-            stats[home]['points'] += 1
-            stats[away]['points'] += 1
-    
-    # Build standings with form (last 5 results)
+            stats[home]['drawn'] += 1; stats[away]['drawn'] += 1
+            stats[home]['points'] += 1; stats[away]['points'] += 1
+
     standings = []
     for team, s in stats.items():
-        # Get last 5 results for this team
         last5 = []
         for h, a, hs, aws in reversed(fixtures):
             if h == team:
-                if hs > aws:
-                    last5.append('W')
-                elif hs < aws:
-                    last5.append('L')
-                else:
-                    last5.append('D')
+                last5.append('W' if hs > aws else ('L' if hs < aws else 'D'))
             elif a == team:
-                if aws > hs:
-                    last5.append('W')
-                elif aws < hs:
-                    last5.append('L')
-                else:
-                    last5.append('D')
+                last5.append('W' if aws > hs else ('L' if aws < hs else 'D'))
             if len(last5) >= 5:
                 break
-        # Pad with '-' if fewer than 5 games
-        while len(last5) < 5:
-            last5.append('-')
-        last5 = ''.join(last5[:5])
-        
+        last5_str = ''.join(last5)
+        while len(last5_str) < 5:
+            last5_str += '-'
         gd = s['gf'] - s['ga']
-        standings.append((
-            team,
-            s['played'],
-            s['won'],
-            s['drawn'],
-            s['lost'],
-            gd,
-            s['gf'],
-            s['ga'],
-            last5,
-            s['points']
-        ))
-    
-    # Sort by points, then goal difference, then goals for
+        standings.append((team, s['played'], s['won'], s['drawn'], s['lost'],
+                          gd, s['gf'], s['ga'], last5_str, s['points']))
     standings.sort(key=lambda x: (x[9], x[5], x[6]), reverse=True)
     return standings
 
-# Calculate standings from fixtures
-CURRENT_STANDINGS = calculate_standings(COMPLETED_FIXTURES)
 
-BASE_ELO = 1500
-MAX_GAMES = 46
+def compute_team_strengths(fixtures, teams, prior_games=PRIOR_GAMES):
+    """
+    Dixon-Coles style attack/defence strengths with Bayesian shrinkage.
+    Attack = team's goal rate / league-average rate (normalised so avg ≈ 1.0).
+    Defence = team's concede rate / league-average rate (lower = better defence).
+    """
+    raw = defaultdict(lambda: {
+        'gf_h': 0, 'gp_h': 0, 'ga_h': 0,
+        'gf_a': 0, 'gp_a': 0, 'ga_a': 0,
+    })
+    for h, a, hs, aws in fixtures:
+        raw[h]['gf_h'] += hs; raw[h]['gp_h'] += 1; raw[h]['ga_h'] += aws
+        raw[a]['gf_a'] += aws; raw[a]['gp_a'] += 1; raw[a]['ga_a'] += hs
 
-wdl_rates = {}
-for team, p, w, d, l, gd, gf, ga, l5, pts in CURRENT_STANDINGS:
-    # Avoid division by zero if p=0
-    if p > 0:
-        wdl_rates[team] = {"win": w/p, "draw": d/p, "loss": l/p}
-    else:
-        wdl_rates[team] = {"win": 0.33, "draw": 0.33, "loss": 0.33}
+    strengths = {}
+    for team in teams:
+        s = raw[team]
 
-form_adjustment = {}
-for team, p, w, d, l, gd, gf, ga, l5, pts in CURRENT_STANDINGS:
-    if p > 0:
-        pts_l5 = sum(3 if r == 'W' else (1 if r == 'D' else 0) for r in l5 if r != '-')
-        games_in_l5 = sum(1 for r in l5 if r != '-')
-        if games_in_l5 > 0:
-            form_adjustment[team] = ((pts_l5 / games_in_l5 - 1.5) * 10) * 0.3  # Reduced from 0.5
-        else:
-            form_adjustment[team] = 0
-    else:
-        form_adjustment[team] = 0
+        # Attack: shrink towards 1.0 (league avg)
+        home_att = (
+            (s['gf_h'] + LEAGUE_HOME_GOALS * prior_games) /
+            (s['gp_h'] + prior_games) / LEAGUE_HOME_GOALS
+        )
+        away_att = (
+            (s['gf_a'] + LEAGUE_AWAY_GOALS * prior_games) /
+            (s['gp_a'] + prior_games) / LEAGUE_AWAY_GOALS
+        )
+        # Defence: concede rate scaled so league avg = 1.0
+        home_def = (
+            (s['ga_h'] + LEAGUE_AWAY_GOALS * prior_games) /
+            (s['gp_h'] + prior_games) / LEAGUE_AWAY_GOALS
+        )
+        away_def = (
+            (s['ga_a'] + LEAGUE_HOME_GOALS * prior_games) /
+            (s['gp_a'] + prior_games) / LEAGUE_HOME_GOALS
+        )
 
-def get_adjusted_elo(team, ratings_dict):
-    base = ratings_dict.get(team, BASE_ELO)
-    return base + form_adjustment.get(team, 0)
+        strengths[team] = {
+            'attack':  (home_att + away_att) / 2,
+            'defense': (home_def + away_def) / 2,
+        }
+    return strengths
+
 
 def generate_remaining_fixtures(teams, completed):
+    """Return the list of remaining (home, away) fixtures."""
     completed_set = {(h, a) for h, a, _, _ in completed}
-    # For a double round-robin, each team plays every other team twice
-    fixtures = []
-    for h, a in permutations(teams, 2):
-        if (h, a) not in completed_set:
-            fixtures.append((h, a))
-    random.shuffle(fixtures)
-    return fixtures
+    remaining = [(h, a) for h, a in permutations(teams, 2) if (h, a) not in completed_set]
+    random.shuffle(remaining)
+    return remaining
 
-# Get all teams from completed fixtures
-ALL_TEAMS = sorted(set([h for h, _, _, _ in COMPLETED_FIXTURES] + [a for _, a, _, _ in COMPLETED_FIXTURES]))
-REMAINING_FIXTURES = generate_remaining_fixtures(ALL_TEAMS, COMPLETED_FIXTURES)
 
-class OptimizedELORatingSystem:
-    def __init__(self, k_factor=20, home_advantage=60):  # Reduced K-factor and home advantage
-        self.k_factor = k_factor
-        self.home_advantage = home_advantage
-        self.ratings = defaultdict(lambda: BASE_ELO)
-        self.match_weights = {'league': 1.0, 'playoff_qf': 1.2, 'playoff_sf': 1.3, 'playoff_final': 1.5}  # Reduced multipliers
+# =========================================================
+# SIMULATOR
+# =========================================================
+class LeagueSimulator:
 
-    def expected_score(self, ra, rb):
-        return 1 / (1 + 10 ** ((rb - ra) / 400))
+    def __init__(self):
+        self.teams = []
+        self.ratings = {}
+        self.strengths = {}
+        self.stats = {}
 
-    def update_ratings(self, home, away, hs, aws, match_type='league'):
-        K = self.k_factor * self.match_weights.get(match_type, 1.0)
-        hr, ar = self.ratings[home] + self.home_advantage, self.ratings[away]
-        gm = min(1 + math.log(1 + abs(hs - aws)), 1.5)  # Reduced goal margin impact
-        eh, ea = self.expected_score(hr, ar), self.expected_score(ar, hr)
-        ah = 1 if hs > aws else (0.5 if hs == aws else 0)
-        aa = 1 if aws > hs else (0.5 if hs == aws else 0)
+    # ---------- SETUP ----------
+    def setup(self, completed_fixtures):
+        self.teams = sorted({
+            h for h, _, _, _ in completed_fixtures
+        } | {
+            a for _, a, _, _ in completed_fixtures
+        })
+
+        # Raw goal counters for incremental strength updates
+        self.raw = defaultdict(lambda: {
+            'gf_h': 0, 'gp_h': 0, 'ga_h': 0,
+            'gf_a': 0, 'gp_a': 0, 'ga_a': 0,
+        })
+        for h, a, hs, aws in completed_fixtures:
+            self.raw[h]['gf_h'] += hs; self.raw[h]['gp_h'] += 1; self.raw[h]['ga_h'] += aws
+            self.raw[a]['gf_a'] += aws; self.raw[a]['gp_a'] += 1; self.raw[a]['ga_a'] += hs
+
+        # Team attack/defense strengths
+        self.strengths = compute_team_strengths(completed_fixtures, self.teams)
+
+        # Current standings
+        self.stats = {}
+        for team, p, w, d, l, gd, gf, ga, l5, pts in calculate_standings(completed_fixtures):
+            self.stats[team] = {
+                'played': p, 'won': w, 'drawn': d, 'lost': l,
+                'gf': gf, 'ga': ga, 'points': pts,
+            }
+
+        # Initialise ELOs then walk through results
+        self.ratings = {t: BASE_ELO for t in self.teams}
+        for h, a, hs, aws in completed_fixtures:
+            self._update_elo(h, a, hs, aws)
+
+    # ---------- ELO ----------
+    def _update_elo(self, home, away, hs, aws, match_type='league'):
+        K = K_FACTOR * PLAYOFF_WEIGHTS.get(match_type, 1.0)
+        hr = self.ratings[home] + HOME_ADV_ELO
+        ar = self.ratings[away]
+
+        # Goal margin multiplier (diminishing)
+        gm = 1.0 + math.log(1.0 + abs(hs - aws)) if abs(hs - aws) > 0 else 1.0
+        gm = min(gm, 1.5)
+
+        # Expected "win share" for the home side
+        eh = 1.0 / (1.0 + 10 ** ((ar - hr) / 400.0))
+        ea = 1.0 - eh     # zero-sum: E[away] = 1 - E[home]
+
+        ah = 1.0 if hs > aws else (0.5 if hs == aws else 0.0)
+        aa = 1.0 - ah
+
         self.ratings[home] += K * gm * (ah - eh)
         self.ratings[away] += K * gm * (aa - ea)
 
-    def predict_match(self, home, away, neutral=False):
-        ha = 0 if neutral else self.home_advantage
-        return 1 / (1 + 10 ** (-(self.ratings[home] - self.ratings[away] + ha) / 400))
+    # ---------- GOAL MODEL ----------
+    def expected_goals(self, home, away, neutral=False):
+        """Return (λ_home, λ_away) from team strengths + ELO diff."""
+        ha = 0.0 if neutral else HOME_ADV_ELO
+        elo_diff = self.ratings[home] + ha - self.ratings[away]
+        elo_factor = 1.0 + 0.0008 * elo_diff
+        elo_factor = max(ELO_FACTOR_MIN, min(ELO_FACTOR_MAX, elo_factor))
+
+        a_h = self.strengths[home]['attack']
+        d_h = self.strengths[home]['defense']
+        a_a = self.strengths[away]['attack']
+        d_a = self.strengths[away]['defense']
+
+        lam_h = LEAGUE_HOME_GOALS * a_h * d_a * elo_factor
+        lam_a = LEAGUE_AWAY_GOALS * a_a * d_h / elo_factor
+
+        # Guard against blowing up for extreme strengths
+        lam_h = max(LAMBDA_MIN, min(LAMBDA_MAX, lam_h))
+        lam_a = max(LAMBDA_MIN, min(LAMBDA_MAX, lam_a))
+        return lam_h, lam_a
 
     def predict_score(self, home, away, neutral=False):
-        ha = 0 if neutral else self.home_advantage
-        diff = get_adjusted_elo(home, self.ratings) - get_adjusted_elo(away, self.ratings) + ha
-        hxg, axg = 0.6 + 1.7 / (1 + math.exp(-diff / 400)), 0.6 + 1.7 / (1 + math.exp(diff / 400))
-        closeness = math.exp(-(diff ** 2) / (2 * 180 ** 2))
-        
-        # Get wdl rates safely
-        home_wdl = wdl_rates.get(home, {"win": 0.33, "draw": 0.33, "loss": 0.33})
-        away_wdl = wdl_rates.get(away, {"win": 0.33, "draw": 0.33, "loss": 0.33})
-        
-        bd = ((home_wdl["win"] - home_wdl["loss"]) - (away_wdl["win"] - away_wdl["loss"])) * 0.5
-        hxg, axg = hxg + bd * 0.15, axg - bd * 0.15
-        tempo = 0.9 + 0.1 * (abs(diff) / 400)
-        hxg, axg = hxg * tempo, axg * tempo
-        vb = 1 + (home_wdl["win"] - home_wdl["draw"]) * 0.1
-        db = max((home_wdl["draw"] + away_wdl["draw"]) / 2, 0.3)
-        ls = 0.05 + closeness * 0.25 * db
-        lh, la = max(0.05, hxg - ls) * vb, max(0.05, axg - ls)
-        sg = np.random.poisson(ls)
-        return int(np.random.poisson(lh) + sg), int(np.random.poisson(la) + sg)
+        lam_h, lam_a = self.expected_goals(home, away, neutral)
+        return int(np.random.poisson(lam_h)), int(np.random.poisson(lam_a))
 
-    def decide_knockout(self, home, away, neutral=False, match_type='playoff_qf'):
-        return home if self.predict_match(home, away, neutral) >= 0.5 else away
+    # ---------- TABLE ----------
+    def update_stats(self, home, away, hs, aws):
+        sh, sa = self.stats[home], self.stats[away]
+        sh['played'] += 1; sh['gf'] += hs; sh['ga'] += aws
+        sa['played'] += 1; sa['gf'] += aws; sa['ga'] += hs
+        if hs > aws:
+            sh['won'] += 1; sh['points'] += 3; sa['lost'] += 1
+        elif hs < aws:
+            sa['won'] += 1; sa['points'] += 3; sh['lost'] += 1
+        else:
+            sh['drawn'] += 1; sa['drawn'] += 1
+            sh['points'] += 1; sa['points'] += 1
 
-class LeagueSimulator:
-    def __init__(self):
-        self.elo_system = OptimizedELORatingSystem()
-        self.team_stats = {}
+    def update_strengths_incremental(self, home, away, hs, aws):
+        for team, gf, ga, side in [(home, hs, aws, 'h'), (away, aws, hs, 'a')]:
+            r = self.raw[team]
+            r[f'gf_{side}'] += gf
+            r[f'gp_{side}'] += 1
+            r[f'ga_{side}'] += ga
 
-    def load_current_standings(self):
-        for team, p, w, d, l, gd, gf, ga, l5, pts in CURRENT_STANDINGS:
-            self.team_stats[team] = {'played': p, 'won': w, 'drawn': d, 'lost': l, 'gf': gf, 'ga': ga, 'points': pts}
+            home_att = (r['gf_h'] + LEAGUE_HOME_GOALS * PRIOR_GAMES) / (r['gp_h'] + PRIOR_GAMES) / LEAGUE_HOME_GOALS
+            away_att = (r['gf_a'] + LEAGUE_AWAY_GOALS * PRIOR_GAMES) / (r['gp_a'] + PRIOR_GAMES) / LEAGUE_AWAY_GOALS
+            home_def = (r['ga_h'] + LEAGUE_AWAY_GOALS * PRIOR_GAMES) / (r['gp_h'] + PRIOR_GAMES) / LEAGUE_AWAY_GOALS
+            away_def = (r['ga_a'] + LEAGUE_HOME_GOALS * PRIOR_GAMES) / (r['gp_a'] + PRIOR_GAMES) / LEAGUE_HOME_GOALS
 
-    def initialize_elos_from_results(self, completed_fixtures):
-        for team in self.team_stats: 
-            self.elo_system.ratings[team] = BASE_ELO
-        for home, away, hs, aws in completed_fixtures:
-            self.elo_system.update_ratings(home, away, hs, aws, match_type='league')
+            self.strengths[team]['attack']  = (home_att + away_att) / 2
+            self.strengths[team]['defense'] = (home_def + away_def) / 2
 
+    def get_table(self):
+        return sorted(
+            self.teams,
+            key=lambda t: (
+                self.stats[t]['points'],
+                self.stats[t]['gf'] - self.stats[t]['ga'],
+                self.stats[t]['gf'],
+            ),
+            reverse=True,
+        )
+
+    # ---------- STATE ----------
     def save_state(self):
         return {
-            'ratings': dict(self.elo_system.ratings), 
-            'stats': {t: dict(s) for t, s in self.team_stats.items()}
+            'ratings':   dict(self.ratings),
+            'stats':     {t: dict(s) for t, s in self.stats.items()},
+            'raw':       {t: dict(s) for t, s in self.raw.items()},
+            'strengths': {t: dict(s) for t, s in self.strengths.items()},
         }
 
     def restore_state(self, state):
-        self.elo_system.ratings = defaultdict(lambda: BASE_ELO)
-        self.elo_system.ratings.update(state['ratings'])
-        self.team_stats = {t: dict(s) for t, s in state['stats'].items()}
+        self.ratings   = dict(state['ratings'])
+        self.stats     = {t: dict(s) for t, s in state['stats'].items()}
+        self.raw       = {t: dict(s) for t, s in state['raw'].items()}
+        self.strengths = {t: dict(s) for t, s in state['strengths'].items()}
 
-    def update_team_stats(self, home, away, hs, aws):
-        self.team_stats[home]['played'] += 1; self.team_stats[home]['gf'] += hs; self.team_stats[home]['ga'] += aws
-        self.team_stats[away]['played'] += 1; self.team_stats[away]['gf'] += aws; self.team_stats[away]['ga'] += hs
-        if hs > aws:
-            self.team_stats[home]['won'] += 1; self.team_stats[home]['points'] += 3; self.team_stats[away]['lost'] += 1
-        elif hs < aws:
-            self.team_stats[away]['won'] += 1; self.team_stats[away]['points'] += 3; self.team_stats[home]['lost'] += 1
-        else:
-            self.team_stats[home]['drawn'] += 1; self.team_stats[away]['drawn'] += 1
-            self.team_stats[home]['points'] += 1; self.team_stats[away]['points'] += 1
-
-    def simulate_fixtures(self, fixtures):
-        for h, a in fixtures:
-            hs, aws = self.elo_system.predict_score(h, a)
-            self.elo_system.update_ratings(h, a, hs, aws, match_type='league')
-            self.update_team_stats(h, a, hs, aws)
-
-    def get_league_table(self):
-        teams = list(self.team_stats.keys())
-        teams.sort(key=lambda t: (
-            self.team_stats[t]['points'], 
-            self.team_stats[t]['gf'] - self.team_stats[t]['ga'], 
-            self.team_stats[t]['gf']
-        ), reverse=True)
-        return teams
+    # ---------- KNOCKOUT / PLAYOFFS ----------
+    def _knockout(self, home, away, match_type, neutral=False):
+        hs, aws = self.predict_score(home, away, neutral=neutral)
+        if hs != aws:
+            return home if hs > aws else away
+        # Penalty shootout: ELO-weighted coin flip
+        ha = 0.0 if neutral else HOME_ADV_ELO
+        diff = self.ratings[home] + ha - self.ratings[away]
+        p_home = 1.0 / (1.0 + 10 ** (-diff / 400.0))
+        return home if random.random() < p_home else away
 
     def simulate_playoffs(self, final_table):
-        pos2, pos3, pos4, pos5, pos6, pos7 = final_table[1], final_table[2], final_table[3], final_table[4], final_table[5], final_table[6]
-        qf1_winner = self.elo_system.decide_knockout(pos4, pos7, match_type='playoff_qf')
-        qf2_winner = self.elo_system.decide_knockout(pos5, pos6, match_type='playoff_qf')
-        qf_winners = sorted([qf1_winner, qf2_winner], key=lambda t: final_table.index(t))
-        sf1_winner = self.elo_system.decide_knockout(pos2, qf_winners[1], match_type='playoff_sf')
-        sf2_winner = self.elo_system.decide_knockout(pos3, qf_winners[0], match_type='playoff_sf')
-        return self.elo_system.decide_knockout(sf1_winner, sf2_winner, neutral=True, match_type='playoff_final')
+        """
+        Standard English playoff bracket (fixed, not reseeded):
+            2nd       vs winner(5v6)   → SF1
+            3rd       vs winner(4v7)   → SF2
+            Final at neutral venue.
+        """
+        pos2 = final_table[1]
+        pos3 = final_table[2]
+        pos4 = final_table[3]
+        pos5 = final_table[4]
+        pos6 = final_table[5]
+        pos7 = final_table[6]
 
-    def run_monte_carlo_simulations(self, fixtures, baseline, num_simulations=2500):
-        teams = list(baseline['stats'].keys())
-        promotion_counts = {t: 0 for t in teams}
-        top7_counts = {t: 0 for t in teams}
-        releg = {t: 0 for t in teams}
-        avg_points = {t: [] for t in teams}
+        qf_5_6 = self._knockout(pos5, pos6, 'playoff_qf')  # 5th vs 6th
+        qf_4_7 = self._knockout(pos4, pos7, 'playoff_qf')  # 4th vs 7th
 
-        for _ in tqdm(range(num_simulations), desc="Simulating", unit="sim"):
+        sf1 = self._knockout(pos2, qf_5_6, 'playoff_sf')   # 2nd vs winner(5v6)
+        sf2 = self._knockout(pos3, qf_4_7, 'playoff_sf')   # 3rd vs winner(4v7)
+
+        return self._knockout(sf1, sf2, 'playoff_final', neutral=True)
+
+    # ---------- MONTE CARLO ----------
+    def run_simulations(self, remaining_fixtures, baseline, num_sims):
+        promotion = {t: 0 for t in self.teams}
+        top7      = {t: 0 for t in self.teams}
+        relegated = {t: 0 for t in self.teams}
+        points_hist = {t: [] for t in self.teams}
+
+        for _ in tqdm(range(num_sims), desc="Simulating", unit="sim"):
             self.restore_state(baseline)
-            self.simulate_fixtures(fixtures)
-            ft = self.get_league_table()
-            
-            promotion_counts[ft[0]] += 1  # Champion
-            for team in ft[:7]: 
-                top7_counts[team] += 1
-            
-            if len(ft) >= 7:
-                pw = self.simulate_playoffs(ft)
-                promotion_counts[pw] += 1  # Playoff Winner
-                
-            for pos, team in enumerate(ft, 1):
-                if pos >= 21: 
-                    releg[team] += 1
-                avg_points[team].append(self.team_stats[team]['points'])
 
-        return (promotion_counts, top7_counts, releg, avg_points)
+            for h, a in remaining_fixtures:
+                hs, aws = self.predict_score(h, a)
+                self._update_elo(h, a, hs, aws)
+                self.update_stats(h, a, hs, aws)
+                self.update_strengths_incremental(h, a, hs, aws)
 
-    def print_predicted_table(self, prom, top7, rel, avg_pts, n):
-        teams = sorted(avg_pts.keys(), key=lambda t: np.mean(avg_pts[t]), reverse=True)
-        
-        print("\n" + "=" * 100)
-        print(f"PREDICTED FINAL TABLE ({n:,} Monte Carlo Simulations)")
-        print("=" * 100)
-        print(f"{'Pos':<4} {'Team':<20} {'Current':<8} {'Avg Pts':<10} {'Prom %':<10} {'Top 7 %':<10} {'Rel %':<10}")
-        print(f"{'':<4} {'':<20} {'ELO':<8} {'':<10} {'':<10} {'':<10} {'':<10}")
-        print("-" * 100)
-        
+            table = self.get_table()
+
+            # Champions (auto-promotion)
+            promotion[table[0]] += 1
+            for t in table[:7]:
+                top7[t] += 1
+            # Playoff winner (2nd promotion)
+            promotion[self.simulate_playoffs(table)] += 1
+
+            for pos, team in enumerate(table, 1):
+                if pos >= 21:
+                    relegated[team] += 1
+                points_hist[team].append(self.stats[team]['points'])
+
+        return promotion, top7, relegated, points_hist
+
+    # ---------- OUTPUT ----------
+    def print_results(self, promotion, top7, releg, points_hist, n):
+        teams = sorted(points_hist.keys(),
+                       key=lambda t: np.mean(points_hist[t]),
+                       reverse=True)
+
+        line = "=" * 108
+        print(f"\n{line}")
+        print(f"PREDICTED FINAL TABLE  ({n:,} Monte Carlo Simulations)")
+        print(f"{line}")
+        print(f"{'Pos':<4}{'Team':<20}{'ELO':<7}{'AvgPts':<9}{'StdP':<8}"
+              f"{'Prom%':<9}{'Top7%':<9}{'Rel%':<9}")
+        print("-" * 108)
+
         for i, team in enumerate(teams, 1):
-            avg_p = np.mean(avg_pts[team])
-            prom_pct = (prom[team] / n) * 100
-            top7_pct = (top7[team] / n) * 100
-            rel_pct = (rel[team] / n) * 100
-            current_elo = int(self.elo_system.ratings.get(team, BASE_ELO))
-            print(f"{i:<4} {team:<20} {current_elo:<8} {avg_p:<10.1f} {prom_pct:<10.1f} {top7_pct:<10.1f} {rel_pct:<10.1f}")
-            
-        print("=" * 100)
-        print("Prom %: Probability of winning the league OR winning the playoffs.")
-        print("Top 7 %: Probability of qualifying for the playoffs.")
-        print("Rel %: Probability of finishing in the relegation zone (21st-24th).")
-        print("Current ELO: ELO rating after completed fixtures (before form adjustment).")
+            avg_pts = np.mean(points_hist[team])
+            std_pts = np.std(points_hist[team])
+            prom_pct  = 100.0 * promotion[team] / n
+            top7_pct  = 100.0 * top7[team]      / n
+            rel_pct   = 100.0 * releg[team]     / n
+            elo = int(self.ratings.get(team, BASE_ELO))
+            print(f"{i:<4}{team:<20}{elo:<7}{avg_pts:<9.1f}{std_pts:<8.2f}"
+                  f"{prom_pct:<9.1f}{top7_pct:<9.1f}{rel_pct:<9.1f}")
 
+        print(line)
+        print("Prom % : Champions (1st) OR playoff winner.")
+        print("Top7 % : Finish inside playoff positions 1-7.")
+        print("Rel  % : Finish in relegation zone (21st-24th).")
+        print("StdP   : Standard deviation of final points across simulations.")
+        print(line)
+
+
+# =========================================================
+# MAIN
+# =========================================================
 def main():
     random.seed(42)
     np.random.seed(42)
 
     sim = LeagueSimulator()
-    sim.load_current_standings()
-    sim.initialize_elos_from_results(COMPLETED_FIXTURES)
+    sim.setup(COMPLETED_FIXTURES)
     baseline = sim.save_state()
 
+    # ---- Current standings printout ----
     print(f"Current standings from {len(COMPLETED_FIXTURES)} completed fixtures:")
-    print("-" * 95)
-    print(f"{'Pos':<4} {'Team':<20} {'P':<4} {'W':<4} {'D':<4} {'L':<4} {'GD':<5} {'Pts':<4} {'ELO':<8} {'Form':<6}")
-    print("-" * 95)
-    for i, (team, p, w, d, l, gd, gf, ga, l5, pts) in enumerate(CURRENT_STANDINGS, 1):
-        elo = int(sim.elo_system.ratings.get(team, BASE_ELO))
-        print(f"{i:<4} {team:<20} {p:<4} {w:<4} {d:<4} {l:<4} {gd:<5} {pts:<4} {elo:<8} {l5:<6}")
-    print("-" * 95)
-    print(f"Remaining fixtures: {len(REMAINING_FIXTURES)}")
-    print(f"Total fixtures per team: {len(REMAINING_FIXTURES) * 2 // len(ALL_TEAMS) + min(8, 0)} games played + remaining")
-    print("\nRunning 2,500 Monte Carlo simulations...\n")
-    
-    results = sim.run_monte_carlo_simulations(fixtures=REMAINING_FIXTURES, baseline=baseline, num_simulations=2500)
-    sim.print_predicted_table(*results, n=2500)
+    print("-" * 100)
+    print(f"{'Pos':<4}{'Team':<20}{'P':<4}{'W':<4}{'D':<4}{'L':<4}"
+          f"{'GD':<5}{'Pts':<5}{'ELO':<7}{'Form':<7}")
+    print("-" * 100)
+    for i, (team, p, w, d, l, gd, gf, ga, l5, pts) in enumerate(
+        calculate_standings(COMPLETED_FIXTURES), 1
+    ):
+        print(f"{i:<4}{team:<20}{p:<4}{w:<4}{d:<4}{l:<4}"
+              f"{gd:<5}{pts:<5}{int(sim.ratings[team]):<7}{l5:<7}")
+    print("-" * 100)
+
+    # ---- Remaining fixtures ----
+    remaining = generate_remaining_fixtures(sim.teams, COMPLETED_FIXTURES)
+    total_matches = len(COMPLETED_FIXTURES) + len(remaining)
+    print(f"Remaining fixtures: {len(remaining):,}")
+    print(f"Total fixtures (completed + remaining): {total_matches:,}")
+    print(f"Teams: {len(sim.teams)}  •  Each team plays {2 * (len(sim.teams) - 1)} matches")
+
+    # ---- Simulate ----
+    print(f"\nRunning {NUM_SIMULATIONS:,} Monte Carlo simulations...\n")
+    results = sim.run_simulations(remaining, baseline, NUM_SIMULATIONS)
+    sim.print_results(*results, n=NUM_SIMULATIONS)
+
 
 if __name__ == "__main__":
     main()

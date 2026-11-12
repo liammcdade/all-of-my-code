@@ -1,0 +1,14 @@
+
+================================================================================
+UNIFIED PREMIER LEAGUE + EUROPEAN + CARABAO CUP SIMULATION (Python)
+================================================================================
+
+!!! EXCEPTION !!!
+Traceback (most recent call last):
+  File "C:\Users\liam\Documents\GitHub\all-of-my-code\sportsanalysis\premier-league\_baseline_check.py", line 56, in main_check
+    mod.main()
+    ~~~~~~~~^^
+  File "C:\Users\liam\Documents\GitHub\all-of-my-code\sportsanalysis\premier-league\26-27-season.py", line 2563, in main
+    position_counts[team][pos + 1] += 1
+    ^^^^^^^^^^^^^^^
+NameError: name 'position_counts' is not defined

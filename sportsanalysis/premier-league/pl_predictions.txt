@@ -1,0 +1,428 @@
+================================================================================================
+Premier League — Elo + Poisson Match Predictions
+Generated: 2026-11-06 10:55:18
+================================================================================================
+
+Loading Premier League data (2000 onwards)…
+  skip 2003-2004.csv: Error tokenizing data. C error: Expected 57 fields in line 305, saw 72
+
+  skip 2004-2005.csv: 'utf-8' codec can't decode byte 0xa0 in position 75278: invalid start byte
+  8830 matches, 2000-08-19 → 2026-11-02
+
+Historical baselines  |  Home 45.6%  Draw 24.7%  Away 29.7%
+Avg goals per match   |  Home 1.54   Away 1.19
+
+Computing Elo…
+
+==============================================================
+ELO RATINGS – ALL TEAMS (after decay to prediction date)
+==============================================================
+  Arsenal                              1880.7
+  Manchester City                      1856.6
+  Liverpool                            1737.3
+  Brighton & Hove Albion               1714.5
+  Bournemouth                          1686.6
+  Aston Villa                          1676.4
+  Chelsea                              1657.9
+  Brentford                            1655.4
+  Manchester United                    1652.0
+  Everton                              1604.7
+  Newcastle United                     1604.2
+  Fulham                               1589.2
+  Leeds United                         1587.2
+  Nottingham Forest                    1580.9
+  Tottenham Hotspur                    1562.0
+  Crystal Palace                       1549.2
+  West Ham United                      1547.5
+  Sunderland                           1500.7
+  Bradford City                        1499.6
+  Charlton Athletic                    1499.2
+  Wigan Athletic                       1499.1
+  Blackpool                            1498.7
+  Birmingham                           1498.7
+  Portsmouth                           1498.2
+  Bolton Wanderers                     1498.1
+  Blackburn Rovers                     1497.9
+  Derby County                         1496.4
+  Stoke City                           1495.7
+  Reading                              1495.3
+  Swansea City                         1494.9
+  Queens Park Rangers                  1492.9
+  Cardiff City                         1492.1
+  Middlesbrough                        1487.5
+  West Bromwich Albion                 1475.8
+  Huddersfield Town                    1472.0
+  Luton Town                           1456.7
+  Watford                              1454.3
+  Wolverhampton Wanderers              1452.1
+  Hull City                            1448.7
+  Norwich City                         1437.7
+  Leicester City                       1437.6
+  Coventry City                        1421.3
+  Ipswich Town                         1418.6
+  Burnley                              1401.3
+  Sheffield United                     1399.2
+  Southampton                          1365.3
+
+Calibrating xG goal model (recency-weighted Poisson)…
+  a=0.4005  b=0.6066  c=0.2122  d=-0.6036
+  → λ_home = exp(0.401 + 0.607·ΔElo/400)
+  → λ_away = exp(0.212 + -0.604·ΔElo/400)   (ΔElo includes +100 home adv.)
+
+========================================================================
+  Arsenal  vs  Hull City
+========================================================================
+
+  Arsenal — HOME record since 2000
+    299W 85D 57L  (441 matches)  → W 67.8% | D 19.3% | L 12.9%
+
+  Hull City — AWAY record since 2000
+    10W 22D 48L  (80 matches)  → W 12.5% | D 27.5% | L 60.0%
+
+  HEAD-TO-HEAD since 2000: 8 matches
+    Arsenal: 6W (75.0%)   Draws: 1 (12.5%)   Hull City: 1W (12.5%)
+
+  Arsenal — last 5
+    2026-11-01  W  1.0-0.0  vs Liverpool
+    2026-10-24  W  2.0-0.0  vs Everton
+    2026-10-18  W  1.0-0.0  vs Nottingham Forest
+    2026-10-10  W  2.0-1.0  vs Leeds United
+    2026-09-19  L  0.0-3.0  vs Brighton & Hove Albion
+
+  Hull City — last 5
+    2026-10-31  D  2.0-2.0  vs Ipswich Town
+    2026-10-25  D  1.0-1.0  vs Brentford
+    2026-10-17  L  0.0-1.0  vs Fulham
+    2026-10-11  D  2.0-2.0  vs Everton
+    2026-09-19  L  1.0-2.0  vs Newcastle United
+
+  ── ELO + MODEL ──
+    Elo:        Arsenal=1881   Hull City=1449   (Δ=+432)
+    xG goals:   Arsenal 3.34   –   0.55 Hull City
+    P(home):     88.8%
+    P(draw):      7.9%
+    P(away):      3.2%
+
+========================================================================
+  Brighton & Hove Albion  vs  Brentford
+========================================================================
+
+  Brighton & Hove Albion — HOME record since 2000
+    65W 61D 49L  (175 matches)  → W 37.1% | D 34.9% | L 28.0%
+
+  Brentford — AWAY record since 2000
+    29W 24D 46L  (99 matches)  → W 29.3% | D 24.2% | L 46.5%
+
+  HEAD-TO-HEAD since 2000: 10 matches
+    Brighton & Hove Albion: 5W (50.0%)   Draws: 3 (30.0%)   Brentford: 2W (20.0%)
+
+  Brighton & Hove Albion — last 5
+    2026-10-31  W  1.0-0.0  vs Manchester City
+    2026-10-25  L  0.0-2.0  vs Liverpool
+    2026-10-18  W  5.0-0.0  vs Crystal Palace
+    2026-10-10  W  2.0-0.0  vs Sunderland
+    2026-09-19  W  3.0-0.0  vs Arsenal
+
+  Brentford — last 5
+    2026-10-31  W  2.0-0.0  vs Nottingham Forest
+    2026-10-25  D  1.0-1.0  vs Hull City
+    2026-10-17  L  1.0-2.0  vs Liverpool
+    2026-10-10  D  2.0-2.0  vs Aston Villa
+    2026-09-18  W  3.0-0.0  vs Chelsea
+
+  ── ELO + MODEL ──
+    Elo:        Brighton & Hove Albion=1714   Brentford=1655   (Δ=+59)
+    xG goals:   Brighton & Hove Albion 1.90   –   0.97 Brentford
+    P(home):     59.1%
+    P(draw):     22.0%
+    P(away):     18.9%
+
+========================================================================
+  Crystal Palace  vs  Liverpool
+========================================================================
+
+  Crystal Palace — HOME record since 2000
+    75W 63D 94L  (232 matches)  → W 32.3% | D 27.2% | L 40.5%
+
+  Liverpool — AWAY record since 2000
+    212W 101D 128L  (441 matches)  → W 48.1% | D 22.9% | L 29.0%
+
+  HEAD-TO-HEAD since 2000: 24 matches
+    Crystal Palace: 6W (25.0%)   Draws: 3 (12.5%)   Liverpool: 15W (62.5%)
+
+  Crystal Palace — last 5
+    2026-10-31  L  0.0-2.0  vs Tottenham Hotspur
+    2026-10-25  L  0.0-2.0  vs Newcastle United
+    2026-10-18  L  0.0-5.0  vs Brighton & Hove Albion
+    2026-10-11  W  3.0-1.0  vs Nottingham Forest
+    2026-09-20  D  0.0-0.0  vs Leeds United
+
+  Liverpool — last 5
+    2026-11-01  L  0.0-1.0  vs Arsenal
+    2026-10-25  W  2.0-0.0  vs Brighton & Hove Albion
+    2026-10-17  W  2.0-1.0  vs Brentford
+    2026-10-11  L  0.0-3.0  vs Manchester City
+    2026-09-20  W  1.0-0.0  vs Bournemouth
+
+  ── ELO + MODEL ──
+    Elo:        Crystal Palace=1549   Liverpool=1737   (Δ=-188)
+    xG goals:   Crystal Palace 1.31   –   1.41 Liverpool
+    P(home):     34.7%
+    P(draw):     25.7%
+    P(away):     39.6%
+
+========================================================================
+  Everton  vs  Coventry City
+========================================================================
+
+  Everton — HOME record since 2000
+    201W 116D 124L  (441 matches)  → W 45.6% | D 26.3% | L 28.1%
+
+  Coventry City — AWAY record since 2000
+    5W 3D 15L  (23 matches)  → W 21.7% | D 13.0% | L 65.2%
+
+  HEAD-TO-HEAD since 2000: 2 matches
+    Everton: 1W (50.0%)   Draws: 0 (0.0%)   Coventry City: 1W (50.0%)
+
+  Everton — last 5
+    2026-11-02  W  1.0-0.0  vs Newcastle United
+    2026-10-24  L  0.0-2.0  vs Arsenal
+    2026-10-17  L  0.0-2.0  vs Chelsea
+    2026-10-11  D  2.0-2.0  vs Hull City
+    2026-09-19  W  1.0-0.0  vs Ipswich Town
+
+  Coventry City — last 5
+    2026-10-31  W  3.0-1.0  vs Sunderland
+    2026-10-24  L  0.0-1.0  vs Fulham
+    2026-10-19  L  1.0-3.0  vs Tottenham Hotspur
+    2026-10-12  W  4.0-1.0  vs Newcastle United
+    2026-09-19  W  1.0-0.0  vs Nottingham Forest
+
+  ── ELO + MODEL ──
+    Elo:        Everton=1605   Coventry City=1421   (Δ=+183)
+    xG goals:   Everton 2.29   –   0.81 Coventry City
+    P(home):     70.9%
+    P(draw):     17.6%
+    P(away):     11.5%
+
+========================================================================
+  Fulham  vs  Newcastle United
+========================================================================
+
+  Fulham — HOME record since 2000
+    134W 67D 107L  (308 matches)  → W 43.5% | D 21.8% | L 34.7%
+
+  Newcastle United — AWAY record since 2000
+    106W 94D 203L  (403 matches)  → W 26.3% | D 23.3% | L 50.4%
+
+  HEAD-TO-HEAD since 2000: 30 matches
+    Fulham: 13W (43.3%)   Draws: 5 (16.7%)   Newcastle United: 12W (40.0%)
+
+  Fulham — last 5
+    2026-10-31  D  1.0-1.0  vs Aston Villa
+    2026-10-24  W  1.0-0.0  vs Coventry City
+    2026-10-17  W  1.0-0.0  vs Hull City
+    2026-10-10  L  1.0-2.0  vs Ipswich Town
+    2026-09-20  D  1.0-1.0  vs Manchester United
+
+  Newcastle United — last 5
+    2026-11-02  L  0.0-1.0  vs Everton
+    2026-10-25  W  2.0-0.0  vs Crystal Palace
+    2026-10-17  L  0.0-1.0  vs Aston Villa
+    2026-10-12  L  1.0-4.0  vs Coventry City
+    2026-09-19  W  2.0-1.0  vs Hull City
+
+  ── ELO + MODEL ──
+    Elo:        Fulham=1589   Newcastle United=1604   (Δ=-15)
+    xG goals:   Fulham 1.70   –   1.09 Newcastle United
+    P(home):     51.6%
+    P(draw):     24.0%
+    P(away):     24.3%
+
+========================================================================
+  Ipswich Town  vs  Bournemouth
+========================================================================
+
+  Ipswich Town — HOME record since 2000
+    20W 14D 27L  (61 matches)  → W 32.8% | D 23.0% | L 44.3%
+
+  Bournemouth — AWAY record since 2000
+    47W 39D 89L  (175 matches)  → W 26.9% | D 22.3% | L 50.9%
+
+  HEAD-TO-HEAD since 2000: 2 matches
+    Ipswich Town: 1W (50.0%)   Draws: 0 (0.0%)   Bournemouth: 1W (50.0%)
+
+  Ipswich Town — last 5
+    2026-10-31  D  2.0-2.0  vs Hull City
+    2026-10-23  D  1.0-1.0  vs Nottingham Forest
+    2026-10-17  L  2.0-3.0  vs Manchester City
+    2026-10-10  W  2.0-1.0  vs Fulham
+    2026-09-19  L  0.0-1.0  vs Everton
+
+  Bournemouth — last 5
+    2026-10-31  W  2.0-0.0  vs Leeds United
+    2026-10-25  W  3.0-0.0  vs Manchester United
+    2026-10-18  W  2.0-0.0  vs Sunderland
+    2026-10-10  L  1.0-5.0  vs Chelsea
+    2026-09-20  L  0.0-1.0  vs Liverpool
+
+  ── ELO + MODEL ──
+    Elo:        Ipswich Town=1419   Bournemouth=1687   (Δ=-268)
+    xG goals:   Ipswich Town 1.16   –   1.59 Bournemouth
+    P(home):     27.7%
+    P(draw):     24.9%
+    P(away):     47.5%
+
+========================================================================
+  Leeds United  vs  Tottenham Hotspur
+========================================================================
+
+  Leeds United — HOME record since 2000
+    54W 38D 45L  (137 matches)  → W 39.4% | D 27.7% | L 32.8%
+
+  Tottenham Hotspur — AWAY record since 2000
+    155W 114D 172L  (441 matches)  → W 35.1% | D 25.9% | L 39.0%
+
+  HEAD-TO-HEAD since 2000: 14 matches
+    Leeds United: 4W (28.6%)   Draws: 2 (14.3%)   Tottenham Hotspur: 8W (57.1%)
+
+  Leeds United — last 5
+    2026-10-31  L  0.0-2.0  vs Bournemouth
+    2026-10-25  D  0.0-0.0  vs Sunderland
+    2026-10-18  D  1.0-1.0  vs Manchester United
+    2026-10-10  L  1.0-2.0  vs Arsenal
+    2026-09-20  D  0.0-0.0  vs Crystal Palace
+
+  Tottenham Hotspur — last 5
+    2026-10-31  W  2.0-0.0  vs Crystal Palace
+    2026-10-24  W  2.0-0.0  vs Chelsea
+    2026-10-19  W  3.0-1.0  vs Coventry City
+    2026-10-10  D  1.0-1.0  vs Manchester United
+    2026-09-19  L  2.0-3.0  vs Aston Villa
+
+  ── ELO + MODEL ──
+    Elo:        Leeds United=1587   Tottenham Hotspur=1562   (Δ=+25)
+    xG goals:   Leeds United 1.80   –   1.02 Tottenham Hotspur
+    P(home):     55.7%
+    P(draw):     23.0%
+    P(away):     21.3%
+
+========================================================================
+  Manchester United  vs  Aston Villa
+========================================================================
+
+  Manchester United — HOME record since 2000
+    302W 74D 65L  (441 matches)  → W 68.5% | D 16.8% | L 14.7%
+
+  Aston Villa — AWAY record since 2000
+    110W 105D 169L  (384 matches)  → W 28.6% | D 27.3% | L 44.0%
+
+  HEAD-TO-HEAD since 2000: 40 matches
+    Manchester United: 27W (67.5%)   Draws: 9 (22.5%)   Aston Villa: 4W (10.0%)
+
+  Manchester United — last 5
+    2026-10-31  L  0.0-2.0  vs Chelsea
+    2026-10-25  L  0.0-3.0  vs Bournemouth
+    2026-10-18  D  1.0-1.0  vs Leeds United
+    2026-10-10  D  1.0-1.0  vs Tottenham Hotspur
+    2026-09-20  D  1.0-1.0  vs Fulham
+
+  Aston Villa — last 5
+    2026-10-31  D  1.0-1.0  vs Fulham
+    2026-10-24  W  2.0-1.0  vs Manchester City
+    2026-10-17  W  1.0-0.0  vs Newcastle United
+    2026-10-10  D  2.0-2.0  vs Brentford
+    2026-09-19  W  3.0-2.0  vs Tottenham Hotspur
+
+  ── ELO + MODEL ──
+    Elo:        Manchester United=1652   Aston Villa=1676   (Δ=-24)
+    xG goals:   Manchester United 1.67   –   1.10 Aston Villa
+    P(home):     50.7%
+    P(draw):     24.2%
+    P(away):     25.1%
+
+========================================================================
+  Nottingham Forest  vs  Manchester City
+========================================================================
+
+  Nottingham Forest — HOME record since 2000
+    26W 25D 29L  (80 matches)  → W 32.5% | D 31.2% | L 36.2%
+
+  Manchester City — AWAY record since 2000
+    202W 92D 128L  (422 matches)  → W 47.9% | D 21.8% | L 30.3%
+
+  HEAD-TO-HEAD since 2000: 8 matches
+    Nottingham Forest: 1W (12.5%)   Draws: 2 (25.0%)   Manchester City: 5W (62.5%)
+
+  Nottingham Forest — last 5
+    2026-10-31  L  0.0-2.0  vs Brentford
+    2026-10-23  D  1.0-1.0  vs Ipswich Town
+    2026-10-18  L  0.0-1.0  vs Arsenal
+    2026-10-11  L  1.0-3.0  vs Crystal Palace
+    2026-09-19  L  0.0-1.0  vs Coventry City
+
+  Manchester City — last 5
+    2026-10-31  L  0.0-1.0  vs Brighton & Hove Albion
+    2026-10-24  L  1.0-2.0  vs Aston Villa
+    2026-10-17  W  3.0-2.0  vs Ipswich Town
+    2026-10-11  W  3.0-0.0  vs Liverpool
+    2026-09-20  W  5.0-3.0  vs Sunderland
+
+  ── ELO + MODEL ──
+    Elo:        Nottingham Forest=1581   Manchester City=1857   (Δ=-276)
+    xG goals:   Nottingham Forest 1.14   –   1.61 Manchester City
+    P(home):     27.0%
+    P(draw):     24.7%
+    P(away):     48.2%
+
+========================================================================
+  Sunderland  vs  Chelsea
+========================================================================
+
+  Sunderland — HOME record since 2000
+    86W 79D 105L  (270 matches)  → W 31.9% | D 29.3% | L 38.9%
+
+  Chelsea — AWAY record since 2000
+    210W 101D 130L  (441 matches)  → W 47.6% | D 22.9% | L 29.5%
+
+  HEAD-TO-HEAD since 2000: 28 matches
+    Sunderland: 6W (21.4%)   Draws: 2 (7.1%)   Chelsea: 20W (71.4%)
+
+  Sunderland — last 5
+    2026-10-31  L  1.0-3.0  vs Coventry City
+    2026-10-25  D  0.0-0.0  vs Leeds United
+    2026-10-18  L  0.0-2.0  vs Bournemouth
+    2026-10-10  L  0.0-2.0  vs Brighton & Hove Albion
+    2026-09-20  L  3.0-5.0  vs Manchester City
+
+  Chelsea — last 5
+    2026-10-31  W  2.0-0.0  vs Manchester United
+    2026-10-24  L  0.0-2.0  vs Tottenham Hotspur
+    2026-10-17  W  2.0-0.0  vs Everton
+    2026-10-10  W  5.0-1.0  vs Bournemouth
+    2026-09-18  L  0.0-3.0  vs Brentford
+
+  ── ELO + MODEL ──
+    Elo:        Sunderland=1501   Chelsea=1658   (Δ=-157)
+    xG goals:   Sunderland 1.37   –   1.35 Chelsea
+    P(home):     37.6%
+    P(draw):     25.7%
+    P(away):     36.7%
+
+
+================================================================================================
+PREDICTION SUMMARY
+================================================================================================
+Home                       Away                        EloH  EloA   xGH   xGA   P(H)   P(D)   P(A)
+------------------------------------------------------------------------------------------------
+Arsenal                    Hull City                   1881  1449  3.34  0.55  88.8%   7.9%   3.2%
+Brighton & Hove Albion     Brentford                   1714  1655  1.90  0.97  59.1%  22.0%  18.9%
+Crystal Palace             Liverpool                   1549  1737  1.31  1.41  34.7%  25.7%  39.6%
+Everton                    Coventry City               1605  1421  2.29  0.81  70.9%  17.6%  11.5%
+Fulham                     Newcastle United            1589  1604  1.70  1.09  51.6%  24.0%  24.3%
+Ipswich Town               Bournemouth                 1419  1687  1.16  1.59  27.7%  24.9%  47.5%
+Leeds United               Tottenham Hotspur           1587  1562  1.80  1.02  55.7%  23.0%  21.3%
+Manchester United          Aston Villa                 1652  1676  1.67  1.10  50.7%  24.2%  25.1%
+Nottingham Forest          Manchester City             1581  1857  1.14  1.61  27.0%  24.7%  48.2%
+Sunderland                 Chelsea                     1501  1658  1.37  1.35  37.6%  25.7%  36.7%
+================================================================================================

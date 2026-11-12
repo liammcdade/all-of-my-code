@@ -1,9 +1,8 @@
 import random
 import math
-import itertools
-from collections import defaultdict, Counter
-from itertools import groupby
-from typing import Dict, List, Tuple, Set, Optional, Any
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Dict, List, Tuple, Set, Optional
 
 try:
     from tqdm import tqdm
@@ -19,11 +18,11 @@ RANDOM_SEED = 42
 HOME_ADV = 108.80
 BASE_XG = 1.35222
 XG_ELO_SCALE = 600.0
-ELO_SCALE = 400
 MAX_XG = 3.5
 HIST_WEIGHT = 0.30
 HIST_PRIOR_MATCHES = 60.0
 
+# Discipline points (yellow = 1, red = 3, second yellow = 3)
 DISCIPLINE_POINTS: Dict[str, int] = {
     "Ukraine": 14, "Israel": 13, "Portugal": 12, "Belgium": 12,
     "Czechia": 12, "Andorra": 11, "Romania": 11, "Türkiye": 11,
@@ -41,7 +40,9 @@ DISCIPLINE_POINTS: Dict[str, int] = {
     "Montenegro": 0, "Gibraltar": 0,
 }
 
-FIXED_RESULTS = {
+# Pre-simulated fixed results for the 2026-27 group phase.
+# Keys are (home_team, away_team) with team names already stripped.
+FIXED_RESULTS: Dict[Tuple[str, str], Tuple[int, int]] = {
     ("Andorra", "Malta"): (1, 2), ("Norway", "Denmark"): (3, 2),
     ("Liechtenstein", "Lithuania"): (0, 2), ("Kosovo", "Republic of Ireland"): (1, 0),
     ("Netherlands", "Germany"): (1, 1), ("Austria", "Israel"): (3, 1),
@@ -94,23 +95,27 @@ FIXED_RESULTS = {
     ("Belarus", "Finland"): (1, 0), ("Albania", "San Marino"): (2, 1),
     ("Estonia", "Iceland"): (0, 0), ("England", "Czechia"): (3, 0),
     ("Switzerland", "North Macedonia"): (3, 0), ("Scotland", "Slovenia"): (1, 2),
+    ("Türkiye", "Belgium"): (1, 2), ("Armenia", "Cyprus"): (1, 1),
+    ("Italy", "France"): (2, 1), ("Czechia", "Spain"): (0, 1),
+    ("England", "Croatia"): (2, 1), ("Albania", "Finland"): (2, 0),
+    ("San Marino", "Belarus"): (0, 2), ("Montenegro", "Latvia"): (0, 0),
 }
 
-ELO_RATINGS = {
-    "Spain": 2282, "England": 2144, "France": 2088, "Portugal": 2067,
-    "Belgium": 1972, "Switzerland": 1927, "Norway": 1908, "Netherlands": 1974,
-    "Italy": 1897, "Germany": 1894, "Croatia": 1891, "Denmark": 1864,
-    "Austria": 1863, "Ukraine": 1747, "Greece": 1807, "Türkiye": 1781,
-    "Sweden": 1759, "Wales": 1681, "Scotland": 1746, "Serbia": 1683,
-    "Kosovo": 1710, "Hungary": 1702, "Poland": 1702, "Republic of Ireland": 1711,
-    "Slovenia": 1690, "Czechia": 1658, "Northern Ireland": 1681, "Slovakia": 1665,
-    "Romania": 1569, "Georgia": 1619, "Iceland": 1603, "Albania": 1612,
-    "Bosnia and Herzegovina": 1655, "North Macedonia": 1536, "Finland": 1552,
-    "Montenegro": 1503, "Belarus": 1515, "Bulgaria": 1411, "Luxembourg": 1422,
-    "Israel": 1619, "Kazakhstan": 1393, "Faroe Islands": 1392, "Armenia": 1341,
-    "Cyprus": 1346, "Azerbaijan": 1326, "Moldova": 1301, "Lithuania": 1278,
-    "Latvia": 1246, "Malta": 1263, "Andorra": 1056, "Gibraltar": 1022,
-    "Liechtenstein": 901, "San Marino": 820, "Estonia": 1400,
+ELO_RATINGS: Dict[str, int] = {
+    "Spain": 2287, "England": 2145, "France": 2104, "Portugal": 2055,
+    "Belgium": 1956, "Switzerland": 1975, "Norway": 1900, "Netherlands": 1974,
+    "Italy": 1910, "Germany": 1895, "Croatia": 1855, "Denmark": 1861,
+    "Austria": 1841, "Ukraine": 1724, "Greece": 1835, "Türkiye": 1768,
+    "Sweden": 1774, "Wales": 1681, "Scotland": 1718, "Serbia": 1683,
+    "Kosovo": 1710, "Hungary": 1725, "Poland": 1685, "Republic of Ireland": 1711,
+    "Slovenia": 1718, "Czechia": 1656, "Northern Ireland": 1672, "Slovakia": 1678,
+    "Romania": 1554, "Georgia": 1628, "Iceland": 1597, "Albania": 1612,
+    "Bosnia and Herzegovina": 1672, "North Macedonia": 1533, "Finland": 1529,
+    "Montenegro": 1490, "Belarus": 1537, "Bulgaria": 1450, "Luxembourg": 1383,
+    "Israel": 1619, "Kazakhstan": 1387, "Faroe Islands": 1397, "Armenia": 1354,
+    "Cyprus": 1346, "Azerbaijan": 1326, "Moldova": 1288, "Lithuania": 1278,
+    "Latvia": 1246, "Malta": 1263, "Andorra": 1056, "Gibraltar": 1034,
+    "Liechtenstein": 887, "San Marino": 820, "Estonia": 1408,
 }
 
 TEAM_HOME_AWAY_GOALS: Dict[str, Dict[str, float]] = {
@@ -170,33 +175,66 @@ TEAM_HOME_AWAY_GOALS: Dict[str, Dict[str, float]] = {
     "Liechtenstein": {"matches_home": 121, "goals_home": 50, "avg_home": 0.413, "matches_away": 138, "goals_away": 55, "avg_away": 0.399},
 }
 
+# 2026-27 league structure (official draw, UEFA.com[reference:3])
 LEAGUES_2627 = {
-    "A": {"groups": {
-        "A1": ["France", "Italy", "Belgium", "Türkiye"],
-        "A2": ["Germany", "Netherlands", "Serbia", "Greece"],
-        "A3": ["Spain", "Croatia", "England", "Czechia"],
-        "A4": ["Portugal", "Denmark", "Norway", "Wales"]}},
-    "B": {"groups": {
-        "B1": ["Scotland", "Switzerland", "Slovenia", "North Macedonia"],
-        "B2": ["Hungary", "Ukraine", "Georgia", "Northern Ireland"],
-        "B3": ["Israel", "Austria", "Republic of Ireland", "Kosovo"],
-        "B4": ["Poland", "Bosnia and Herzegovina", "Romania", "Sweden"]}},
-    "C": {"groups": {
-        "C1": ["Albania", "Finland", "Belarus", "San Marino"],
-        "C2": ["Montenegro", "Armenia", "Cyprus", "Latvia"],
-        "C3": ["Kazakhstan", "Slovakia", "Faroe Islands", "Moldova"],
-        "C4": ["Iceland", "Bulgaria", "Estonia", "Luxembourg"]}},
-    "D": {"groups": {
-        "D1": ["Gibraltar", "Malta", "Andorra"],
-        "D2": ["Lithuania", "Azerbaijan", "Liechtenstein"]}},
+    "A": {
+        "groups": {
+            "A1": ["France", "Italy", "Belgium", "Türkiye"],
+            "A2": ["Germany", "Netherlands", "Serbia", "Greece"],
+            "A3": ["Spain", "Croatia", "England", "Czechia"],
+            "A4": ["Portugal", "Denmark", "Norway", "Wales"],
+        }
+    },
+    "B": {
+        "groups": {
+            "B1": ["Scotland", "Switzerland", "Slovenia", "North Macedonia"],
+            "B2": ["Hungary", "Ukraine", "Georgia", "Northern Ireland"],
+            "B3": ["Israel", "Austria", "Republic of Ireland", "Kosovo"],
+            "B4": ["Poland", "Bosnia and Herzegovina", "Romania", "Sweden"],
+        }
+    },
+    "C": {
+        "groups": {
+            "C1": ["Albania", "Finland", "Belarus", "San Marino"],
+            "C2": ["Montenegro", "Armenia", "Cyprus", "Latvia"],
+            "C3": ["Kazakhstan", "Slovakia", "Faroe Islands", "Moldova"],
+            "C4": ["Iceland", "Bulgaria", "Estonia", "Luxembourg"],
+        }
+    },
+    "D": {
+        "groups": {
+            "D1": ["Gibraltar", "Malta", "Andorra"],
+            "D2": ["Lithuania", "Azerbaijan", "Liechtenstein"],
+        }
+    },
 }
 
-ALL_TEAMS = [t for lg in LEAGUES_2627.values() for grp in lg["groups"].values() for t in grp]
+# ============================================================
+# CLEANUP & INDEX BUILDING
+# ============================================================
+def _clean_team_name(name: str) -> str:
+    return name.strip()
+
+ALL_TEAMS: List[str] = [
+    t for lg in LEAGUES_2627.values()
+    for grp in lg["groups"].values()
+    for t in grp
+]
+
 for t in ALL_TEAMS:
-    if t not in DISCIPLINE_POINTS: DISCIPLINE_POINTS[t] = 0
+    if t not in DISCIPLINE_POINTS:
+        DISCIPLINE_POINTS[t] = 0
+
+ACCESS_LIST: Dict[str, int] = {}
+_idx = 0
+for lg_name in ("A", "B", "C", "D"):
+    for gname, teams in LEAGUES_2627[lg_name]["groups"].items():
+        for t in teams:
+            ACCESS_LIST[t] = _idx
+            _idx += 1
 
 # ============================================================
-# CORE SIMULATION FUNCTIONS
+# CORE SIMULATION HELPERS
 # ============================================================
 def effective_elo(team: str) -> float:
     return float(ELO_RATINGS[team])
@@ -205,28 +243,38 @@ _total_mh = sum(TEAM_HOME_AWAY_GOALS[t]["matches_home"] for t in ALL_TEAMS)
 _total_gh = sum(TEAM_HOME_AWAY_GOALS[t]["goals_home"] for t in ALL_TEAMS)
 _total_ma = sum(TEAM_HOME_AWAY_GOALS[t]["matches_away"] for t in ALL_TEAMS)
 _total_ga = sum(TEAM_HOME_AWAY_GOALS[t]["goals_away"] for t in ALL_TEAMS)
+
 GLOBAL_AVG_HOME = _total_gh / _total_mh
 GLOBAL_AVG_AWAY = _total_ga / _total_ma
+
 
 def _attack_modifier(team: str, is_home: bool) -> float:
     s = TEAM_HOME_AWAY_GOALS[team]
     n, g, ref = (
-        (s["matches_home"], s["goals_home"], GLOBAL_AVG_HOME) if is_home
+        (s["matches_home"], s["goals_home"], GLOBAL_AVG_HOME)
+        if is_home
         else (s["matches_away"], s["goals_away"], GLOBAL_AVG_AWAY)
     )
-    if n == 0: return 1.0
+    if n == 0:
+        return 1.0
     shrunk = (n * (g / n) + HIST_PRIOR_MATCHES * ref) / (n + HIST_PRIOR_MATCHES)
     return shrunk / ref
+
 
 HOME_ATTACK_MOD = {t: _attack_modifier(t, True) for t in ALL_TEAMS}
 AWAY_ATTACK_MOD = {t: _attack_modifier(t, False) for t in ALL_TEAMS}
 
+
 def poisson_rand(lam: float, rng: random.Random) -> int:
-    if lam <= 0: return 0
+    if lam <= 0:
+        return 0
     L, k, p = math.exp(-lam), 0, 1.0
     while True:
-        k += 1; p *= rng.random()
-        if p <= L: return k - 1
+        k += 1
+        p *= rng.random()
+        if p <= L:
+            return k - 1
+
 
 def expected_goals(home: str, away: str) -> Tuple[float, float]:
     diff = (effective_elo(home) + HOME_ADV) - effective_elo(away)
@@ -236,332 +284,608 @@ def expected_goals(home: str, away: str) -> Tuple[float, float]:
     a = a_elo * (1.0 + HIST_WEIGHT * (AWAY_ATTACK_MOD[away] - 1.0))
     return min(h, MAX_XG), min(a, MAX_XG)
 
+
 def simulate_match(home: str, away: str, rng: random.Random) -> Tuple[int, int]:
     hxg, axg = expected_goals(home, away)
     return poisson_rand(hxg, rng), poisson_rand(axg, rng)
 
-def simulate_two_legged_tie(higher: str, lower: str, rng: random.Random) -> str:
-    # Higher ranked team hosts 2nd leg
-    h1, a1 = simulate_match(lower, higher, rng) # Leg 1 at Lower
-    h2, a2 = simulate_match(higher, lower, rng) # Leg 2 at Higher
-    
-    agg_h, agg_l = a1 + h2, h1 + a2
-    if agg_h > agg_l: return higher
-    if agg_l > agg_h: return lower
-    
-    # Extra time & Penalties approximated by Elo advantage
-    e1, e2 = effective_elo(higher), effective_elo(lower)
-    return higher if rng.random() < 0.5 + (e1 - e2) / (2 * ELO_SCALE) else lower
-
-def neutral_match(t1: str, t2: str, rng: random.Random) -> str:
-    e1, e2 = effective_elo(t1), effective_elo(t2)
-    d = e1 - e2
-    xg1_elo = min(BASE_XG * math.exp(d / XG_ELO_SCALE), MAX_XG)
-    xg2_elo = min(BASE_XG * math.exp(-d / XG_ELO_SCALE), MAX_XG)
-    mod1 = 0.5 * (HOME_ATTACK_MOD[t1] + AWAY_ATTACK_MOD[t1])
-    mod2 = 0.5 * (HOME_ATTACK_MOD[t2] + AWAY_ATTACK_MOD[t2])
-    xg1 = min(xg1_elo * (1.0 + HIST_WEIGHT * (mod1 - 1.0)), MAX_XG)
-    xg2 = min(xg2_elo * (1.0 + HIST_WEIGHT * (mod2 - 1.0)), MAX_XG)
-    g1, g2 = poisson_rand(xg1, rng), poisson_rand(xg2, rng)
-    if g1 > g2: return t1
-    if g2 > g1: return t2
-    return t1 if rng.random() < 0.5 + (e1 - e2) / (2 * ELO_SCALE) else t2
 
 # ============================================================
-# STANDINGS & TIE-BREAKS
+# TIEBREAKERS (Article 15 of the regulations[reference:4])
 # ============================================================
-def calculate_group_standings(teams, results, access_order=None):
-    stats = {t: {"team": t, "played": 0, "won": 0, "drawn": 0, "lost": 0,
-                 "gf": 0, "ga": 0, "gd": 0, "points": 0,
-                 "away_gf": 0, "away_won": 0, "disc_points": DISCIPLINE_POINTS.get(t, 0)}
-             for t in teams}
-    if access_order is None: access_order = {t: i for i, t in enumerate(teams)}
-    
-    for home, away, hg, ag in results:
-        stats[home]["played"] += 1; stats[away]["played"] += 1
-        stats[home]["gf"] += hg; stats[home]["ga"] += ag
-        stats[away]["gf"] += ag; stats[away]["ga"] += hg
-        stats[away]["away_gf"] += ag
-        if hg > ag: stats[home]["won"] += 1; stats[home]["points"] += 3; stats[away]["lost"] += 1
-        elif hg < ag: stats[away]["won"] += 1; stats[away]["away_won"] += 1; stats[away]["points"] += 3; stats[home]["lost"] += 1
-        else: stats[home]["drawn"] += 1; stats[away]["drawn"] += 1; stats[home]["points"] += 1; stats[away]["points"] += 1
-            
-    for t in stats: stats[t]["gd"] = stats[t]["gf"] - stats[t]["ga"]
-    
-    # Sort by Points, GD, GF, then Access Order (Seed)
-    order = sorted(teams, key=lambda t: (-stats[t]["points"], -stats[t]["gd"], -stats[t]["gf"], access_order[t]))
-    return [stats[t] for t in order]
+def sort_tied_teams(teams: List[str],
+                    results: List[Tuple[str, str, int, int]],
+                    overall_stats: Dict[str, Dict],
+                    access_order: Dict[str, int]) -> List[str]:
+    """
+    Sort a list of teams tied on points using the official UEFA criteria.
 
-# ============================================================
-# 2026/27 SIMULATION
-# ============================================================
-def simulate_2627_season(rng):
-    group_standings = {}
-    for lg_name, lg in LEAGUES_2627.items():
-        for gname, teams in lg["groups"].items():
-            matches = [(a, b) for i, a in enumerate(teams) for b in teams[i+1:]] + \
-                      [(b, a) for i, a in enumerate(teams) for b in teams[i+1:]]
-            results = []
-            for h, a in matches:
-                if (h, a) in FIXED_RESULTS: results.append((h, a, FIXED_RESULTS[(h,a)][0], FIXED_RESULTS[(h,a)][1]))
-                else:
-                    hg, ag = simulate_match(h, a, rng)
-                    results.append((h, a, hg, ag))
-            
-            st = calculate_group_standings(teams, results)
-            group_standings[gname] = st
-            
-    return group_standings
+    Criteria:
+      a) head-to-head points
+      b) head-to-head goal difference
+      c) head-to-head goals scored
+      → if still level, REAPPLY (a)–(c) to the remaining teams
+      e) overall goal difference
+      f) overall goals scored
+      g) away goals scored
+      h) wins
+      i) away wins
+      j) disciplinary points
+      k) access-list position
+    """
+    if len(teams) <= 1:
+        return teams[:]
 
-def get_overall_ranking_2627(group_standings):
-    """
-    Creates the 1-54 ranking used to seed the 2028/29 leagues.
-    Rules: League Level > Group Position > Points > GD > GF
-    """
-    league_level = {"A": 4, "B": 3, "C": 2, "D": 1}
-    all_teams_ranked = []
-    
-    for gname, st in group_standings.items():
-        lg = gname[0]
-        for pos, entry in enumerate(st, 1):
-            entry["league_level"] = league_level[lg]
-            entry["group_pos"] = pos
-            all_teams_ranked.append(entry)
-            
-    # Sort by League Level (Desc), Group Pos (Asc), Points (Desc), GD (Desc), GF (Desc)
-    all_teams_ranked.sort(key=lambda x: (-x["league_level"], x["group_pos"], -x["points"], -x["gd"], -x["gf"]))
-    return [e["team"] for e in all_teams_ranked]
+    h2h = {t: {"pts": 0, "gd": 0, "gf": 0} for t in teams}
+    for h, a, hg, ag in results:
+        if h in teams and a in teams:
+            if hg > ag:
+                h2h[h]["pts"] += 3
+            elif hg < ag:
+                h2h[a]["pts"] += 3
+            else:
+                h2h[h]["pts"] += 1
+                h2h[a]["pts"] += 1
+            h2h[h]["gd"] += hg - ag
+            h2h[a]["gd"] += ag - hg
+            h2h[h]["gf"] += hg
+            h2h[a]["gf"] += ag
 
-def determine_2829_leagues(ranking_2627):
-    """
-    Splits the 54 teams into 3 leagues of 18 based on 26/27 ranking.
-    """
-    return {
-        "A": ranking_2627[0:18],
-        "B": ranking_2627[18:36],
-        "C": ranking_2627[36:54]
+    teams_sorted = sorted(
+        teams,
+        key=lambda t: (-h2h[t]["pts"], -h2h[t]["gd"], -h2h[t]["gf"])
+    )
+
+    result: List[str] = []
+    i = 0
+    while i < len(teams_sorted):
+        j = i + 1
+        key_i = (h2h[teams_sorted[i]]["pts"],
+                 h2h[teams_sorted[i]]["gd"],
+                 h2h[teams_sorted[i]]["gf"])
+        while j < len(teams_sorted):
+            key_j = (h2h[teams_sorted[j]]["pts"],
+                     h2h[teams_sorted[j]]["gd"],
+                     h2h[teams_sorted[j]]["gf"])
+            if key_j != key_i:
+                break
+            j += 1
+
+        block = teams_sorted[i:j]
+        if len(block) == 1:
+            result.append(block[0])
+        elif len(block) == len(teams):
+            # Head-to-head cannot separate them → overall criteria.
+            block.sort(key=lambda t: (
+                -overall_stats[t]["gd"],
+                -overall_stats[t]["gf"],
+                -overall_stats[t]["away_gf"],
+                -overall_stats[t]["wins"],
+                -overall_stats[t]["away_wins"],
+                overall_stats[t]["disc_points"],
+                access_order[t],
+                -effective_elo(t),
+            ))
+            result.extend(block)
+        else:
+            # REAPPLY head-to-head (a–c) exclusively to the remaining block.
+            result.extend(sort_tied_teams(
+                block, results, overall_stats, access_order))
+        i = j
+
+    return result
+
+
+def calculate_group_standings(teams: List[str],
+                              results: List[Tuple[str, str, int, int]],
+                              access_order: Optional[Dict[str, int]] = None
+                              ) -> List[Dict]:
+    if access_order is None:
+        access_order = {t: ACCESS_LIST.get(t, 999) for t in teams}
+
+    stats = {
+        t: {
+            "team": t, "played": 0, "won": 0, "drawn": 0, "lost": 0,
+            "gf": 0, "ga": 0, "gd": 0, "points": 0,
+            "away_gf": 0, "away_won": 0,
+            "disc_points": DISCIPLINE_POINTS.get(t, 0),
+        }
+        for t in teams
     }
 
-# ============================================================
-# 2028/29 SIMULATION
-# ============================================================
-def draw_groups_2829(teams, rng):
-    """
-    Draws 3 groups of 6 from 18 teams.
-    Seeding: 3 pots of 6. Each group gets 2 from each pot.
-    """
-    pots = [teams[0:6], teams[6:12], teams[12:18]]
-    for pot in pots: rng.shuffle(pot)
-    
-    groups = {"G1": [], "G2": [], "G3": []}
-    for pot in pots:
-        groups["G1"].extend(pot[0:2])
-        groups["G2"].extend(pot[2:4])
-        groups["G3"].extend(pot[4:6])
-    return groups
+    for home, away, hg, ag in results:
+        stats[home]["played"] += 1
+        stats[away]["played"] += 1
+        stats[home]["gf"] += hg
+        stats[home]["ga"] += ag
+        stats[away]["gf"] += ag
+        stats[away]["ga"] += hg
+        stats[away]["away_gf"] += ag
 
-def generate_2829_fixtures_indices():
+        if hg > ag:
+            stats[home]["won"] += 1
+            stats[home]["points"] += 3
+            stats[away]["lost"] += 1
+        elif hg < ag:
+            stats[away]["won"] += 1
+            stats[away]["away_won"] += 1
+            stats[away]["points"] += 3
+            stats[home]["lost"] += 1
+        else:
+            stats[home]["drawn"] += 1
+            stats[away]["drawn"] += 1
+            stats[home]["points"] += 1
+            stats[away]["points"] += 1
+
+    for t in stats:
+        stats[t]["gd"] = stats[t]["gf"] - stats[t]["ga"]
+
+    overall_stats = {
+        t: {
+            "gd": stats[t]["gd"],
+            "gf": stats[t]["gf"],
+            "away_gf": stats[t]["away_gf"],
+            "wins": stats[t]["won"],
+            "away_wins": stats[t]["away_won"],
+            "disc_points": stats[t]["disc_points"],
+        }
+        for t in teams
+    }
+
+    teams_sorted_by_points = sorted(
+        teams, key=lambda t: -stats[t]["points"])
+
+    final_order: List[str] = []
+    i = 0
+    while i < len(teams_sorted_by_points):
+        j = i + 1
+        pts = stats[teams_sorted_by_points[i]]["points"]
+        while (j < len(teams_sorted_by_points)
+               and stats[teams_sorted_by_points[j]]["points"] == pts):
+            j += 1
+        group = teams_sorted_by_points[i:j]
+        if len(group) == 1:
+            final_order.append(group[0])
+        else:
+            final_order.extend(
+                sort_tied_teams(group, results, overall_stats, access_order))
+        i = j
+
+    return [stats[t] for t in final_order]
+
+
+# ============================================================
+# INTERIM OVERALL RANKING
+# (Leagues A→B→C→D, then by group position, then full tiebreakers)
+# ============================================================
+def build_interim_ranking(group_standings: Dict[str, List[Dict]]
+                          ) -> List[str]:
     """
-    Returns a list of (home_idx, away_idx) for a group of 6 teams.
-    Indices 0,1 are Pot 1; 2,3 are Pot 2; 4,5 are Pot 3.
-    Ensures: 
-    - 2 games vs same pot opponent.
-    - 1 game vs each of the 4 other opponents.
-    - Balanced Home/Away against each Pot.
+    Returns the 1–54 interim overall ranking used to seed EURO 2028
+    qualifying pots.
+
+    The ranking is ordered strictly by:
+      League A 1st, League A 2nd, League A 3rd, League A 4th,
+      League B 1st, League B 2nd, … League D 2nd/3rd.
+    Within each band, teams are ordered by the full group-stage
+    tiebreaker chain (points → GD → GF → away GF → wins → away wins
+    → discipline → access list → Elo).
     """
-    return [
-        # Pot 1 Rivalry (0 vs 1)
-        (0, 1), (1, 0),
-        # Team 0 vs Pot 2 (2,3) & Pot 3 (4,5)
-        (0, 2), (3, 0), (4, 0), (0, 5),
-        # Team 1 vs Pot 2 (2,3) & Pot 3 (4,5)
-        (2, 1), (1, 3), (1, 4), (5, 1),
-        # Pot 2 Rivalry (2 vs 3)
-        (2, 3), (3, 2),
-        # Team 2 vs Pot 3 (4,5) - remaining matches for 2
-        (2, 4), (5, 2),
-        # Team 3 vs Pot 3 (4,5) - remaining matches for 3
-        (4, 3), (3, 5),
-        # Pot 3 Rivalry (4 vs 5)
-        (4, 5), (5, 4)
+    bands: Dict[Tuple[str, int], List[Dict]] = defaultdict(list)
+
+    for gname, standings in group_standings.items():
+        league = gname[0]  # "A", "B", "C", "D"
+        for pos, entry in enumerate(standings, 1):
+            bands[(league, pos)].append(entry)
+
+    ranking: List[str] = []
+    for league in ("A", "B", "C", "D"):
+        max_pos = 4 if league in ("A", "B", "C") else 3
+        for pos in range(1, max_pos + 1):
+            entries = bands.get((league, pos), [])
+            entries.sort(key=lambda e: (
+                -e["points"],
+                -e["gd"],
+                -e["gf"],
+                -e["away_gf"],
+                -e["won"],
+                -e["away_won"],
+                e["disc_points"],
+                ACCESS_LIST.get(e["team"], 999),
+                -effective_elo(e["team"]),
+            ))
+            ranking.extend(e["team"] for e in entries)
+
+    assert len(ranking) == len(ALL_TEAMS), (
+        f"Interim ranking has {len(ranking)} teams, "
+        f"expected {len(ALL_TEAMS)}."
+    )
+    return ranking
+
+
+# ============================================================
+# PROMOTION / RELEGATION PLAY-OFFS
+# ============================================================
+def _resolve_playoff_pair(
+    team_a: str, team_b: str, rng: random.Random
+) -> Tuple[str, str]:
+    """
+    Two-legged promotion/relegation play-off.
+    Returns (winner, loser).  The winner stays in / moves to the higher league.
+    """
+    hg1, ag1 = simulate_match(team_a, team_b, rng)  # leg 1: A at home
+    hg2, ag2 = simulate_match(team_b, team_a, rng)  # leg 2: B at home
+
+    agg_a = hg1 + ag2
+    agg_b = ag1 + hg2
+
+    if agg_a != agg_b:
+        return (team_a, team_b) if agg_a > agg_b else (team_b, team_a)
+
+    # Extra time (single 30-minute period simulated with reduced λ).
+    et_h, et_a = simulate_match(team_b, team_a, rng)
+    if et_h != et_a:
+        winner = team_b if et_h > et_a else team_a
+        loser = team_a if winner == team_b else team_b
+        return winner, loser
+
+    # Penalties.
+    diff = effective_elo(team_a) - effective_elo(team_b)
+    prob_a = 1.0 / (1.0 + math.exp(-diff / 150.0))
+    if rng.random() < prob_a:
+        return team_a, team_b
+    return team_b, team_a
+
+
+@dataclass
+class LeagueMovement:
+    """Records the promotion/relegation outcomes for one league."""
+    promoted_direct: List[str] = field(default_factory=list)
+    relegated_direct: List[str] = field(default_factory=list)
+    playoff_winners: List[str] = field(default_factory=list)
+    playoff_losers: List[str] = field(default_factory=list)
+
+
+def simulate_promotion_relegation(
+    group_standings: Dict[str, List[Dict]],
+    rng: random.Random,
+) -> Dict[str, LeagueMovement]:
+    """
+    Applies the 2026-27 promotion/relegation rules:
+
+    League A/B play-offs:
+      – 2 lowest-ranked 3rd-placed League A teams
+      – 2 highest-ranked 4th-placed League A teams
+      – 4 runners-up from League B
+      (8 teams → 4 two-legged ties)[reference:5]
+
+    League B/C play-offs:
+      – 4 fourth-placed League B teams
+      – 4 runners-up from League C
+      (8 teams → 4 two-legged ties)[reference:6]
+
+    League C/D play-offs (2026-27 special rule):
+      – All League D teams are guaranteed promotion to League C.
+      – No League C team is relegated (the competition shrinks in 2028-29)[reference:7].
+      For completeness the two lowest-ranked League C fourth-placed teams
+      are recorded as “relegated to League D” in the historical record, but
+      they will in fact play in League C in 2028-29 because League D is abolished.
+    """
+    movements: Dict[str, LeagueMovement] = {
+        lg: LeagueMovement() for lg in ("A", "B", "C", "D")
+    }
+
+    def _league_entries(league: str, pos: int) -> List[Dict]:
+        out: List[Dict] = []
+        for gname, standings in group_standings.items():
+            if gname[0] != league:
+                continue
+            if len(standings) >= pos:
+                out.append(standings[pos - 1])
+        return out
+
+    def _sort_entries(entries: List[Dict]) -> List[Dict]:
+        return sorted(entries, key=lambda e: (
+            -e["points"], -e["gd"], -e["gf"], -e["away_gf"],
+            -e["won"], -e["away_won"], e["disc_points"],
+            ACCESS_LIST.get(e["team"], 999), -effective_elo(e["team"]),
+        ))
+
+    # ---- League A: automatic relegation ----
+    fourth_a = _sort_entries(_league_entries("A", 4))
+    if len(fourth_a) >= 2:
+        movements["A"].relegated_direct = [
+            fourth_a[-1]["team"], fourth_a[-2]["team"]
+        ]
+
+    # ---- League A/B play-offs ----
+    third_a = _sort_entries(_league_entries("A", 3))
+    fourth_a = _sort_entries(_league_entries("A", 4))
+    runners_b = _sort_entries(_league_entries("B", 2))
+
+    # Two lowest-ranked 3rd-placed League A teams.
+    third_a_low = third_a[-2:] if len(third_a) >= 2 else third_a[:]
+    # Two highest-ranked 4th-placed League A teams.
+    fourth_a_high = fourth_a[:2] if len(fourth_a) >= 2 else fourth_a[:]
+
+    ab_teams = (
+        [e["team"] for e in third_a_low]
+        + [e["team"] for e in fourth_a_high]
+        + [e["team"] for e in runners_b]
+    )
+    rng.shuffle(ab_teams)
+
+    for i in range(0, len(ab_teams) - 1, 2):
+        winner, loser = _resolve_playoff_pair(
+            ab_teams[i], ab_teams[i + 1], rng)
+        movements["A"].playoff_winners.append(winner)
+        movements["B"].playoff_losers.append(loser)
+
+    # ---- League B/C play-offs ----
+    fourth_b = _sort_entries(_league_entries("B", 4))
+    runners_c = _sort_entries(_league_entries("C", 2))
+
+    bc_teams = (
+        [e["team"] for e in fourth_b]
+        + [e["team"] for e in runners_c]
+    )
+    rng.shuffle(bc_teams)
+
+    for i in range(0, len(bc_teams) - 1, 2):
+        winner, loser = _resolve_playoff_pair(
+            bc_teams[i], bc_teams[i + 1], rng)
+        movements["B"].playoff_winners.append(winner)
+        movements["C"].playoff_losers.append(loser)
+
+    # ---- Direct promotions ----
+    for league, higher in (("B", "A"), ("C", "B"), ("D", "C")):
+        winners = _sort_entries(_league_entries(league, 1))
+        movements[league].promoted_direct = [e["team"] for e in winners]
+
+    # ---- League C/D special rule ----
+    # All League D teams are promoted to League C in 2028-29.
+    movements["D"].promoted_direct = [
+        e["team"]
+        for gname, standings in group_standings.items()
+        if gname[0] == "D"
+        for e in standings
     ]
+    # No League C team is relegated in 2026-27.
+    movements["C"].relegated_direct = []
 
-def simulate_2829_league_phase(teams_dict, rng):
-    """
-    Simulates the league phase for Leagues A, B, C.
-    Returns final standings for each league.
-    """
-    final_standings = {}
-    fixture_template = generate_2829_fixtures_indices()
-    
-    for lg_name, teams in teams_dict.items():
-        groups = draw_groups_2829(teams, rng)
-        lg_entries = []
-        
-        for g_idx, (g_name, g_teams) in enumerate(groups.items()):
-            results = []
-            for h_idx, a_idx in fixture_template:
-                home_team = g_teams[h_idx]
-                away_team = g_teams[a_idx]
-                hg, ag = simulate_match(home_team, away_team, rng)
-                results.append((home_team, away_team, hg, ag))
-            
-            access_order = {t: i for i, t in enumerate(g_teams)}
-            st = calculate_group_standings(g_teams, results, access_order)
-            
-            # Add metadata for overall ranking
-            for pos, entry in enumerate(st, 1):
-                entry["group_pos"] = pos
-                entry["league"] = lg_name
-                
-            lg_entries.extend(st)
-            
-        # Sort League Standings (for display/internal logic, though overall ranking uses group pos)
-        lg_entries.sort(key=lambda e: (-e["points"], -e["gd"], -e["gf"]))
-        final_standings[lg_name] = lg_entries
-        
-    return final_standings
+    return movements
 
-def get_overall_ranking_2829(standings_2829):
-    """
-    Creates the 1-54 ranking after 28/29 League Phase.
-    This is the ranking used for World Cup Qualifying seeding.
-    Rules: League Level (A>B>C) > Group Position > Points > GD > GF
-    """
-    league_level = {"A": 3, "B": 2, "C": 1}
-    all_teams_ranked = []
-    
-    for lg_name, entries in standings_2829.items():
-        for entry in entries:
-            entry["league_level"] = league_level[lg_name]
-            all_teams_ranked.append(entry)
-            
-    # Sort by League Level (Desc), Group Pos (Asc), Points (Desc), GD (Desc), GF (Desc)
-    all_teams_ranked.sort(key=lambda x: (-x["league_level"], x["group_pos"], -x["points"], -x["gd"], -x["gf"]))
-    return [e["team"] for e in all_teams_ranked]
 
 # ============================================================
-# MAIN SIMULATION LOOP
+# SEASON SIMULATION
 # ============================================================
-def run_full_simulation(n_sims, seed=None):
-    rng = random.Random(seed)
-    
-    # Counters
-    rank_counts = defaultdict(lambda: defaultdict(int)) # team -> {rank: count}
-    wc_league_1_counts = Counter()
-    wc_league_2_counts = Counter()
-    
-    it = tqdm(range(n_sims), desc="Simulating 2026-2029", unit="sim") if HAS_TQDM else range(n_sims)
-    
-    for _ in it:
-        # 1. Simulate 2026/27
-        gs_2627 = simulate_2627_season(rng)
-        ranking_2627 = get_overall_ranking_2627(gs_2627)
-        
-        # 2. Allocate 2028/29 Leagues
-        teams_2829 = determine_2829_leagues(ranking_2627)
-        
-        # 3. Simulate 2028/29 League Phase
-        standings_2829 = simulate_2829_league_phase(teams_2829, rng)
-        
-        # 4. Get Final Ranking 28/29 (Pre-Finals)
-        ranking_2829 = get_overall_ranking_2829(standings_2829)
-        
-        # 5. Record Data
-        for rank, team in enumerate(ranking_2829, 1):
-            rank_counts[team][rank] += 1
-            
-        # 6. Determine WC Qualifying Leagues
-        # League A & B -> WC League 1
-        # League C -> WC League 2
-        for team in teams_2829["A"] + teams_2829["B"]:
-            wc_league_1_counts[team] += 1
-        for team in teams_2829["C"]:
-            wc_league_2_counts[team] += 1
-            
-    return rank_counts, wc_league_1_counts, wc_league_2_counts
+def simulate_2627_season(rng: random.Random
+                         ) -> Tuple[Dict[str, List[Dict]],
+                                    List[Tuple[str, str, int, int]]]:
+    """
+    Simulates all 2026-27 group-stage matches.
+    Returns (group_standings, all_results).
+    """
+    group_standings: Dict[str, List[Dict]] = {}
+    all_results: List[Tuple[str, str, int, int]] = []
 
-def print_most_likely_ranking(rank_counts, n_sims):
-    print("\n=== MOST LIKELY FINAL RANKING (2028/29 League Phase) ===")
-    print("This ranking determines the 2030 World Cup Qualifying Paths.")
+    for lg_name, lg in LEAGUES_2627.items():
+        for gname, teams in lg["groups"].items():
+            matches = (
+                [(a, b) for i, a in enumerate(teams)
+                 for b in teams[i + 1:]]
+                + [(b, a) for i, a in enumerate(teams)
+                   for b in teams[i + 1:]]
+            )
+            results: List[Tuple[str, str, int, int]] = []
+            for h, a in matches:
+                fixed = _resolve_fixed_result(h, a)
+                if fixed is not None:
+                    hg, ag = fixed
+                else:
+                    hg, ag = simulate_match(h, a, rng)
+                results.append((h, a, hg, ag))
+                all_results.append((h, a, hg, ag))
+
+            st = calculate_group_standings(teams, results)
+            group_standings[gname] = st
+
+    return group_standings, all_results
+
+
+def _resolve_fixed_result(home: str, away: str
+                          ) -> Optional[Tuple[int, int]]:
+    """
+    Checks FIXED_RESULTS for (home, away) and, if absent, for (away, home)
+    with the score reversed.
+    """
+    if (home, away) in FIXED_RESULTS:
+        return FIXED_RESULTS[(home, away)]
+    if (away, home) in FIXED_RESULTS:
+        ag, hg = FIXED_RESULTS[(away, home)]
+        return hg, ag
+    return None
+
+
+# ============================================================
+# PUBLIC INTERFACE FOR euro2028.py
+# ============================================================
+@dataclass
+class NLSeasonState:
+    """
+    Everything EURO 2028 qualifying needs from the 2026-27 Nations League.
+
+    Attributes
+    ----------
+    ranking : list[str]
+        1–54 interim overall ranking (drives qualifying draw pots).
+    qf_teams : set[str]
+        The 8 teams that advance to the League A quarter-finals
+        (top two from each League A group).
+    group_winners : set[str]
+        All 14 UNL group winners (4 from A, 4 from B, 4 from C, 2 from D).
+        These are the teams eligible for the EURO 2028 play-off route.
+    group_standings : dict[str, list[dict]]
+        Raw group standings keyed by group name (A1, A2, … D2).
+    league_movement : dict[str, LeagueMovement]
+        Promotion / relegation / play-off outcomes.
+    playoff_winners : set[str]
+        Teams that won a promotion/relegation play-off.
+    """
+    ranking: List[str]
+    qf_teams: Set[str]
+    group_winners: Set[str]
+    group_standings: Dict[str, List[Dict]]
+    league_movement: Dict[str, LeagueMovement]
+    playoff_winners: Set[str]
+
+
+def simulate_nl_season_state(rng: random.Random) -> NLSeasonState:
+    """
+    Run one complete 2026-27 Nations League season.
+
+    This is the single function that euro2028.py should call.
+    """
+    group_standings, _ = simulate_2627_season(rng)
+
+    ranking = build_interim_ranking(group_standings)
+
+    # Quarter-finalists: top two from each League A group.
+    qf_teams: Set[str] = set()
+    for gname in ("A1", "A2", "A3", "A4"):
+        standings = group_standings.get(gname, [])
+        for entry in standings[:2]:
+            qf_teams.add(entry["team"])
+    assert len(qf_teams) == 8, (
+        f"Expected 8 quarter-finalists, got {len(qf_teams)}.")
+
+    # All UNL group winners.
+    group_winners: Set[str] = set()
+    for gname, standings in group_standings.items():
+        if standings:
+            group_winners.add(standings[0]["team"])
+    assert len(group_winners) == 14, (
+        f"Expected 14 group winners, got {len(group_winners)}.")
+
+    # Promotion / relegation.
+    league_movement = simulate_promotion_relegation(
+        group_standings, rng)
+
+    playoff_winners: Set[str] = set()
+    for lg in league_movement.values():
+        playoff_winners.update(lg.playoff_winners)
+
+    return NLSeasonState(
+        ranking=ranking,
+        qf_teams=qf_teams,
+        group_winners=group_winners,
+        group_standings=group_standings,
+        league_movement=league_movement,
+        playoff_winners=playoff_winners,
+    )
+
+
+# Legacy helper (kept for backward compatibility with any existing callers).
+def simulate_nl_ranking(rng: random.Random) -> List[str]:
+    return simulate_nl_season_state(rng).ranking
+
+
+# ============================================================
+# PRINTING HELPERS
+# ============================================================
+def print_group_standings_2627(
+    group_standings: Dict[str, List[Dict]]
+) -> None:
+    print("\n=== 2026-27 UEFA NATIONS LEAGUE GROUP STANDINGS ===")
+    for gname in sorted(group_standings.keys()):
+        print(f"\nGroup {gname}")
+        print(f"{'Pos':<4} {'Team':<24} {'Pld':>3} {'W':>2} {'D':>2} "
+              f"{'L':>2} {'GF':>3} {'GA':>3} {'GD':>4} {'Pts':>4}")
+        print("-" * 55)
+        for pos, entry in enumerate(group_standings[gname], 1):
+            print(
+                f"{pos:<4} {entry['team']:<24} {entry['played']:>3} "
+                f"{entry['won']:>2} {entry['drawn']:>2} {entry['lost']:>2} "
+                f"{entry['gf']:>3} {entry['ga']:>3} "
+                f"{entry['gd']:>+4} {entry['points']:>4}"
+            )
+
+
+def print_most_likely_ranking_2627(
+    rank_counts: Dict[str, Dict[int, int]], n_sims: int
+) -> None:
+    print("\n=== MOST LIKELY INTERIM OVERALL RANKING (2026-27) ===")
+    print("This ranking is used for EURO 2028 qualifying pot allocation.")
     print("-" * 65)
     print(f"{'Rank':<5} {'Team':<24} {'Prob %':>8} {'Avg Rank':>10}")
     print("-" * 65)
-    
-    # Calculate most likely rank for each team
-    team_best_rank = {}
+
+    team_best: Dict[str, Tuple[int, float, float]] = {}
     for team in ALL_TEAMS:
-        probs = rank_counts[team]
-        if not probs: continue
-        # Find rank with highest probability
+        probs = rank_counts.get(team)
+        if not probs:
+            continue
         best_r = max(probs, key=probs.get)
         best_p = probs[best_r] / n_sims
-        avg_r = sum(r*c for r,c in probs.items()) / sum(probs.values())
-        team_best_rank[team] = (best_r, best_p, avg_r)
-        
-    # Sort teams by their most likely rank
-    sorted_teams = sorted(ALL_TEAMS, key=lambda t: team_best_rank.get(t, (99,0,0))[0])
-    
-    for i, team in enumerate(sorted_teams[:54]): # Top 54
-        best_r, best_p, avg_r = team_best_rank[team]
-        print(f"{best_r:<5} {team:<24} {best_p*100:>7.1f}% {avg_r:>9.1f}")
+        avg_r = sum(r * c for r, c in probs.items()) / sum(probs.values())
+        team_best[team] = (best_r, best_p, avg_r)
 
-def print_wc_summary_with_certainty(wc1, wc2, n_sims):
-    print("\n=== 2030 WORLD CUP QUALIFYING LEAGUE PROJECTIONS ===")
-    print(f"{'Team':<24} {'Most Likely':>12} {'Certainty %':>11} {'L1 %':>8} {'L2 %':>8}")
-    print("-" * 65)
-    
-    certainties = []
-    
-    for team in sorted(ALL_TEAMS):
-        p1 = wc1.get(team, 0) / n_sims * 100
-        p2 = wc2.get(team, 0) / n_sims * 100
-        
-        # Determine most likely league and certainty
-        if p1 >= p2:
-            most_likely = "League 1"
-            certainty = p1
-        else:
-            most_likely = "League 2"
-            certainty = p2
-        
-        certainties.append(certainty)
-        
-        if p1 > 0.1 or p2 > 0.1:
-            print(f"{team:<24} {most_likely:>12} {certainty:>10.1f}% {p1:>7.1f}% {p2:>7.1f}%")
-    
-    # Calculate and display average certainty
-    avg_certainty = sum(certainties) / len(certainties)
-    median_certainty = sorted(certainties)[len(certainties) // 2]
-    min_certainty = min(certainties)
-    max_certainty = max(certainties)
-    
-    print("-" * 65)
-    print(f"\n=== LEAGUE ALLOCATION CERTAINTY ===")
-    print(f"Average Certainty: {avg_certainty:.2f}%")
-    print(f"Median Certainty:  {median_certainty:.2f}%")
-    print(f"Range:             {min_certainty:.2f}% - {max_certainty:.2f}%")
-    print(f"\nThe league allocation is {avg_certainty:.1f}% 'solved'")
-    
-    # Show most uncertain teams
-    teams_with_certs = [(team, max(wc1.get(team, 0) / n_sims * 100, 
-                                     wc2.get(team, 0) / n_sims * 100)) 
-                        for team in ALL_TEAMS]
-    teams_with_certs.sort(key=lambda x: x[1])
-    
-    print(f"\n=== MOST UNCERTAIN TEAMS (Bottom 5) ===")
-    for team, cert in teams_with_certs[:5]:
-        print(f"{team:<24} {cert:>6.2f}%")
+    sorted_teams = sorted(
+        ALL_TEAMS, key=lambda t: team_best.get(t, (99, 0.0, 0.0))[0])
+
+    for team in sorted_teams[:54]:
+        best_r, best_p, avg_r = team_best[team]
+        print(f"{best_r:<5} {team:<24} {best_p * 100:>7.1f}% "
+              f"{avg_r:>9.1f}")
 
 
-def main():
-    print(f"=== UEFA NATIONS LEAGUE 2026-2029 SIMULATION ===")
+# ============================================================
+# MAIN (stand-alone NL simulation)
+# ============================================================
+def run_2627_simulation(
+    n_sims: int, seed: Optional[int] = None
+) -> Dict[str, Dict[int, int]]:
+    rng = random.Random(seed)
+    rank_counts: Dict[str, Dict[int, int]] = defaultdict(
+        lambda: defaultdict(int))
+
+    iterator = (
+        tqdm(range(n_sims), desc="Simulating 2026-27", unit="sim")
+        if HAS_TQDM else range(n_sims)
+    )
+    for _ in iterator:
+        state = simulate_nl_season_state(rng)
+        for rank, team in enumerate(state.ranking, 1):
+            rank_counts[team][rank] += 1
+
+    return rank_counts
+
+
+def main() -> None:
+    print("=== UEFA NATIONS LEAGUE 2026-27 SIMULATION ===")
     print(f"Sims: {N_SIMS:,} | Seed: {RANDOM_SEED}")
-    
-    rank_counts, wc1, wc2 = run_full_simulation(N_SIMS, seed=RANDOM_SEED)
-    
-    print_most_likely_ranking(rank_counts, N_SIMS)
-    print_wc_summary_with_certainty(wc1, wc2, N_SIMS)
+
+    # Single simulation for display.
+    rng = random.Random(RANDOM_SEED)
+    state = simulate_nl_season_state(rng)
+    print_group_standings_2627(state.group_standings)
+
+    print("\nInterim Overall Ranking (single simulation):")
+    for i, team in enumerate(state.ranking, 1):
+        print(f"{i:>2}. {team}")
+
+    print("\nQuarter-finalists (League A top two):")
+    for t in sorted(state.qf_teams):
+        print(f"  – {t}")
+
+    print("\nLeague A/B play-off winners:")
+    for t in state.league_movement["A"].playoff_winners:
+        print(f"  – {t}")
+
+    # Probabilistic ranking.
+    rank_counts = run_2627_simulation(N_SIMS, seed=RANDOM_SEED)
+    print_most_likely_ranking_2627(rank_counts, N_SIMS)
+
 
 if __name__ == "__main__":
     main()
